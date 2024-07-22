@@ -3,6 +3,7 @@ import session from "express-session";
 import dotenv from "dotenv";
 import initDb from "./models/db";
 import userRoutes from "./routes/userRoutes";
+import eventRoutes from "./routes/eventRoutes";
 
 dotenv.config();
 
@@ -31,7 +32,7 @@ initDb()
     console.error("Database initialization failed:", error);
   });
 
-app.use(userRoutes);
+app.use(userRoutes, eventRoutes);
 
 app.get("/", (req, res) => {
   res.send("hello world!");

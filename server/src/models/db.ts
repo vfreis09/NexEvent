@@ -8,10 +8,20 @@ const initDb = async () => {
         password VARCHAR(255) NOT NULL,
         name VARCHAR(255),
         bio TEXT,
-        role VARCHAR(10) DEFAULT 'standard',
+        role VARCHAR(5) DEFAULT 'user',
         contact TEXT,
         visibility VARCHAR(7) DEFAULT 'public'
-    )
+      );
+      
+      CREATE TABLE IF NOT EXISTS events(
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        event_datetime TIMESTAMP NOT NULL,
+        number_of_attendees INT DEFAULT 0,
+        author_id INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
   `;
 
   try {
