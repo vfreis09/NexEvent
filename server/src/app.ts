@@ -1,5 +1,6 @@
 import express from "express";
 import initDb from "./models/db";
+import userRoutes from "./routes/userRoutes";
 
 const app = express();
 
@@ -14,6 +15,8 @@ initDb()
   .catch((error) => {
     console.error("Database initialization failed:", error);
   });
+
+app.use(userRoutes);
 
 app.get("/", (req, res) => {
   res.send("hello world!");
