@@ -1,11 +1,26 @@
 import express from "express";
+import session from "express-session";
+import dotenv from "dotenv";
 import initDb from "./models/db";
 import userRoutes from "./routes/userRoutes";
+
+dotenv.config();
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+const maxAge = 1000 * 60 * 60 * 24;
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET as string,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge },
+  })
+);
 
 initDb()
   .then(() => {

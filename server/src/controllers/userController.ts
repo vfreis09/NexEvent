@@ -12,7 +12,16 @@ const signup = async (req: Request, res: Response) => {
       "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
       [email, hashedPassword]
     );
-    res.status(201).json(result.rows[0]);
+
+    const user = result.rows[0];
+
+    if (!req.session.user) {
+      req.session.user = { email: "", id: undefined };
+    }
+
+    req.session.user = user;
+
+    res.status(201).json({ id: user.id, email: user.email });
   } catch (error) {
     console.log(error);
   }
@@ -40,8 +49,6 @@ const login = async (req: Request, res: Response) => {
         .json({ message: "Password field is missing for this user" });
     }
 
-    console.log(password, user.password);
-
     // Compare the provided password with the stored hashed password
     const isMatch = await bcrypt.compare(password, user.password);
 
@@ -50,17 +57,36 @@ const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Store user info in the session
+    req.session.user = user;
+
     // If the password matches, respond with user details (excluding the password)
     res.status(200).json({ email: user.email, id: user.id });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getUser = async (req: Request, res: Response) => {
+  if (req.session.user) {
+    const { id } = req.session.user;
+    const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
+      id,
+    ]);
+    if (rows.length > 0) {
+      res.json({ isLoggedIn: true, user: rows[0] });
+    } else {
+      res.json({ isLoggedIn: false });
+    }
+  } else {
+    res.json({ isLoggedIn: false });
   }
 };
 
 const userController = {
   signup,
   login,
+  getUser,
 };
 
 export default userController;
