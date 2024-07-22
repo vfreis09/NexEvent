@@ -83,10 +83,51 @@ const getUser = async (req: Request, res: Response) => {
   }
 };
 
+const logout = async (req: Request, res: Response) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    res.clearCookie("connect.sid");
+    res.json({ message: "Logged out successfully" });
+  });
+};
+
+const resetPassword = async (req: Request, res: Response) => {
+  const { email, newPassword } = req.body;
+  try {
+    // Generate a salt and hash the new password
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the user's password in the database
+    const result = await pool.query(
+      "UPDATE users SET password = $1 WHERE email = $2 RETURNING id, email",
+      [hashedPassword, email]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = result.rows[0];
+
+    // Respond with user information
+    res
+      .status(200)
+      .json({ message: "Password reset successful", email: user.email });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const userController = {
   signup,
   login,
   getUser,
+  logout,
+  resetPassword,
 };
 
 export default userController;
