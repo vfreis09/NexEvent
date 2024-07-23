@@ -1,6 +1,7 @@
 import express from "express";
 import session from "express-session";
 import dotenv from "dotenv";
+import cors from "cors";
 import initDb from "./models/db";
 import userRoutes from "./routes/userRoutes";
 import eventRoutes from "./routes/eventRoutes";
@@ -20,6 +21,13 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge },
+  })
+);
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
   })
 );
 
