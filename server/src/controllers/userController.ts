@@ -83,6 +83,16 @@ const getUser = async (req: Request, res: Response) => {
   }
 };
 
+const logout = async (req: Request, res: Response) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    res.clearCookie("connect.sid");
+    res.json({ message: "Logged out successfully" });
+  });
+};
+
 const resetPassword = async (req: Request, res: Response) => {
   const { email, newPassword } = req.body;
   try {
@@ -116,6 +126,7 @@ const userController = {
   signup,
   login,
   getUser,
+  logout,
   resetPassword,
 };
 

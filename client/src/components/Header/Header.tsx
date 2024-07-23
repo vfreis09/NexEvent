@@ -5,9 +5,24 @@ import { useUser } from "../../context/UserContext";
 const Header: React.FC = () => {
   const { user, setUser, setIsLoggedIn } = useUser();
 
-  const handleLogout = () => {
-    setUser(null);
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      await response.json();
+      setUser(null);
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (

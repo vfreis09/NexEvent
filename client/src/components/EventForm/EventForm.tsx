@@ -8,7 +8,7 @@ const EventForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3000/event", {
+      const response = await fetch("http://localhost:3000/api/event", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

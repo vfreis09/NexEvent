@@ -25,7 +25,7 @@ interface UserContextProps {
 const UserContext = createContext<UserContextProps | undefined>(undefined);
 
 const fetchUser = async (): Promise<{ user: User; isLoggedIn: boolean }> => {
-  const response = await fetch("http://localhost:3000/user", {
+  const response = await fetch("http://localhost:3000/api/user", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

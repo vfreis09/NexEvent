@@ -40,7 +40,7 @@ initDb()
     console.error("Database initialization failed:", error);
   });
 
-app.use(userRoutes, eventRoutes);
+app.use("/api", userRoutes, eventRoutes);
 
 app.get("/", (req, res) => {
   res.send("hello world!");
