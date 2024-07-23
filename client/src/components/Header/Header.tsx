@@ -1,14 +1,30 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useUser } from "../../context/UserContext";
 
 const Header: React.FC = () => {
+  const { user, setUser, setIsLoggedIn } = useUser();
+
+  const handleLogout = () => {
+    setUser(null);
+    setIsLoggedIn(false);
+  };
+
   return (
-    <>
-      <Link to="/">Home</Link>
-      <Link to="/create">Create</Link>
-      <Link to="/login">Login</Link>
-      <Link to="/signup">Signup</Link>
-    </>
+    <header>
+      <nav>
+        <Link to="/">Home</Link>
+        {user && <Link to="/create">Create</Link>}
+        {user ? (
+          <>
+            <span>Welcome {user.email}</span>
+            <button onClick={handleLogout}>Logout</button>
+          </>
+        ) : (
+          <Link to="/login">Login or Signup</Link>
+        )}
+      </nav>
+    </header>
   );
 };
 
