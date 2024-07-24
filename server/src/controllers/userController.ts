@@ -124,20 +124,12 @@ const resetPassword = async (req: Request, res: Response) => {
 
 const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { email } = req.body;
+  const { email, name, bio, contact } = req.body;
 
   try {
-    const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
-      id,
-    ]);
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
     const result = await pool.query(
-      "UPDATE users SET email = $1 WHERE id = $2 RETURNING *",
-      [email, id]
+      "UPDATE users SET email = $1, name = $2, bio = $3, contact = $4 WHERE id = $5 RETURNING *",
+      [email, name, bio, contact, id]
     );
 
     const updatedUser = result.rows[0];
