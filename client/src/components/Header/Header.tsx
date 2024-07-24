@@ -32,7 +32,7 @@ const Header: React.FC = () => {
         {user && <Link to="/create">Create</Link>}
         {user ? (
           <>
-            <span>Welcome {user.email}</span>
+            <Link to="/dashboard">{user.email}</Link>
             <button onClick={handleLogout}>Logout</button>
           </>
         ) : (

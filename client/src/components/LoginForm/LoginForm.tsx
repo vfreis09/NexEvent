@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -50,6 +51,7 @@ const LoginForm: React.FC = () => {
         />
       </div>
       <button type="submit">Login</button>
+      <Link to="/signup">signup</Link>
     </form>
   );
 };
