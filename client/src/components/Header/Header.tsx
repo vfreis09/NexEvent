@@ -1,5 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import {
+  Navbar,
+  Container
+} from "react-bootstrap";
 import { useUser } from "../../context/UserContext";
 
 const Header: React.FC = () => {
@@ -26,8 +30,9 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header>
-      <nav>
+    <>
+      <Navbar sticky="top" bg="light" data-bs-theme="light" expand="lg">
+        <Container fluid>
         <Link to="/">Home</Link>
         {user && <Link to="/create">Create</Link>}
         {user ? (
@@ -37,9 +42,9 @@ const Header: React.FC = () => {
           </>
         ) : (
           <Link to="/login">Login or Signup</Link>
-        )}
-      </nav>
-    </header>
+        )}</Container>
+      </Navbar>
+    </>
   );
 };
 
