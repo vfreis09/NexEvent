@@ -20,7 +20,7 @@ const EditUser: React.FC = () => {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, name, bio, contact }),
         }
       );
 
