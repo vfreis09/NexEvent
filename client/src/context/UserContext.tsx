@@ -47,6 +47,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     const loadUser = async () => {
+      if (user) return;
       try {
         const { user, isLoggedIn } = await fetchUser();
         setUser(user);

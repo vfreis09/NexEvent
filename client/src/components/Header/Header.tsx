@@ -33,16 +33,17 @@ const Header: React.FC = () => {
     <>
       <Navbar sticky="top" bg="light" data-bs-theme="light" expand="lg">
         <Container fluid>
-        <Link to="/">Home</Link>
-        {user && <Link to="/create">Create</Link>}
-        {user ? (
-          <>
-            <Link to="/dashboard">{user.email}</Link>
-            <button onClick={handleLogout}>Logout</button>
-          </>
-        ) : (
-          <Link to="/login">Login or Signup</Link>
-        )}</Container>
+          <Link to="/">Home</Link>
+          {user && <Link to="/create">Create</Link>}
+          {user ? (
+            <>
+              <Link to="/dashboard">{user.email}</Link>
+              <button onClick={handleLogout}>Logout</button>
+            </>
+          ) : (
+            <Link to="/login">Login or Signup</Link>
+          )}
+        </Container>
       </Navbar>
     </>
   );
