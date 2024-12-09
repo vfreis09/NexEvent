@@ -5,5 +5,6 @@ const router = Router();
 
 router.post("/events", eventController.createEvent);
 router.get("/events", eventController.getEvents);
+router.get("/events/:id", eventController.getEventById);
 
 export default router;
