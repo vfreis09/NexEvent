@@ -6,6 +6,7 @@ import SignupPage from "./pages/Signup/Signup";
 import LoginPage from "./pages/Login/Login";
 import CreateEvent from "./pages/CreateEvent/CreateEvent";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import EventDetails from "./pages/EventDetails/EventDetails";
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/create" element={<CreateEvent />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/event/:id" element={<EventDetails />} />
       </Routes>
     </UserProvider>
   );
