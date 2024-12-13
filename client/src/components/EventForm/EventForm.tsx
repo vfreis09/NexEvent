@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const EventForm: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDateTime, setEventDateTime] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +24,7 @@ const EventForm: React.FC = () => {
       }
 
       await response.json();
+      navigate("/");
       alert("Event created successfully");
     } catch (error) {
       console.error("Event creation failed", error);

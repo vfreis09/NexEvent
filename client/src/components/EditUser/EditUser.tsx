@@ -1,8 +1,8 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 
 const EditUser: React.FC = () => {
-  //email, name, bio, contact
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -37,7 +37,12 @@ const EditUser: React.FC = () => {
   };
 
   if (!user) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <h2>You have to login to access this content</h2>
+        <Link to="/login">login</Link>
+      </div>
+      );
   }
 
   return (

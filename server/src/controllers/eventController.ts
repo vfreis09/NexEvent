@@ -52,10 +52,30 @@ const getEventById =  async(req: Request, res: Response) => {
   }
 }
 
+const deleteEvent = async(req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const userEmail = req.session.user.email;
+  try {
+    const result = await pool.query(
+      "DELETE FROM posts WHERE id = $1 AND email = $2 RETURNING *",
+      [id, userEmail]
+    );
+    if (result.rows.length > 0) {
+      res.json({ message: "Post deleted successfully" });
+    } else {
+      res.status(404).json({ message: "Post not found or not authorized" });
+    }
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
 const eventController = {
   createEvent,
   getEvents,
   getEventById,
+  deleteEvent
 };
 
 export default eventController;

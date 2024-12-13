@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Navbar,
   Container
@@ -8,6 +8,7 @@ import { useUser } from "../../context/UserContext";
 
 const Header: React.FC = () => {
   const { user, setUser, setIsLoggedIn } = useUser();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
@@ -24,6 +25,7 @@ const Header: React.FC = () => {
       await response.json();
       setUser(null);
       setIsLoggedIn(false);
+      navigate("/");
     } catch (error) {
       console.error("Error logging out:", error);
     }
