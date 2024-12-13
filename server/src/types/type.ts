@@ -4,7 +4,7 @@ declare module "express-session" {
   interface Session {
     user: {
       id: number | undefined;
-      email: string;
+      user_id: number | undefined;
     };
   }
 }

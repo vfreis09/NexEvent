@@ -16,7 +16,7 @@ const signup = async (req: Request, res: Response) => {
     const user = result.rows[0];
 
     if (!req.session.user) {
-      req.session.user = { email: "", id: undefined };
+      req.session.user = { user_id: undefined, id: undefined };
     }
 
     req.session.user = user;

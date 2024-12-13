@@ -52,29 +52,50 @@ const getEventById =  async(req: Request, res: Response) => {
   }
 }
 
-const deleteEvent = async(req: Request, res: Response) => {
+const updateEvent = async(req: Request, res: Response) => {
   const id = parseInt(req.params.id);
-  const userEmail = req.session.user.email;
+  const { title, description, eventDateTime } = req.body;
+  const authorId = req.session.user.id;
   try {
     const result = await pool.query(
-      "DELETE FROM posts WHERE id = $1 AND email = $2 RETURNING *",
-      [id, userEmail]
+      "UPDATE posts SET title = $1, description = $2, event_datetime = $3 WHERE id = $4 AND author_id = $5 RETURNING *",
+      [title, description, eventDateTime, id, authorId]
     );
     if (result.rows.length > 0) {
-      res.json({ message: "Post deleted successfully" });
+      res.json(result.rows[0]);
     } else {
       res.status(404).json({ message: "Post not found or not authorized" });
     }
   } catch (error) {
-    console.error("Error deleting post:", error);
+    console.error("Error updating post:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};
+
+const deleteEvent = async(req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const authorId = req.session.user.id;
+  try {
+    const result = await pool.query(
+      "DELETE FROM posts WHERE id = $1 AND author_id = $2 RETURNING *",
+      [id, authorId]
+    );
+    if (result.rows.length > 0) {
+      res.json({ message: "Event deleted successfully" });
+    } else {
+      res.status(404).json({ message: "Event not found or not authorized" });
+    }
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 const eventController = {
   createEvent,
   getEvents,
   getEventById,
+  updateEvent,
   deleteEvent
 };
 
