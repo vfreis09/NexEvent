@@ -1,17 +1,52 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-const EventForm: React.FC = () => {
+interface EventFormProps {
+  isEditing: boolean;
+}
+
+const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDateTime, setEventDateTime] = useState("");
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+
+  const eventId = id ? parseInt(id) : null;
+
+  useEffect(() => {
+    if (isEditing && eventId && !isNaN(eventId)) {
+      const fetchEvent = async () => {
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/events/${eventId}`
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch event details");
+          }
+          const data = await response.json();
+          const formattedDateTime = new Date(data.event_datetime).toISOString().slice(0, 16);
+          setTitle(data.title);
+          setDescription(data.description);
+          setEventDateTime(formattedDateTime);
+        } catch (error) {
+          console.error("Error fetching event:", error);
+        }
+      };
+
+      fetchEvent();
+    }
+  }, [isEditing, eventId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
-      const response = await fetch("http://localhost:3000/api/events", {
-        method: "POST",
+      const url = `http://localhost:3000/api/events/${isEditing ? `${eventId}` : ""}`;
+      const method = isEditing ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -20,14 +55,15 @@ const EventForm: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Event creation failed");
+        throw new Error(isEditing ? "Event update failed" : "Event creation failed");
       }
 
-      await response.json();
+      const result = await response.json();
+      console.log("Success:", result);
       navigate("/");
-      alert("Event created successfully");
+      alert(isEditing ? "Event updated successfully" : "Event created successfully");
     } catch (error) {
-      console.error("Event creation failed", error);
+      console.error(isEditing ? "Event update failed" : "Event creation failed", error);
     }
   };
 
@@ -59,7 +95,9 @@ const EventForm: React.FC = () => {
           required
         />
       </div>
-      <button type="submit">Create Event</button>
+      <button type="submit">
+        {isEditing ? "Update Event" : "Create Event"}
+      </button>
     </form>
   );
 };
