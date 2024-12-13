@@ -12,9 +12,10 @@ interface Event {
 
 interface EventProps {
   event: Event;
+  onDelete: (id: number) => void;
 }
 
-const Event: React.FC<EventProps> = ({ event }) => {
+const Event: React.FC<EventProps> = ({ event, onDelete }) => {
   return (
     <div>
       <h2>{event.title}</h2>
@@ -22,6 +23,7 @@ const Event: React.FC<EventProps> = ({ event }) => {
       <p>Event Date: {new Date(event.event_datetime).toLocaleString()}</p>
       <p>Number of Attendees: {event.number_of_attendees}</p>
       <p>Created At: {new Date(event.created_at).toLocaleString()}</p>
+      <button onClick={() => onDelete(event.id)}>delete event</button>
     </div>
   );
 };

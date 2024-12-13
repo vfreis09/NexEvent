@@ -58,7 +58,7 @@ const updateEvent = async(req: Request, res: Response) => {
   const authorId = req.session.user.id;
   try {
     const result = await pool.query(
-      "UPDATE posts SET title = $1, description = $2, event_datetime = $3 WHERE id = $4 AND author_id = $5 RETURNING *",
+      "UPDATE events SET title = $1, description = $2, event_datetime = $3 WHERE id = $4 AND author_id = $5 RETURNING *",
       [title, description, eventDateTime, id, authorId]
     );
     if (result.rows.length > 0) {
@@ -77,7 +77,7 @@ const deleteEvent = async(req: Request, res: Response) => {
   const authorId = req.session.user.id;
   try {
     const result = await pool.query(
-      "DELETE FROM posts WHERE id = $1 AND author_id = $2 RETURNING *",
+      "DELETE FROM events WHERE id = $1 AND author_id = $2 RETURNING *",
       [id, authorId]
     );
     if (result.rows.length > 0) {
