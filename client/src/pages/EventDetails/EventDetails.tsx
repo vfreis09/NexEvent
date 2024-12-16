@@ -23,6 +23,7 @@ function EventDetails() {
         throw new Error("Error deleting event");
       }
       setEvent(null);
+      alert("Event deleted successfully");
       navigate("/");
     };
 
