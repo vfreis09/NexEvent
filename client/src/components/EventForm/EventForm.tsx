@@ -114,35 +114,73 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       zoom: 8,
       mapId: mapID,
     });
-    
 
-    // Ensure google.maps.marker is available
-    if (google.maps.marker) {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: latLng,
-        gmpDraggable: true,
-      });
+    // Create a Geocoder instance
+    const geocoder = new google.maps.Geocoder();
 
-      // Update position if latLng changes
-      if (latLng) {
-        marker.position = latLng;
-        map.setCenter(latLng);
-      }
+    // Create an AdvancedMarkerElement instance
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      map,
+      position: latLng,
+      gmpDraggable: true,
+    });
 
-      map.addListener("click", (e: google.maps.MapMouseEvent) => {
-        if (e.latLng) {
-          const position = {
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng(),
-          };
-          marker.position = position;
-          setLatLng(position);
-        }
-      });
-    } else {
-      console.error("google.maps.marker not available.");
+    // Update position if latLng changes
+    if (latLng) {
+      marker.position = latLng;
+      map.setCenter(latLng);
     }
+
+    // Add click listener for the map to place the marker
+    map.addListener("click", (e: google.maps.MapMouseEvent) => {
+      if (e.latLng) {
+        const position = {
+          lat: e.latLng.lat(),
+          lng: e.latLng.lng(),
+        };
+        marker.position = position;
+        setLatLng(position);
+
+        // Reverse geocoding to get the address from the clicked position
+        geocoder.geocode({ location: position }, (results, status) => {
+          if (status === "OK" && results && results[0]) {
+            // Set the location state with the formatted address
+            setLocation(results[0].formatted_address);
+          } else {
+            console.error("Geocode was unsuccessful for the following reason:", status);
+            setLocation("Unknown location");
+          }
+        });
+      }
+    });
+
+    // Initialize the Autocomplete functionality for the location search
+    const input = document.getElementById("location-search") as HTMLInputElement;
+    const autocomplete = new google.maps.places.Autocomplete(input);
+
+    // Restrict the search to certain types (optional)
+    autocomplete.setTypes(["geocode"]);
+
+    // Listen for when a user selects a place
+    autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) {
+      console.error("Place details or location are unavailable.");
+      return;
+    }
+
+    // Set the position of the marker to the selected place
+    const position = place.geometry.location;
+    marker.position = position;
+    setLatLng({ lat: position.lat(), lng: position.lng() });
+
+    // Update the map's center and zoom
+    map.setCenter(position);
+    map.setZoom(15);
+
+    // Update the location state with the place's formatted address
+    setLocation(place.formatted_address || "Unknown location");
+    });
   };
 
   return (
@@ -174,9 +212,10 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         />
       </div>
       <div>
-        <label>Location:</label>
+        <label>Search Location:</label>
         <input
           type="text"
+          id="location-search"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Enter location"
