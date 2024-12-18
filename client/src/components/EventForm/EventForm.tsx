@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLoadScript } from "@react-google-maps/api";
 import Map from "../Map/Map";
+import Places from "../Places/Places";
 
 interface EventFormProps {
   isEditing: boolean;
 }
+
+type LatLngLiteral = google.maps.LatLngLiteral;
 
 const apiKey = import.meta.env.VITE_PUBLIC_API_KEY as string;
 
@@ -13,6 +16,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDateTime, setEventDateTime] = useState("");
+  const [location, setLocation] = useState<LatLngLiteral | null>(null);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: apiKey,
@@ -92,6 +96,10 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
     }
   };
 
+  const handleLocationChange = async (position: google.maps.LatLngLiteral) => {
+    setLocation(position);
+  };
+
   if (!isLoaded) {
     return <div>Loading...</div>;
   }
@@ -123,7 +131,8 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           required
         />
       </div>
-      <Map />
+      <Places setPosition={handleLocationChange} />
+      <Map location={location} />
       <button type="submit">
         {isEditing ? "Update Event" : "Create Event"}
       </button>
