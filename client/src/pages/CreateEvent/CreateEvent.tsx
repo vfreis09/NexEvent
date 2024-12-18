@@ -5,7 +5,7 @@ function CreateEvent() {
   return (
     <>
       <Header />
-      <EventForm />
+      <EventForm isEditing={false} />
     </>
   );
 }
