@@ -6,11 +6,24 @@ const createEvent = async (req: Request, res: Response) => {
     return res.status(401).send("Unauthorized");
   }
   const { title, description, eventDateTime, location } = req.body;
+
+  if (!location) {
+    return res.status(400).json({ message: "Location is required." });
+  }
+
+  const [longitude, latitude] = location.split(" ").map(Number);
+  if (isNaN(longitude) || isNaN(latitude)) {
+    return res.status(400).json({ message: "Invalid location format." });
+  }
+
+  const locationPoint = `(${longitude}, ${latitude})`;
+
   const authorId = req.session.user.id;
+
   try {
     const result = await pool.query(
       "INSERT INTO events (title, description, event_datetime, location, author_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [title, description, eventDateTime, location, authorId]
+      [title, description, eventDateTime, locationPoint, authorId]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -55,11 +68,23 @@ const getEventById = async (req: Request, res: Response) => {
 const updateEvent = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
   const { title, description, eventDateTime, location } = req.body;
+
+  if (!location) {
+    return res.status(400).json({ message: "Location is required." });
+  }
+
+  const [longitude, latitude] = location.split(" ").map(Number);
+  if (isNaN(longitude) || isNaN(latitude)) {
+    return res.status(400).json({ message: "Invalid location format." });
+  }
+
+  const locationPoint = `(${longitude}, ${latitude})`;
+
   const authorId = req.session.user.id;
   try {
     const result = await pool.query(
       "UPDATE events SET title = $1, description = $2, event_datetime = $3, location = $4 WHERE id = $5 AND author_id = $6 RETURNING *",
-      [title, description, eventDateTime, location, id, authorId]
+      [title, description, eventDateTime, locationPoint, id, authorId]
     );
     if (result.rows.length > 0) {
       res.json(result.rows[0]);

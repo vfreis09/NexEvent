@@ -45,6 +45,17 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           setTitle(data.title);
           setDescription(data.description);
           setEventDateTime(formattedDateTime);
+
+          if (
+            data.location &&
+            typeof data.location.x === "number" &&
+            typeof data.location.y === "number"
+          ) {
+            setLocation({ lat: data.location.y, lng: data.location.x });
+          } else {
+            console.warn("No valid location data found.");
+            setLocation(null);
+          }
         } catch (error) {
           console.error("Error fetching event:", error);
         }
@@ -57,11 +68,24 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!location || !location.lat || !location.lng) {
+      alert("Please select a valid location.");
+      return;
+    }
+
     try {
       const url = `http://localhost:3000/api/events/${
         isEditing ? `${eventId}` : ""
       }`;
       const method = isEditing ? "PUT" : "POST";
+
+      // Extract latitude and longitude from location object
+      const latitude = location?.lat ?? null;
+      const longitude = location?.lng ?? null;
+
+      // Format the location as a POINT (longitude latitude)
+      const locationPoint =
+        latitude && longitude ? `${longitude} ${latitude}` : null;
 
       const response = await fetch(url, {
         method,
@@ -73,6 +97,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           title,
           description,
           eventDateTime,
+          location: locationPoint,
         }),
       });
 
