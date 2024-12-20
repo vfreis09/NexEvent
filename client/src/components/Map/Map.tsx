@@ -1,18 +1,41 @@
+import { useEffect, useState } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import styles from "./Map.module.css";
 
 type MapProps = {
   location: google.maps.LatLngLiteral | null;
+  isLoaded: boolean;
 };
 
-const Map = ({ location }: MapProps) => {
+const Map = ({ location, isLoaded }: MapProps) => {
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+
   const center = { lat: 43, lng: -80 };
+
+  const onMapLoad = (map: google.maps.Map) => {
+    setMapInstance(map);
+  };
+
+  useEffect(() => {
+    if (mapInstance && location) {
+      new google.maps.Marker({
+        position: location,
+        map: mapInstance,
+        title: "Event Location",
+      });
+    }
+  }, [mapInstance, location]);
+
+  if (!isLoaded) {
+    return <div>Loading map...</div>;
+  }
 
   return (
     <GoogleMap
       zoom={10}
       center={location || center}
       mapContainerClassName={styles.mapContainer}
+      onLoad={onMapLoad}
     >
       {location && <Marker position={location} />}
     </GoogleMap>

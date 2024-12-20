@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useLoadScript } from "@react-google-maps/api";
 import Map from "../Map/Map";
 import Places from "../Places/Places";
+import { useMapContext } from "../../context/MapProvider";
 
 interface EventFormProps {
   isEditing: boolean;
@@ -10,21 +10,16 @@ interface EventFormProps {
 
 type LatLngLiteral = google.maps.LatLngLiteral;
 
-const apiKey = import.meta.env.VITE_PUBLIC_API_KEY as string;
-
 const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDateTime, setEventDateTime] = useState("");
   const [location, setLocation] = useState<LatLngLiteral | null>(null);
 
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: apiKey,
-    libraries: ["places"],
-  });
-
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+
+  const { isLoaded } = useMapContext();
 
   const eventId = id ? parseInt(id) : null;
 
@@ -46,16 +41,12 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           setDescription(data.description);
           setEventDateTime(formattedDateTime);
 
-          if (
-            data.location &&
-            typeof data.location.x === "number" &&
-            typeof data.location.y === "number"
-          ) {
-            setLocation({ lat: data.location.y, lng: data.location.x });
-          } else {
-            console.warn("No valid location data found.");
-            setLocation(null);
-          }
+          const myLocation = {
+            lat: data.location?.y ?? 37.7749,
+            lng: data.location?.x ?? -122.4194,
+          };
+
+          setLocation(myLocation);
         } catch (error) {
           console.error("Error fetching event:", error);
         }
@@ -67,11 +58,6 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!location || !location.lat || !location.lng) {
-      alert("Please select a valid location.");
-      return;
-    }
 
     try {
       const url = `http://localhost:3000/api/events/${
@@ -157,7 +143,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         />
       </div>
       <Places setPosition={handleLocationChange} />
-      <Map location={location} />
+      <Map location={location} isLoaded={isLoaded} />
       <button type="submit">
         {isEditing ? "Update Event" : "Create Event"}
       </button>
