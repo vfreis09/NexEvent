@@ -23,7 +23,16 @@ const initDb = async () => {
         author_id INTEGER REFERENCES users(id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-  `;
+
+      CREATE TABLE IF NOT EXISTS rsvps (
+      id SERIAL PRIMARY KEY,
+      user_id INT REFERENCES users(id) ON DELETE CASCADE,
+      event_id INT REFERENCES events(id) ON DELETE CASCADE,
+      status VARCHAR(10) CHECK (status IN ('Accepted', 'Declined')),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT unique_user_event UNIQUE (user_id, event_id)
+      );
+    `;
 
   try {
     await pool.query(createTableQuery);

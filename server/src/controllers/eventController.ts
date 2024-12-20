@@ -116,12 +116,76 @@ const deleteEvent = async (req: Request, res: Response) => {
   }
 };
 
+//rsvp
+
+const createRsvp = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { userId, status } = req.body;
+
+  try {
+    // Check if event exists
+    const event = await pool.query("SELECT * FROM events WHERE id = $1", [id]);
+    if (!event.rows.length) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const updateAttendeesCount = async (id: string) => {
+      const result = await pool.query(
+        `SELECT COUNT(*) FROM rsvps WHERE event_id = $1 AND status = 'Accepted'`,
+        [id]
+      );
+      const attendeesCount = parseInt(result.rows[0].count, 10);
+
+      await pool.query(
+        `UPDATE events SET number_of_attendees = $1 WHERE id = $2`,
+        [attendeesCount, id]
+      );
+    };
+
+    // Add or update RSVP
+    await pool.query(
+      `INSERT INTO rsvps (user_id, event_id, status)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, event_id) 
+         DO UPDATE SET status = EXCLUDED.status`,
+      [userId, id, status]
+    );
+
+    await updateAttendeesCount(id);
+
+    res.status(200).json({ message: "RSVP updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getRsvps = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const rsvps = await pool.query(
+      `SELECT u.name, r.status FROM rsvps r
+         JOIN users u ON r.user_id = u.id
+         WHERE r.event_id = $1`,
+      [id]
+    );
+
+    res.status(200).json(rsvps.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const eventController = {
   createEvent,
   getEvents,
   getEventById,
   updateEvent,
   deleteEvent,
+  createRsvp,
+  getRsvps,
 };
 
 export default eventController;

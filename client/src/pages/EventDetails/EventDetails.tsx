@@ -4,6 +4,8 @@ import Header from "../../components/Header/Header";
 import Event from "../../components/Event/Event";
 import Map from "../../components/Map/Map";
 import { useMapContext } from "../../context/MapProvider";
+import RSVPButton from "../../components/RSVPButton/RSVPButton";
+import { useUser } from "../../context/UserContext";
 
 type EventData = {
   id: number;
@@ -21,6 +23,7 @@ type EventData = {
 
 function EventDetails() {
   const [event, setEvent] = useState<EventData | null>(null);
+  const { user } = useUser();
   const { id } = useParams<{ id: string }>();
   const eventId = parseInt(id ?? "");
   const navigate = useNavigate();
@@ -71,6 +74,7 @@ function EventDetails() {
     <>
       <Header />
       <Event event={event} onDelete={() => handleDelete(eventId)} />
+      <RSVPButton eventId={event.id} userId={user?.id} />
       <Map location={location} isLoaded={isLoaded} />
     </>
   ) : (
