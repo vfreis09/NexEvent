@@ -13,5 +13,6 @@ router.delete("/events/:id", eventController.deleteEvent);
 
 router.post("/events/:id/rsvp", eventController.createRsvp);
 router.get("/events/:id/rsvps", eventController.getRsvps);
+router.get("/events/:id/rsvp", eventController.getSingleRsvp);
 
 export default router;

@@ -178,6 +178,31 @@ const getRsvps = async (req: Request, res: Response) => {
   }
 };
 
+const getSingleRsvp = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
+
+  try {
+    const rsvp = await pool.query(
+      `SELECT status FROM rsvps WHERE event_id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+
+    if (!rsvp.rows.length) {
+      return res.status(404).json({ message: "RSVP not found" });
+    }
+
+    res.status(200).json({ status: rsvp.rows[0].status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const eventController = {
   createEvent,
   getEvents,
@@ -186,6 +211,7 @@ const eventController = {
   deleteEvent,
   createRsvp,
   getRsvps,
+  getSingleRsvp,
 };
 
 export default eventController;

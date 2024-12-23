@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 type RSVPProps = {
   eventId: number;
@@ -7,6 +7,40 @@ type RSVPProps = {
 
 const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
   const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchRSVPStatus = async () => {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/events/${eventId}/rsvp?userId=${userId}`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setStatus(data.status);
+        } else if (response.status === 404) {
+          setStatus(null);
+        } else {
+          console.error("Failed to fetch RSVP status.");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) fetchRSVPStatus();
+  }, [eventId, userId]);
 
   const handleRSVP = async (rsvpStatus: string) => {
     try {
@@ -37,6 +71,14 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
       alert("Failed to update RSVP.");
     }
   };
+
+  if (!userId) {
+    return <p>Please log in to RSVP for this event.</p>;
+  }
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div>
