@@ -15,6 +15,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [description, setDescription] = useState("");
   const [eventDateTime, setEventDateTime] = useState("");
   const [location, setLocation] = useState<LatLngLiteral | null>(null);
+  const [maxAttendees, setMaxAttendees] = useState<number | string>("");
 
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -47,6 +48,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           };
 
           setLocation(myLocation);
+          setMaxAttendees(data.max_attendees ?? "");
         } catch (error) {
           console.error("Error fetching event:", error);
         }
@@ -84,6 +86,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           description,
           eventDateTime,
           location: locationPoint,
+          max_attendees: maxAttendees,
         }),
       });
 
@@ -139,6 +142,16 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           type="datetime-local"
           value={eventDateTime}
           onChange={(e) => setEventDateTime(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label>Max Attendees:</label>
+        <input
+          type="number"
+          value={maxAttendees}
+          onChange={(e) => setMaxAttendees(e.target.value)}
+          min="1"
           required
         />
       </div>

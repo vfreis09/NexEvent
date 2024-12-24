@@ -19,6 +19,7 @@ const initDb = async () => {
         description TEXT NOT NULL,
         event_datetime TIMESTAMP NOT NULL,
         number_of_attendees INT DEFAULT 0,
+        max_attendees INT DEFAULT NULL,
         location POINT,
         author_id INTEGER REFERENCES users(id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

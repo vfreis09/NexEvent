@@ -5,7 +5,8 @@ const createEvent = async (req: Request, res: Response) => {
   if (!req.session.user) {
     return res.status(401).send("Unauthorized");
   }
-  const { title, description, eventDateTime, location } = req.body;
+  const { title, description, eventDateTime, location, max_attendees } =
+    req.body;
 
   if (!location) {
     return res.status(400).json({ message: "Location is required." });
@@ -22,8 +23,15 @@ const createEvent = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      "INSERT INTO events (title, description, event_datetime, location, author_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [title, description, eventDateTime, locationPoint, authorId]
+      "INSERT INTO events (title, description, event_datetime, location, author_id, max_attendees) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [
+        title,
+        description,
+        eventDateTime,
+        locationPoint,
+        authorId,
+        max_attendees,
+      ]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -118,7 +126,7 @@ const deleteEvent = async (req: Request, res: Response) => {
 
 //rsvp
 
-const createRsvp = async (req: Request, res: Response) => {
+const createRsvp = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const { userId, status } = req.body;
 
@@ -126,10 +134,13 @@ const createRsvp = async (req: Request, res: Response) => {
     // Check if event exists
     const event = await pool.query("SELECT * FROM events WHERE id = $1", [id]);
     if (!event.rows.length) {
-      return res.status(404).json({ message: "Event not found" });
+      res.status(404).json({ message: "Event not found" });
+      return;
     }
 
-    const updateAttendeesCount = async (id: string) => {
+    const { max_attendees } = event.rows[0];
+
+    const updateAttendeesCount = async (id: string): Promise<number> => {
       const result = await pool.query(
         `SELECT COUNT(*) FROM rsvps WHERE event_id = $1 AND status = 'Accepted'`,
         [id]
@@ -140,7 +151,20 @@ const createRsvp = async (req: Request, res: Response) => {
         `UPDATE events SET number_of_attendees = $1 WHERE id = $2`,
         [attendeesCount, id]
       );
+
+      return attendeesCount;
     };
+
+    // Check max attendees limit if RSVP is "Accepted"
+    if (status === "Accepted" && max_attendees !== null) {
+      const currentAttendees = await updateAttendeesCount(id);
+      if (currentAttendees >= max_attendees) {
+        res
+          .status(400)
+          .json({ message: "Maximum number of attendees reached" });
+        return;
+      }
+    }
 
     // Add or update RSVP
     await pool.query(
@@ -192,11 +216,33 @@ const getSingleRsvp = async (req: Request, res: Response) => {
       [id, userId]
     );
 
-    if (!rsvp.rows.length) {
-      return res.status(404).json({ message: "RSVP not found" });
+    const event = await pool.query(
+      `SELECT COUNT(*) AS attendee_count, max_attendees 
+       FROM rsvps 
+       INNER JOIN events ON rsvps.event_id = events.id
+       WHERE events.id = $1
+       GROUP BY max_attendees`,
+      [id]
+    );
+
+    if (!event.rows.length) {
+      return res.status(404).json({ message: "Event not found" });
     }
 
-    res.status(200).json({ status: rsvp.rows[0].status });
+    const { attendee_count, max_attendees } = event.rows[0];
+    const isEventFull = attendee_count >= max_attendees;
+
+    if (!rsvp.rows.length) {
+      return res.status(404).json({
+        message: "RSVP not found",
+        isEventFull,
+      });
+    }
+
+    res.status(200).json({
+      status: rsvp.rows[0].status,
+      isEventFull,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
