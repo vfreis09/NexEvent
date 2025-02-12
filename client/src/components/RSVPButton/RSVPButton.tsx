@@ -27,12 +27,12 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
 
         if (response.ok) {
           const data = await response.json();
-          setStatus(data.status || null); // Set status if found, or null otherwise
-          setIsEventFull(data.isEventFull); // Set event full status from backend
+          setStatus(data.status || null);
+          setIsEventFull(data.isEventFull);
         } else if (response.status === 404) {
           const errorData = await response.json();
-          setStatus(null); // User has no RSVP
-          setIsEventFull(errorData.isEventFull || false); // Handle full status on 404
+          setStatus(null);
+          setIsEventFull(errorData.isEventFull || false);
         } else {
           console.error("Failed to fetch RSVP status.");
         }
@@ -66,7 +66,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
       if (response.ok) {
         const data = await response.json();
         setStatus(rsvpStatus);
-        alert(data.message); // Message from server after updating RSVP
+        alert(data.message);
       } else {
         alert("Failed to update RSVP.");
       }
@@ -86,24 +86,20 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
 
   return (
     <div>
-      {isEventFull && !status ? (
-        <p>Sorry, this event is already full.</p>
-      ) : (
-        <>
-          <button
-            onClick={() => handleRSVP("Accepted")}
-            disabled={status === "Accepted"} // Disable if already accepted
-          >
-            Accept
-          </button>
-          <button
-            onClick={() => handleRSVP("Declined")}
-            disabled={status === "Declined"} // Disable if already declined
-          >
-            Decline
-          </button>
-        </>
-      )}
+      <>
+        <button
+          onClick={() => handleRSVP("Accepted")}
+          disabled={status === "Accepted"}
+        >
+          Accept
+        </button>
+        <button
+          onClick={() => handleRSVP("Declined")}
+          disabled={status === "Declined"}
+        >
+          Decline
+        </button>
+      </>
       {status && <p>You have {status.toLowerCase()} the invitation.</p>}
     </div>
   );

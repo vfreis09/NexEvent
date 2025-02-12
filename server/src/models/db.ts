@@ -22,7 +22,9 @@ const initDb = async () => {
         max_attendees INT DEFAULT NULL,
         location POINT,
         author_id INTEGER REFERENCES users(id),
+        status VARCHAR(10) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired'))
       );
 
       CREATE TABLE IF NOT EXISTS rsvps (

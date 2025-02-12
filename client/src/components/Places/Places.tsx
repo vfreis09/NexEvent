@@ -2,7 +2,6 @@ import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
 } from "use-places-autocomplete";
-
 import {
   Combobox,
   ComboboxInput,
@@ -10,7 +9,6 @@ import {
   ComboboxList,
   ComboboxOption,
 } from "@reach/combobox";
-
 import "@reach/combobox/styles.css";
 
 type PlacesProps = {

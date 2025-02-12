@@ -18,6 +18,7 @@ type EventData = {
   event_datetime: string;
   number_of_attendees: number;
   author_id: number;
+  status: string;
   created_at: string;
 };
 
@@ -74,7 +75,9 @@ function EventDetails() {
     <>
       <Header />
       <Event event={event} onDelete={() => handleDelete(eventId)} />
-      <RSVPButton eventId={event.id} userId={user?.id} />
+      {event.status === "active" && (
+        <RSVPButton eventId={event.id} userId={user?.id} />
+      )}
       <Map location={location} isLoaded={isLoaded} />
     </>
   ) : (

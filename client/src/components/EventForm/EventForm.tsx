@@ -67,11 +67,9 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       }`;
       const method = isEditing ? "PUT" : "POST";
 
-      // Extract latitude and longitude from location object
       const latitude = location?.lat ?? null;
       const longitude = location?.lng ?? null;
 
-      // Format the location as a POINT (longitude latitude)
       const locationPoint =
         latitude && longitude ? `${longitude} ${latitude}` : null;
 
@@ -95,9 +93,6 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           isEditing ? "Event update failed" : "Event creation failed"
         );
       }
-
-      const result = await response.json();
-      console.log("Success:", result);
       navigate("/");
       alert(
         isEditing ? "Event updated successfully" : "Event created successfully"
@@ -151,8 +146,6 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           type="number"
           value={maxAttendees}
           onChange={(e) => setMaxAttendees(e.target.value)}
-          min="1"
-          required
         />
       </div>
       <Places setPosition={handleLocationChange} />
