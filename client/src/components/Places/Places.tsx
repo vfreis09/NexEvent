@@ -11,9 +11,9 @@ import {
 } from "@reach/combobox";
 import "@reach/combobox/styles.css";
 
-type PlacesProps = {
+interface PlacesProps {
   setPosition: (position: google.maps.LatLngLiteral) => void;
-};
+}
 
 const Places = ({ setPosition }: PlacesProps) => {
   const {

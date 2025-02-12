@@ -1,19 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
-interface Event {
-  id: number;
-  title: string;
-  description: string;
-  event_datetime: string;
-  number_of_attendees: number;
-  author_id: number;
-  status: string;
-  created_at: string;
-}
+import { EventType } from "../../types/EventType";
 
 interface EventProps {
-  event: Event;
+  event: EventType;
   onDelete: (id: number) => void;
 }
 

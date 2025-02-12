@@ -5,14 +5,7 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  bio: string;
-  contact: string;
-}
+import { User } from "../types/User";
 
 interface UserContextProps {
   user: User | null;

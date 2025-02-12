@@ -1,13 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
-interface Event {
-  id: number;
-  title: string;
-}
+import { EventTitle } from "../../types/EventTitle";
 
 interface EventListProps {
-  events: Event[];
+  events: EventTitle[];
 }
 
 const EventList: React.FC<EventListProps> = ({ events }) => {
@@ -15,9 +11,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
     <ul>
       {events.map((event) => (
         <li key={event.id}>
-          <Link to={`/event/${event.id}`}>
-            {event.title}
-          </Link>
+          <Link to={`/event/${event.id}`}>{event.title}</Link>
         </li>
       ))}
     </ul>

@@ -6,21 +6,7 @@ import Map from "../../components/Map/Map";
 import { useMapContext } from "../../context/MapProvider";
 import RSVPButton from "../../components/RSVPButton/RSVPButton";
 import { useUser } from "../../context/UserContext";
-
-type EventData = {
-  id: number;
-  title: string;
-  description: string;
-  location: {
-    x: number;
-    y: number;
-  };
-  event_datetime: string;
-  number_of_attendees: number;
-  author_id: number;
-  status: string;
-  created_at: string;
-};
+import { EventData } from "../../types/EventData";
 
 function EventDetails() {
   const [event, setEvent] = useState<EventData | null>(null);

@@ -1,14 +1,10 @@
 import { useState, useEffect } from "react";
 import Header from "../../components/Header/Header";
 import EventList from "../../components/EventList/EventList";
-
-interface Event {
-  id: number;
-  title: string;
-}
+import { EventTitle } from "../../types/EventTitle";
 
 function HomePage() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventTitle[]>([]);
 
   useEffect(() => {
     const fetchPosts = async () => {
