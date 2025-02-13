@@ -5,15 +5,19 @@ import { EventTitle } from "../../types/EventTitle";
 
 function HomePage() {
   const [events, setEvents] = useState<EventTitle[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/events/");
         const data = await response.json();
-        setEvents(data);
+        setEvents(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching posts:", error);
+        setEvents([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -22,7 +26,7 @@ function HomePage() {
   return (
     <>
       <Header />
-      <EventList events={events} />
+      {loading ? <div>Loading events...</div> : <EventList events={events} />}
     </>
   );
 }

@@ -42,6 +42,11 @@ const getEvents = async (req: Request, res: Response) => {
     const result = await pool.query(
       "SELECT * FROM events ORDER BY created_at DESC"
     );
+
+    if (result.rows.length === 0) {
+      return res.status(200).json([]);
+    }
+
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching events:", error);

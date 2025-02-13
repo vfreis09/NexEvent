@@ -7,6 +7,10 @@ interface EventListProps {
 }
 
 const EventList: React.FC<EventListProps> = ({ events }) => {
+  if (!Array.isArray(events) || events.length === 0) {
+    return <div>No events available. Try again later!</div>;
+  }
+
   return (
     <ul>
       {events.map((event) => (
