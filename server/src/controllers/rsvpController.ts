@@ -90,32 +90,18 @@ const getSingleRsvp = async (req: Request, res: Response) => {
       [id, userId]
     );
 
-    const event = await pool.query(
-      `SELECT COUNT(*) AS attendee_count, max_attendees 
-         FROM rsvps 
-         INNER JOIN events ON rsvps.event_id = events.id
-         WHERE events.id = $1
-         GROUP BY max_attendees`,
-      [id]
-    );
+    const event = await pool.query(`SELECT id FROM events WHERE id = $1`, [id]);
 
     if (!event.rows.length) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    const { attendee_count, max_attendees } = event.rows[0];
-    const isEventFull = attendee_count >= max_attendees;
-
     if (!rsvp.rows.length) {
-      return res.status(404).json({
-        message: "RSVP not found",
-        isEventFull,
-      });
+      return res.status(200).json({ status: null });
     }
 
     res.status(200).json({
       status: rsvp.rows[0].status,
-      isEventFull,
     });
   } catch (err) {
     console.error(err);

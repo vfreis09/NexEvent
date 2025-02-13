@@ -7,7 +7,6 @@ type RSVPProps = {
 
 const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
   const [status, setStatus] = useState<string | null>(null);
-  const [isEventFull, setIsEventFull] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -28,11 +27,8 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
         if (response.ok) {
           const data = await response.json();
           setStatus(data.status || null);
-          setIsEventFull(data.isEventFull);
         } else if (response.status === 404) {
-          const errorData = await response.json();
           setStatus(null);
-          setIsEventFull(errorData.isEventFull || false);
         } else {
           console.error("Failed to fetch RSVP status.");
         }
