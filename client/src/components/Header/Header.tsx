@@ -1,9 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Navbar,
-  Container
-} from "react-bootstrap";
+import { Navbar, Container } from "react-bootstrap";
 import { useUser } from "../../context/UserContext";
 
 const Header: React.FC = () => {
@@ -39,7 +36,7 @@ const Header: React.FC = () => {
           {user && <Link to="/create">Create</Link>}
           {user ? (
             <>
-              <Link to="/dashboard">{user.email}</Link>
+              <Link to="/settings">{user.email}</Link>
               <button onClick={handleLogout}>Logout</button>
             </>
           ) : (

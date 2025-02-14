@@ -1,7 +1,7 @@
 import Header from "../../components/Header/Header";
 import EditUser from "../../components/EditUser/EditUser";
 
-function Dashboard() {
+function Settings() {
   return (
     <>
       <Header />
@@ -10,4 +10,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default Settings;
