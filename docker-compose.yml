@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  pgsql:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-secret}"
+      POSTGRES_DB: "${DB_DATABASE}"
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build: ./server
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: pgsql
+      DB_PORT: 5432
+      DB_USER: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD:-secret}"
+      DB_NAME: "${DB_DATABASE}"
+    volumes:
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      pgsql:
+        condition: service_healthy
+
+  client:
+    build: ./client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - server
+    command: npm run dev -- --host
+
+volumes:
+  pgdata:
