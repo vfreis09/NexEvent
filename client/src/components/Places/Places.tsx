@@ -2,14 +2,8 @@ import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
 } from "use-places-autocomplete";
-import {
-  Combobox,
-  ComboboxInput,
-  ComboboxPopover,
-  ComboboxList,
-  ComboboxOption,
-} from "@reach/combobox";
-import "@reach/combobox/styles.css";
+import { useState } from "react";
+import { Form, Dropdown } from "react-bootstrap";
 
 interface PlacesProps {
   setPosition: (position: google.maps.LatLngLiteral) => void;
@@ -24,9 +18,12 @@ const Places = ({ setPosition }: PlacesProps) => {
     clearSuggestions,
   } = usePlacesAutocomplete();
 
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const handleSelect = async (address: string) => {
     setValue(address, false);
     clearSuggestions();
+    setShowSuggestions(false);
 
     const results = await getGeocode({ address });
     const { lat, lng } = await getLatLng(results[0]);
@@ -34,22 +31,32 @@ const Places = ({ setPosition }: PlacesProps) => {
   };
 
   return (
-    <Combobox onSelect={handleSelect}>
-      <ComboboxInput
+    <div>
+      <Form.Control
+        type="text"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setValue(e.target.value);
+          setShowSuggestions(true);
+        }}
         disabled={!ready}
         placeholder="Search a location"
       />
-      <ComboboxPopover>
-        <ComboboxList>
-          {status === "OK" &&
-            data.map(({ place_id, description }) => (
-              <ComboboxOption key={place_id} value={description} />
+      {showSuggestions && status === "OK" && (
+        <Dropdown show>
+          <Dropdown.Menu style={{ width: "100%" }}>
+            {data.map(({ place_id, description }) => (
+              <Dropdown.Item
+                key={place_id}
+                onClick={() => handleSelect(description)}
+              >
+                {description}
+              </Dropdown.Item>
             ))}
-        </ComboboxList>
-      </ComboboxPopover>
-    </Combobox>
+          </Dropdown.Menu>
+        </Dropdown>
+      )}
+    </div>
   );
 };
 

@@ -44,7 +44,6 @@ services:
       - /usr/src/app/node_modules
     depends_on:
       - server
-    command: npm run dev -- --host
 
 volumes:
   pgdata:
