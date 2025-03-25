@@ -13,6 +13,7 @@ interface UserContextProps {
   setUser: (user: User | null) => void;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   loading: boolean;
+  loadUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -38,21 +39,31 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      if (user) return;
-      try {
-        const { user, isLoggedIn } = await fetchUser();
-        setUser(user);
-        setIsLoggedIn(isLoggedIn);
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadUser = async () => {
+    if (!isLoggedIn) {
+      setLoading(false);
+      return;
+    }
 
-    loadUser();
+    try {
+      const { user, isLoggedIn } = await fetchUser();
+      setUser(user);
+      setIsLoggedIn(isLoggedIn);
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      setUser(null);
+      setIsLoggedIn(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      loadUser();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   return (
@@ -63,6 +74,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
         loading,
         setUser,
         setIsLoggedIn,
+        loadUser,
       }}
     >
       {children}

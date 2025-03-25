@@ -1,11 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar, Container } from "react-bootstrap";
 import { useUser } from "../../context/UserContext";
 
 const Header: React.FC = () => {
-  const { user, setUser, setIsLoggedIn } = useUser();
+  const { user, setUser, setIsLoggedIn, loadUser } = useUser();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      loadUser();
+    }
+  }, [user, loadUser]);
 
   const handleLogout = async () => {
     try {

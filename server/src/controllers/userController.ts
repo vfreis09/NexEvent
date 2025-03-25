@@ -1,6 +1,19 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import path from "path";
 const pool = require("../config/dbConfig");
+
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+
+const jwtSecret = process.env.JWT_SECRET as string | undefined;
+
+if (!jwtSecret) {
+  throw new Error(
+    "jwtSecret is not defined. Check your environment variables."
+  );
+}
 
 const signup = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -15,15 +28,22 @@ const signup = async (req: Request, res: Response) => {
 
     const user = result.rows[0];
 
-    if (!req.session.user) {
-      req.session.user = { user_id: undefined, id: undefined };
-    }
+    const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
+      expiresIn: "1h",
+    });
 
-    req.session.user = user;
-
-    res.status(201).json({ id: user.id, email: user.email });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 3600000,
+      })
+      .status(201)
+      .json({ user: { id: user.id, email: user.email } });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -52,19 +72,31 @@ const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    req.session.user = user;
+    const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
+      expiresIn: "1h",
+    });
 
-    res.status(200).json({ email: user.email, id: user.id });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 3600000,
+      })
+      .status(200)
+      .json({ user: { id: user.id, email: user.email } });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const getUser = async (req: Request, res: Response) => {
-  if (req.session.user) {
-    const { id } = req.session.user;
+  const userId = req.user?.id;
+
+  if (userId) {
     const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
-      id,
+      userId,
     ]);
     if (rows.length > 0) {
       res.json({ isLoggedIn: true, user: rows[0] });
@@ -77,13 +109,10 @@ const getUser = async (req: Request, res: Response) => {
 };
 
 const logout = async (req: Request, res: Response) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: "Logout failed" });
-    }
-    res.clearCookie("connect.sid");
-    res.json({ message: "Logged out successfully" });
-  });
+  res
+    .clearCookie("token")
+    .status(200)
+    .json({ message: "Logged out successfully" });
 };
 
 const resetPassword = async (req: Request, res: Response) => {
@@ -124,11 +153,10 @@ const updateUser = async (req: Request, res: Response) => {
 
     const updatedUser = result.rows[0];
 
-    req.session.user = updatedUser;
-
     res.status(200).json({ id: updatedUser.id, email: updatedUser.email });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

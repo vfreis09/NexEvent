@@ -1,10 +1,7 @@
-import { Session } from "express-session";
+import { Request } from "express";
 
-declare module "express-session" {
-  interface Session {
-    user: {
-      id: number | undefined;
-      user_id: number | undefined;
-    };
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: { id: string; email: string };
   }
 }

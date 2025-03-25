@@ -13,6 +13,10 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+# Accept build-time variable
+ARG VITE_PUBLIC_API_KEY
+ENV VITE_PUBLIC_API_KEY=$VITE_PUBLIC_API_KEY
+
 # Build the application
 RUN npm run build
 
