@@ -3,7 +3,7 @@ const pool = require("../config/dbConfig");
 import { updateEventStatus } from "../utils/eventService";
 
 const createEvent = async (req: Request, res: Response) => {
-  if (!req.session.user) {
+  if (!req.cookies?.token) {
     return res.status(401).send("Unauthorized");
   }
   const { title, description, eventDateTime, location, max_attendees } =
@@ -23,7 +23,7 @@ const createEvent = async (req: Request, res: Response) => {
 
   const locationPoint = `(${longitude}, ${latitude})`;
 
-  const authorId = req.session.user.id;
+  const authorId = req.user?.id;
 
   try {
     const result = await pool.query(
@@ -94,7 +94,8 @@ const updateEvent = async (req: Request, res: Response) => {
 
   const locationPoint = `(${longitude}, ${latitude})`;
 
-  const authorId = req.session.user.id;
+  const authorId = req.user?.id;
+
   try {
     const result = await pool.query(
       "UPDATE events SET title = $1, description = $2, event_datetime = $3, location = $4, max_attendees = $5 WHERE id = $6 AND author_id = $7 RETURNING *",
@@ -123,7 +124,8 @@ const updateEvent = async (req: Request, res: Response) => {
 
 const deleteEvent = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
-  const authorId = req.session.user.id;
+  const authorId = req.user?.id;
+
   try {
     const result = await pool.query(
       "DELETE FROM events WHERE id = $1 AND author_id = $2 RETURNING *",

@@ -40,11 +40,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   const loadUser = async () => {
-    if (!isLoggedIn) {
-      setLoading(false);
-      return;
-    }
-
     try {
       const { user, isLoggedIn } = await fetchUser();
       setUser(user);
@@ -59,11 +54,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (!user) {
-      loadUser();
-    } else {
-      setLoading(false);
-    }
+    loadUser();
   }, []);
 
   return (

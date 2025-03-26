@@ -9,6 +9,11 @@ dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const jwtSecret = process.env.JWT_SECRET as string | undefined;
 
+interface JwtPayload {
+  id: string;
+  email: string;
+}
+
 if (!jwtSecret) {
   throw new Error(
     "jwtSecret is not defined. Check your environment variables."
@@ -92,19 +97,28 @@ const login = async (req: Request, res: Response) => {
 };
 
 const getUser = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
+  const token = req.cookies?.token;
 
-  if (userId) {
+  if (!token) {
+    return res.json({ isLoggedIn: false, user: null });
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+    const userId = decoded.id;
+
     const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
       userId,
     ]);
+
     if (rows.length > 0) {
-      res.json({ isLoggedIn: true, user: rows[0] });
+      return res.json({ isLoggedIn: true, user: rows[0] });
     } else {
-      res.json({ isLoggedIn: false });
+      return res.json({ isLoggedIn: false, user: null });
     }
-  } else {
-    res.json({ isLoggedIn: false });
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return res.json({ isLoggedIn: false, user: null });
   }
 };
 
