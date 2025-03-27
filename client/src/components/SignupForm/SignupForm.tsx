@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import "./SignupForm.css";
 
 const SignupForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -35,10 +36,11 @@ const SignupForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="signup-form">
+      <h1>Register</h1>
       <div>
-        <label>Email:</label>
         <input
+          placeholder="Email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -46,8 +48,8 @@ const SignupForm: React.FC = () => {
         />
       </div>
       <div>
-        <label>Password:</label>
         <input
+          placeholder="Password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -55,7 +57,11 @@ const SignupForm: React.FC = () => {
         />
       </div>
       <button type="submit">Signup</button>
-      <Link to="/login">login</Link>
+      <div className="links-container">
+        <p>
+          Already part of the app? <Link to="/login">Login</Link>
+        </p>
+      </div>
     </form>
   );
 };
