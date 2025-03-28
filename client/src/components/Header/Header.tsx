@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Navbar, Container } from "react-bootstrap";
+import { Navbar } from "react-bootstrap";
 import { useUser } from "../../context/UserContext";
+import "./Header.css";
 
 const Header: React.FC = () => {
   const { user, setUser, setIsLoggedIn, loadUser } = useUser();
@@ -17,14 +18,11 @@ const Header: React.FC = () => {
     try {
       const response = await fetch("http://localhost:3000/api/logout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
-      }
       await response.json();
       setUser(null);
       setIsLoggedIn(false);
@@ -35,22 +33,42 @@ const Header: React.FC = () => {
   };
 
   return (
-    <>
-      <Navbar sticky="top" bg="light" data-bs-theme="light" expand="lg">
-        <Container fluid>
-          <Link to="/">Home</Link>
-          {user && <Link to="/create">Create</Link>}
+    <Navbar sticky="top" expand="lg" className="custom-navbar">
+      <div className="header-wrapper">
+        <div className="header-left">
+          <Link to="/" className="logo-text">
+            Home
+          </Link>
+          {user && (
+            <Link to="/create" className="nav-link create-event">
+              Create Event
+            </Link>
+          )}
+        </div>
+
+        <div className="header-right">
           {user ? (
             <>
-              <Link to="/settings">{user.email}</Link>
-              <button onClick={handleLogout}>Logout</button>
+              <Link to="/settings" className="nav-link">
+                {user.email}
+              </Link>
+              <button onClick={handleLogout} className="nav-button">
+                Logout
+              </button>
             </>
           ) : (
-            <Link to="/login">Login or Signup</Link>
+            <>
+              <Link to="/login" className="nav-button login-button">
+                Login
+              </Link>
+              <Link to="/signup" className="nav-button signup-button">
+                Start for Free
+              </Link>
+            </>
           )}
-        </Container>
-      </Navbar>
-    </>
+        </div>
+      </div>
+    </Navbar>
   );
 };
 
