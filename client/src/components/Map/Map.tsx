@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
-import styles from "./Map.module.css";
+import "./Map.css";
 
 interface MapProps {
   location: google.maps.LatLngLiteral | null;
@@ -34,7 +34,7 @@ const Map = ({ location, isLoaded }: MapProps) => {
     <GoogleMap
       zoom={15}
       center={location || center}
-      mapContainerClassName={styles.mapContainer}
+      mapContainerClassName="mapContainer"
       onLoad={onMapLoad}
     >
       {location && <Marker position={location} />}

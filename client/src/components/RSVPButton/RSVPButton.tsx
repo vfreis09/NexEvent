@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
+import "./RSVP.css";
 
 type RSVPProps = {
   eventId: number;
   userId: number | undefined;
+  status: string;
 };
 
-const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
-  const [status, setStatus] = useState<string | null>(null);
+const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
+  const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -26,9 +28,9 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
 
         if (response.ok) {
           const data = await response.json();
-          setStatus(data.status || null);
+          setRsvpStatus(data.status || null);
         } else if (response.status === 404) {
-          setStatus(null);
+          setRsvpStatus(null);
         } else {
           console.error("Failed to fetch RSVP status.");
         }
@@ -61,7 +63,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setStatus(rsvpStatus);
+        setRsvpStatus(rsvpStatus);
         alert(data.message);
       } else {
         alert("Failed to update RSVP.");
@@ -72,31 +74,42 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId }) => {
     }
   };
 
-  if (!userId) {
-    return <p>Please log in to RSVP for this event.</p>;
-  }
-
-  if (loading) {
-    return <p>Loading...</p>;
+  if (status === "expired") {
+    return (
+      <div className="rsvp-container">
+        <p>This event has expired. You can no longer RSVP.</p>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <>
-        <button
-          onClick={() => handleRSVP("Accepted")}
-          disabled={status === "Accepted"}
-        >
-          Accept
-        </button>
-        <button
-          onClick={() => handleRSVP("Declined")}
-          disabled={status === "Declined"}
-        >
-          Decline
-        </button>
-      </>
-      {status && <p>You have {status.toLowerCase()} the invitation.</p>}
+    <div className="rsvp-container">
+      {loading ? (
+        <p>Loading RSVP status...</p>
+      ) : !userId ? (
+        <p>Please log in to RSVP for this event.</p>
+      ) : (
+        <>
+          <p>Please let us know if you'll be attending:</p>
+          <div className="rsvp-buttons">
+            <button
+              onClick={() => handleRSVP("Accepted")}
+              className={rsvpStatus === "Accepted" ? "active" : ""}
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => handleRSVP("Declined")}
+              className={rsvpStatus === "Declined" ? "active" : ""}
+            >
+              Decline
+            </button>
+          </div>
+          {rsvpStatus && (
+            <p>You have {rsvpStatus.toLowerCase()} the invitation.</p>
+          )}
+        </>
+      )}
     </div>
   );
 };

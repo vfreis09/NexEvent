@@ -61,9 +61,7 @@ function EventDetails() {
     <>
       <Header />
       <Event event={event} onDelete={() => handleDelete(eventId)} />
-      {event.status === "active" && (
-        <RSVPButton eventId={event.id} userId={user?.id} />
-      )}
+      <RSVPButton eventId={event.id} userId={user?.id} status={event?.status} />
       <Map location={location} isLoaded={isLoaded} />
     </>
   ) : (
