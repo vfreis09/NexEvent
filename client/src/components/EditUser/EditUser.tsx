@@ -42,7 +42,7 @@ const EditUser: React.FC = () => {
         <h2>You have to login to access this content</h2>
         <Link to="/login">login</Link>
       </div>
-      );
+    );
   }
 
   return (

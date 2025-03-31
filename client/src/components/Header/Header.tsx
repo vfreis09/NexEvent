@@ -5,14 +5,14 @@ import { useUser } from "../../context/UserContext";
 import "./Header.css";
 
 const Header: React.FC = () => {
-  const { user, setUser, setIsLoggedIn, loadUser } = useUser();
+  const { user, isLoggedIn, setUser, setIsLoggedIn, loadUser } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (isLoggedIn) {
       loadUser();
     }
-  }, [user, loadUser]);
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     try {

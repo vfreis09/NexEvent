@@ -3,6 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import Map from "../Map/Map";
 import Places from "../Places/Places";
 import { useMapContext } from "../../context/MapProvider";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import "./EventForm.css";
 
 interface EventFormProps {
   isEditing: boolean;
@@ -19,10 +22,11 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-
   const { isLoaded } = useMapContext();
 
   const eventId = id ? parseInt(id) : null;
+
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
     if (isEditing && eventId && !isNaN(eventId)) {
@@ -31,13 +35,15 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           const response = await fetch(
             `http://localhost:3000/api/events/${eventId}`
           );
-          if (!response.ok) {
-            throw new Error("Failed to fetch event details");
-          }
+          if (!response.ok) throw new Error("Failed to fetch event details");
+
           const data = await response.json();
-          const formattedDateTime = new Date(data.event_datetime)
-            .toISOString()
-            .slice(0, 16);
+
+          const utcDate = new Date(data.event_datetime);
+          const localDate = toZonedTime(utcDate, timeZone);
+
+          const formattedDateTime = format(localDate, "yyyy-MM-dd'T'HH:mm");
+
           setTitle(data.title);
           setDescription(data.description);
           setEventDateTime(formattedDateTime);
@@ -56,7 +62,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
       fetchEvent();
     }
-  }, [isEditing, eventId]);
+  }, [isEditing, eventId, timeZone]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +79,10 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       const locationPoint =
         latitude && longitude ? `${longitude} ${latitude}` : null;
 
+      const localDate = new Date(eventDateTime);
+      const utcDate = toZonedTime(localDate, timeZone);
+      const utcISOString = utcDate.toISOString();
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -82,7 +92,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         body: JSON.stringify({
           title,
           description,
-          eventDateTime,
+          eventDateTime: utcISOString,
           location: locationPoint,
           max_attendees: maxAttendees,
         }),
@@ -93,6 +103,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           isEditing ? "Event update failed" : "Event creation failed"
         );
       }
+
       navigate("/");
       alert(
         isEditing ? "Event updated successfully" : "Event created successfully"
@@ -105,54 +116,72 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
     }
   };
 
-  const handleLocationChange = async (position: google.maps.LatLngLiteral) => {
+  const handleLocationChange = (position: LatLngLiteral) => {
     setLocation(position);
   };
 
-  if (!isLoaded) {
-    return <div>Loading...</div>;
-  }
+  if (!isLoaded) return <div>Loading...</div>;
+
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label>Title:</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
+    <form onSubmit={handleSubmit} className="container mt-4 mb-5">
+      <div className="card p-4 shadow-sm">
+        <h2 className="mb-4">{isEditing ? "Edit Event" : "Create Event"}</h2>
+        <div className="mb-3">
+          <label className="form-label">Title:</label>
+          <input
+            type="text"
+            className="form-control"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Description:</label>
+          <textarea
+            className="form-control"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Event Date and Time:</label>
+          <input
+            type="datetime-local"
+            className="form-control"
+            value={eventDateTime}
+            onChange={(e) => setEventDateTime(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Max Attendees:</label>
+          <input
+            type="number"
+            className="form-control"
+            value={maxAttendees}
+            onChange={(e) => setMaxAttendees(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Search Location:</label>
+          <div className="border p-2 rounded">
+            <Places setPosition={handleLocationChange} />
+          </div>
+        </div>
+        <div className="mb-3">
+          <div className="map-container mb-3">
+            <Map location={location} isLoaded={isLoaded} />
+          </div>
+        </div>
+        <div className="text-end">
+          <button type="submit" className="btn btn-primary">
+            {isEditing ? "Update Event" : "Create Event"}
+          </button>
+        </div>
       </div>
-      <div>
-        <label>Description:</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label>Event Date and Time:</label>
-        <input
-          type="datetime-local"
-          value={eventDateTime}
-          onChange={(e) => setEventDateTime(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label>Max Attendees:</label>
-        <input
-          type="number"
-          value={maxAttendees}
-          onChange={(e) => setMaxAttendees(e.target.value)}
-        />
-      </div>
-      <Places setPosition={handleLocationChange} />
-      <Map location={location} isLoaded={isLoaded} />
-      <button type="submit">
-        {isEditing ? "Update Event" : "Create Event"}
-      </button>
     </form>
   );
 };
