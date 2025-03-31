@@ -10,7 +10,7 @@ interface MapProps {
 const Map = ({ location, isLoaded }: MapProps) => {
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
-  const center = { lat: 43, lng: -80 };
+  const center = { lat: 40.7128, lng: -74.006 };
 
   const onMapLoad = (map: google.maps.Map) => {
     setMapInstance(map);

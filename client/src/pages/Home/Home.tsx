@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import Header from "../../components/Header/Header";
 import EventList from "../../components/EventList/EventList";
-import { EventTitle } from "../../types/EventTitle";
+import { EventData } from "../../types/EventData";
+import "./Home.css";
 
 function HomePage() {
-  const [events, setEvents] = useState<EventTitle[]>([]);
+  const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +27,16 @@ function HomePage() {
   return (
     <>
       <Header />
-      {loading ? <div>Loading events...</div> : <EventList events={events} />}
+      <div className="home-page">
+        {loading ? (
+          <div>Loading events...</div>
+        ) : (
+          <>
+            <h2>Upcoming Events</h2>
+            <EventList events={events} />
+          </>
+        )}
+      </div>
     </>
   );
 }

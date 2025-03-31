@@ -1,9 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { EventTitle } from "../../types/EventTitle";
+import { EventData } from "../../types/EventData";
+import "./EventList.css";
 
 interface EventListProps {
-  events: EventTitle[];
+  events: EventData[];
 }
 
 const EventList: React.FC<EventListProps> = ({ events }) => {
@@ -12,13 +13,29 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
   }
 
   return (
-    <ul>
+    <div>
       {events.map((event) => (
-        <li key={event.id}>
-          <Link to={`/event/${event.id}`}>{event.title}</Link>
-        </li>
+        <div key={event.id} className="event-card">
+          <div className="event-card-header">
+            <Link to={`/event/${event.id}`}>{event.title}</Link>
+          </div>
+          <div className="event-card-details">
+            <div className="event-card-date">
+              {new Date(event.event_datetime).toLocaleString()}
+            </div>
+            <div>
+              <strong>Attendees:</strong> {event.number_of_attendees}
+            </div>
+            <div className="event-card-description">
+              {event.description.slice(0, 100)}
+            </div>
+          </div>
+          <div className="event-card-footer">
+            <strong>Status:</strong> {event.status}
+          </div>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 };
 
