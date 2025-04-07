@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Header from "../../components/Header/Header";
+
 import Event from "../../components/Event/Event";
 import Map from "../../components/Map/Map";
 import { useMapContext } from "../../context/MapProvider";
@@ -10,7 +10,7 @@ import { EventData } from "../../types/EventData";
 
 function EventDetails() {
   const [event, setEvent] = useState<EventData | null>(null);
-  const { user } = useUser();
+  const { user, isVerified } = useUser();
   const { id } = useParams<{ id: string }>();
   const eventId = parseInt(id ?? "");
   const navigate = useNavigate();
@@ -59,9 +59,14 @@ function EventDetails() {
 
   return event ? (
     <>
-      <Header />
       <Event event={event} onDelete={() => handleDelete(eventId)} />
-      <RSVPButton eventId={event.id} userId={user?.id} status={event?.status} />
+      {isVerified && (
+        <RSVPButton
+          eventId={event.id}
+          userId={user?.id}
+          status={event?.status}
+        />
+      )}
       <Map location={location} isLoaded={isLoaded} />
     </>
   ) : (

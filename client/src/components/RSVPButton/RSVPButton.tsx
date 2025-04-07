@@ -82,6 +82,14 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
     );
   }
 
+  if (status === "full") {
+    return (
+      <div className="rsvp-container">
+        <p>This event is full. RSVP is closed.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="rsvp-container">
       {loading ? (

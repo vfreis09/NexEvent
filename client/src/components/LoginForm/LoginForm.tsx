@@ -8,7 +8,7 @@ const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const { setUser, setIsLoggedIn } = useUser();
+  const { loadUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,9 +26,8 @@ const LoginForm: React.FC = () => {
         throw new Error("Login failed");
       }
 
-      const userData = await response.json();
-      setUser(userData);
-      setIsLoggedIn(true);
+      await loadUser();
+
       navigate("/");
     } catch (error) {
       console.error("Login failed", error);

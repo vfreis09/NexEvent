@@ -11,4 +11,11 @@ router.post("/logout", authenticateUser, userController.logout);
 router.post("/reset-password", authenticateUser, userController.resetPassword);
 router.put("/user/:id", authenticateUser, userController.updateUser);
 
+router.post(
+  "/send-verification-email",
+  authenticateUser,
+  userController.requestVerificationEmail
+);
+router.get("/verify-email", userController.verifyEmail);
+
 export default router;

@@ -5,14 +5,22 @@ import { useUser } from "../../context/UserContext";
 import "./Header.css";
 
 const Header: React.FC = () => {
-  const { user, isLoggedIn, setUser, setIsLoggedIn, loadUser } = useUser();
+  const {
+    user,
+    isLoggedIn,
+    setUser,
+    setIsLoggedIn,
+    loadUser,
+    isVerified,
+    hasFetchedUser,
+  } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !user && !hasFetchedUser) {
       loadUser();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, user, hasFetchedUser]);
 
   const handleLogout = async () => {
     try {
@@ -39,7 +47,7 @@ const Header: React.FC = () => {
           <Link to="/" className="logo-text">
             Home
           </Link>
-          {user && (
+          {user && isVerified && (
             <Link to="/create" className="nav-link create-event">
               Create Event
             </Link>

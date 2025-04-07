@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useUser } from "../../context/UserContext";
 import { EventType } from "../../types/EventType";
 import "./Event.css";
 
@@ -9,6 +10,10 @@ interface EventProps {
 }
 
 const Event: React.FC<EventProps> = ({ event, onDelete }) => {
+  const { isVerified, user } = useUser();
+
+  const isOwner = user && event.author_id === user.id;
+
   return (
     <div className="event-container">
       <h2>{event.title}</h2>
@@ -27,8 +32,12 @@ const Event: React.FC<EventProps> = ({ event, onDelete }) => {
       <p>
         <strong>Event Status:</strong> {event.status}
       </p>
-      <Link to={`/edit/${event.id}`}>Edit</Link>
-      <button onClick={() => onDelete(event.id)}>Delete</button>
+      {isVerified && isOwner && (
+        <>
+          <Link to={`/edit/${event.id}`}>Edit</Link>
+          <button onClick={() => onDelete(event.id)}>Delete</button>
+        </>
+      )}
     </div>
   );
 };

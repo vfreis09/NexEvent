@@ -8,7 +8,7 @@ const SignupForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const { setUser, setIsLoggedIn } = useUser();
+  const { loadUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +26,14 @@ const SignupForm: React.FC = () => {
         throw new Error("Signup failed");
       }
 
-      const userData = await response.json();
-      setUser(userData);
-      setIsLoggedIn(true);
-      navigate("/");
+      await loadUser();
+
+      navigate("/", {
+        state: {
+          successMessage:
+            "Account created! Please check your email to verify your account.",
+        },
+      });
     } catch (error) {
       console.error("Signup failed", error);
     }

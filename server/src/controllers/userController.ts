@@ -3,25 +3,23 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
+import { sendVerificationEmail } from "../services/emailService";
+
 const pool = require("../config/dbConfig");
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const jwtSecret = process.env.JWT_SECRET as string | undefined;
 
-interface JwtPayload {
-  id: string;
-  email: string;
-}
-
 if (!jwtSecret) {
   throw new Error(
-    "jwtSecret is not defined. Check your environment variables."
+    "JWT_SECRET is not defined. Check your environment variables."
   );
 }
 
 const signup = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+
   try {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -32,6 +30,7 @@ const signup = async (req: Request, res: Response) => {
     );
 
     const user = result.rows[0];
+    await sendVerificationEmail(user.email, user.id);
 
     const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
       expiresIn: "1h",
@@ -47,7 +46,7 @@ const signup = async (req: Request, res: Response) => {
       .status(201)
       .json({ user: { id: user.id, email: user.email } });
   } catch (error) {
-    console.log(error);
+    console.log("Error in signup:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -66,9 +65,7 @@ const login = async (req: Request, res: Response) => {
     const user = result.rows[0];
 
     if (!user.password) {
-      return res
-        .status(500)
-        .json({ message: "Password field is missing for this user" });
+      return res.status(500).json({ message: "Password field is missing" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -104,7 +101,7 @@ const getUser = async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+    const decoded = jwt.verify(token, jwtSecret) as { id: string };
     const userId = decoded.id;
 
     const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
@@ -174,6 +171,63 @@ const updateUser = async (req: Request, res: Response) => {
   }
 };
 
+const verifyEmail = async (req: Request, res: Response) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ message: "Token is required" });
+  }
+
+  try {
+    const decoded = jwt.verify(token as string, jwtSecret) as {
+      userId: string;
+    };
+    const userId = decoded.userId;
+
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      userId,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = result.rows[0];
+    if (user.is_verified) {
+      return res.status(200).json({ message: "Email already verified." });
+    }
+
+    await pool.query("UPDATE users SET is_verified = true WHERE id = $1", [
+      userId,
+    ]);
+
+    return res.status(200).json({ message: "Email verified successfully" });
+  } catch (error) {
+    console.error("Verification error:", error);
+    return res.status(400).json({ message: "Invalid or expired token" });
+  }
+};
+
+const requestVerificationEmail = async (req: Request, res: Response) => {
+  const user = req.user;
+
+  if (!user || !user.email || !user.id) {
+    return res.status(400).json({ message: "User not authenticated properly" });
+  }
+
+  try {
+    await sendVerificationEmail(user.email, user.id);
+    return res
+      .status(200)
+      .json({ message: "Verification email sent successfully" });
+  } catch (error) {
+    console.error("Failed to send verification email:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to send verification email" });
+  }
+};
+
 const userController = {
   signup,
   login,
@@ -181,6 +235,8 @@ const userController = {
   logout,
   resetPassword,
   updateUser,
+  verifyEmail,
+  requestVerificationEmail,
 };
 
 export default userController;

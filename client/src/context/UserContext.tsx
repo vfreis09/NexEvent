@@ -10,47 +10,37 @@ import { User } from "../types/User";
 interface UserContextProps {
   user: User | null;
   isLoggedIn: boolean;
+  isVerified: boolean;
   setUser: (user: User | null) => void;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
-  loading: boolean;
   loadUser: () => Promise<void>;
+  hasFetchedUser: boolean;
 }
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
-
-const fetchUser = async (): Promise<{ user: User; isLoggedIn: boolean }> => {
-  const response = await fetch("http://localhost:3000/api/user", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-  });
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
-  return response.json();
-};
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [hasFetchedUser, setHasFetchedUser] = useState(false);
 
   const loadUser = async () => {
-    setLoading(true);
     try {
-      const { user, isLoggedIn } = await fetchUser();
-      setUser(user);
-      setIsLoggedIn(isLoggedIn);
-    } catch (error) {
-      console.error("Failed to fetch user:", error);
-      setUser(null);
+      const res = await fetch("http://localhost:3000/api/user", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch user");
+
+      const data = await res.json();
+      setUser(data.user);
+      setIsLoggedIn(data.isLoggedIn);
+    } catch (err) {
+      console.error("Load user failed", err);
       setIsLoggedIn(false);
     } finally {
-      setLoading(false);
+      setHasFetchedUser(true);
     }
   };
 
@@ -63,10 +53,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
       value={{
         user,
         isLoggedIn,
-        loading,
+        isVerified: user?.is_verified ?? false,
         setUser,
         setIsLoggedIn,
         loadUser,
+        hasFetchedUser,
       }}
     >
       {children}

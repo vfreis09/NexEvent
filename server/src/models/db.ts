@@ -10,7 +10,8 @@ const initDb = async () => {
         bio TEXT,
         role VARCHAR(5) DEFAULT 'user',
         contact TEXT,
-        visibility VARCHAR(7) DEFAULT 'public'
+        visibility VARCHAR(7) DEFAULT 'public',
+        is_verified BOOLEAN DEFAULT FALSE
       );
       
       CREATE TABLE IF NOT EXISTS events(

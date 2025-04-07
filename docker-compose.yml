@@ -29,6 +29,11 @@ services:
       DB_PASSWORD: "${DB_PASSWORD:-secret}"
       DB_NAME: "${DB_DATABASE}"
       JWT_SECRET: "${JWT_SECRET}"
+      SENDGRID_API_KEY: "${SENDGRID_API_KEY}"
+      MAILTRAP_HOST: "${MAILTRAP_HOST}"
+      MAILTRAP_PORT: "${MAILTRAP_PORT}"
+      MAILTRAP_USER: "${MAILTRAP_USER}"
+      MAILTRAP_PASS: "${MAILTRAP_PASS}"
     volumes:
       - ./server:/usr/src/app
       - /usr/src/app/node_modules

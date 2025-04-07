@@ -4,4 +4,5 @@ export interface User {
   name: string;
   bio: string;
   contact: string;
+  is_verified: boolean;
 }
