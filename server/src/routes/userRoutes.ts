@@ -9,6 +9,13 @@ router.post("/login", userController.login);
 router.get("/user", authenticateUser, userController.getUser);
 router.post("/logout", authenticateUser, userController.logout);
 router.post("/reset-password", authenticateUser, userController.resetPassword);
+
+router.put(
+  "/user/settings",
+  authenticateUser,
+  userController.updateNotificationSettings
+);
+
 router.put("/user/:id", authenticateUser, userController.updateUser);
 
 router.post(

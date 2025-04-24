@@ -10,6 +10,7 @@ const EditUser: React.FC = () => {
   const [bio, setBio] = useState("");
   const [contact, setContact] = useState("");
   const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
+  const [wantsNotifications, setWantsNotifications] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -17,10 +18,11 @@ const EditUser: React.FC = () => {
       setName(user.name || "");
       setBio(user.bio || "");
       setContact(user.contact || "");
+      setWantsNotifications(user.wants_notifications ?? false);
     }
   }, [user]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUserUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await fetch(
@@ -44,6 +46,27 @@ const EditUser: React.FC = () => {
       alert("User updated successfully");
     } catch (error) {
       console.error("Failed to update user", error);
+    }
+  };
+
+  const handleNotificationToggle = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/user/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ wants_notifications: !wantsNotifications }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update notification settings");
+      }
+
+      setWantsNotifications(!wantsNotifications);
+    } catch (error) {
+      console.error("Error updating notification preference:", error);
     }
   };
 
@@ -98,15 +121,14 @@ const EditUser: React.FC = () => {
           {verifyMessage && <p>{verifyMessage}</p>}
         </div>
       )}
-
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleUserUpdate}>
         <div>
           <label>Email:</label>
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <div>
@@ -115,7 +137,6 @@ const EditUser: React.FC = () => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
           />
         </div>
         <div>
@@ -133,6 +154,16 @@ const EditUser: React.FC = () => {
             value={contact}
             onChange={(e) => setContact(e.target.value)}
           />
+        </div>
+        <div style={{ margin: "10px 0" }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={wantsNotifications}
+              onChange={handleNotificationToggle}
+            />
+            &nbsp; Receive event notification emails
+          </label>
         </div>
         <button type="submit">Update User</button>
       </form>

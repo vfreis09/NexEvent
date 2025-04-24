@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
 import Event from "../../components/Event/Event";
 import Map from "../../components/Map/Map";
 import { useMapContext } from "../../context/MapProvider";

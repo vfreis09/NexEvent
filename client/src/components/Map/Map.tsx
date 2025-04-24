@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import "./Map.css";
 
@@ -8,23 +7,7 @@ interface MapProps {
 }
 
 const Map = ({ location, isLoaded }: MapProps) => {
-  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
-
   const center = { lat: 40.7128, lng: -74.006 };
-
-  const onMapLoad = (map: google.maps.Map) => {
-    setMapInstance(map);
-  };
-
-  useEffect(() => {
-    if (mapInstance && location) {
-      new google.maps.Marker({
-        position: location,
-        map: mapInstance,
-        title: "Event Location",
-      });
-    }
-  }, [mapInstance, location]);
 
   if (!isLoaded) {
     return <div>Loading map...</div>;
@@ -35,7 +18,6 @@ const Map = ({ location, isLoaded }: MapProps) => {
       zoom={15}
       center={location || center}
       mapContainerClassName="mapContainer"
-      onLoad={onMapLoad}
     >
       {location && <Marker position={location} />}
     </GoogleMap>

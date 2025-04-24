@@ -33,7 +33,5 @@ router.post(
   requireVerifiedUser,
   rsvpController.createRsvp
 );
-router.get("/events/:id/rsvps", rsvpController.getRsvps);
-router.get("/events/:id/rsvp", rsvpController.getSingleRsvp);
 
 export default router;

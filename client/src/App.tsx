@@ -16,27 +16,46 @@ import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 const App: React.FC = () => {
   return (
     <UserProvider>
-      <MapProvider>
-        <Header />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
+      <Header />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          element={
+            <>
+              <RequireVerifiedUser />
+            </>
+          }
+        >
           <Route
+            path="/create"
             element={
-              <>
-                <RequireVerifiedUser />
-              </>
+              <MapProvider>
+                <CreateEvent />
+              </MapProvider>
             }
-          >
-            <Route path="/create" element={<CreateEvent />} />
-            <Route path="/edit/:id" element={<EditEvent />} />
-          </Route>
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/event/:id" element={<EventDetails />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-        </Routes>
-      </MapProvider>
+          />
+          <Route
+            path="/edit/:id"
+            element={
+              <MapProvider>
+                <EditEvent />
+              </MapProvider>
+            }
+          />
+        </Route>
+        <Route path="/settings" element={<Settings />} />
+        <Route
+          path="/event/:id"
+          element={
+            <MapProvider>
+              <EventDetails />
+            </MapProvider>
+          }
+        />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+      </Routes>
     </UserProvider>
   );
 };

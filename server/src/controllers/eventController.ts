@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 const pool = require("../config/dbConfig");
 import { updateEventStatus } from "../utils/eventService";
+import emailServices from "../utils/emailService";
 
 const createEvent = async (req: Request, res: Response) => {
   if (!req.cookies?.token) {
@@ -30,7 +31,21 @@ const createEvent = async (req: Request, res: Response) => {
       "INSERT INTO events (title, description, event_datetime, location, author_id, max_attendees) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
       [title, description, eventDateTime, locationPoint, authorId, maxAttendees]
     );
-    res.status(201).json(result.rows[0]);
+    const event = result.rows[0];
+
+    const users = await pool.query(
+      "SELECT email FROM users WHERE is_verified = true"
+    );
+
+    for (const user of users.rows) {
+      await emailServices.sendEventCreationEmail(
+        user.email,
+        event.title,
+        event.id
+      );
+    }
+
+    res.status(201).json(event);
   } catch (error) {
     console.error("Error creating event:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -98,7 +113,10 @@ const updateEvent = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      "UPDATE events SET title = $1, description = $2, event_datetime = $3, location = $4, max_attendees = $5 WHERE id = $6 AND author_id = $7 RETURNING *",
+      `UPDATE events 
+       SET title = $1, description = $2, event_datetime = $3, location = $4, max_attendees = $5 
+       WHERE id = $6 AND author_id = $7 
+       RETURNING *`,
       [
         title,
         description,
@@ -109,16 +127,37 @@ const updateEvent = async (req: Request, res: Response) => {
         authorId,
       ]
     );
-    if (result.rows.length > 0) {
-      res.json(result.rows[0]);
-    } else {
-      res.status(404).json({ message: "Post not found or not authorized" });
-    }
 
-    await updateEventStatus(Number(id));
+    if (result.rows.length > 0) {
+      const updatedEvent = result.rows[0];
+
+      const rsvpResult = await pool.query(
+        `SELECT r.*, u.email FROM rsvps r
+         JOIN users u ON r.user_id = u.id
+         WHERE r.event_id = $1
+         AND r.status = 'Accepted'
+         AND u.is_verified = true
+         AND u.wants_notifications = true`,
+        [id]
+      );
+
+      for (const user of rsvpResult.rows) {
+        await emailServices.sendEventUpdateEmail(
+          user.email,
+          updatedEvent.title,
+          updatedEvent.id
+        );
+      }
+
+      return res.json(updatedEvent);
+    } else {
+      return res
+        .status(404)
+        .json({ message: "Event not found or not authorized" });
+    }
   } catch (error) {
-    console.error("Error updating post:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error updating event:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

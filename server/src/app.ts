@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import initDb from "./models/db";
 import userRoutes from "./routes/userRoutes";
 import eventRoutes from "./routes/eventRoutes";
+import rsvpRoutes from "./routes/rsvpRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 
 dotenv.config();
 
@@ -31,7 +33,7 @@ initDb()
     console.error("Database initialization failed:", error);
   });
 
-app.use("/api", userRoutes, eventRoutes);
+app.use("/api", userRoutes, eventRoutes, rsvpRoutes, notificationRoutes);
 
 app.get("/", (req, res) => {
   res.send("hello world!");

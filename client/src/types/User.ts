@@ -5,4 +5,5 @@ export interface User {
   bio: string;
   contact: string;
   is_verified: boolean;
+  wants_notifications: boolean;
 }

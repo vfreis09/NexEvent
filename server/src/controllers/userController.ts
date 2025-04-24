@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
-import { sendVerificationEmail } from "../services/emailService";
+import emailServices from "../utils/emailService";
 
 const pool = require("../config/dbConfig");
 
@@ -18,19 +18,19 @@ if (!jwtSecret) {
 }
 
 const signup = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, wantsNotifications } = req.body;
 
   try {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const result = await pool.query(
-      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
-      [email, hashedPassword]
+      `INSERT INTO users (email, password, wants_notifications) VALUES ($1, $2, $3) RETURNING id, email`,
+      [email, hashedPassword, wantsNotifications]
     );
 
     const user = result.rows[0];
-    await sendVerificationEmail(user.email, user.id);
+    await emailServices.sendVerificationEmail(user.email, user.id);
 
     const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
       expiresIn: "1h",
@@ -216,7 +216,7 @@ const requestVerificationEmail = async (req: Request, res: Response) => {
   }
 
   try {
-    await sendVerificationEmail(user.email, user.id);
+    await emailServices.sendVerificationEmail(user.email, user.id);
     return res
       .status(200)
       .json({ message: "Verification email sent successfully" });
@@ -225,6 +225,32 @@ const requestVerificationEmail = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ message: "Failed to send verification email" });
+  }
+};
+
+const updateNotificationSettings = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { wants_notifications } = req.body;
+
+  if (!user?.id) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  if (typeof wants_notifications !== "boolean") {
+    return res
+      .status(400)
+      .json({ message: "`wants_notifications` must be a boolean" });
+  }
+
+  try {
+    await pool.query(
+      "UPDATE users SET wants_notifications = $1 WHERE id = $2",
+      [wants_notifications, user.id]
+    );
+    return res.json({ message: "Notification settings updated." });
+  } catch (error) {
+    console.error("Error updating notification settings:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -237,6 +263,7 @@ const userController = {
   updateUser,
   verifyEmail,
   requestVerificationEmail,
+  updateNotificationSettings,
 };
 
 export default userController;
