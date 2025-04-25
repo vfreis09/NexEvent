@@ -11,6 +11,7 @@ const EditUser: React.FC = () => {
   const [contact, setContact] = useState("");
   const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
   const [wantsNotifications, setWantsNotifications] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -19,6 +20,7 @@ const EditUser: React.FC = () => {
       setBio(user.bio || "");
       setContact(user.contact || "");
       setWantsNotifications(user.wants_notifications ?? false);
+      setIsVerified(user.is_verified ?? false);
     }
   }, [user]);
 
@@ -42,7 +44,15 @@ const EditUser: React.FC = () => {
       }
 
       const updatedUser = await response.json();
-      setUser(updatedUser);
+
+      const fixedUser = {
+        ...updatedUser,
+        is_verified: updatedUser.is_verified ?? user?.is_verified,
+      };
+
+      setUser(fixedUser);
+      setIsVerified(fixedUser.is_verified ?? false);
+
       alert("User updated successfully");
     } catch (error) {
       console.error("Failed to update user", error);
@@ -106,7 +116,7 @@ const EditUser: React.FC = () => {
 
   return (
     <div>
-      {user.is_verified ? (
+      {isVerified ? (
         <div style={{ marginBottom: "1rem" }}>
           <p style={{ color: "green" }}>Your email is verified.</p>
         </div>

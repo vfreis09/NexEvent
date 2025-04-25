@@ -164,9 +164,17 @@ const updateUser = async (req: Request, res: Response) => {
 
     const updatedUser = result.rows[0];
 
-    res.status(200).json({ id: updatedUser.id, email: updatedUser.email });
+    res.status(200).json({
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      bio: updatedUser.bio,
+      contact: updatedUser.contact,
+      wants_notifications: updatedUser.wants_notifications,
+      is_verified: updatedUser.is_verified,
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Error updating user:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
