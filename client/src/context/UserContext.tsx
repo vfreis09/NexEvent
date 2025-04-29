@@ -31,6 +31,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
       const res = await fetch("http://localhost:3000/api/user", {
         credentials: "include",
       });
+
+      if (res.status === 403) {
+        setUser(null);
+        setIsLoggedIn(false);
+        return;
+      }
+
       if (!res.ok) throw new Error("Failed to fetch user");
 
       const data = await res.json();
