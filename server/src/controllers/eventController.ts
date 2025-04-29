@@ -35,6 +35,9 @@ const createEvent = async (req: Request, res: Response) => {
 
     await updateEventStatus(event.id);
 
+    //return response before sending email notifications
+    res.status(201).json(event);
+
     const users = await pool.query(
       "SELECT email FROM users WHERE is_verified = true"
     );
@@ -46,8 +49,6 @@ const createEvent = async (req: Request, res: Response) => {
         event.id
       );
     }
-
-    res.status(201).json(event);
   } catch (error) {
     console.error("Error creating event:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -145,6 +146,8 @@ const updateEvent = async (req: Request, res: Response) => {
 
       await updateEventStatus(id);
 
+      res.json(updatedEvent);
+
       const rsvpResult = await pool.query(
         `SELECT r.*, u.email FROM rsvps r
          JOIN users u ON r.user_id = u.id
@@ -156,14 +159,16 @@ const updateEvent = async (req: Request, res: Response) => {
       );
 
       for (const user of rsvpResult.rows) {
-        await emailServices.sendEventUpdateEmail(
-          user.email,
-          updatedEvent.title,
-          updatedEvent.id
-        );
+        try {
+          await emailServices.sendEventUpdateEmail(
+            user.email,
+            updatedEvent.title,
+            updatedEvent.id
+          );
+        } catch (emailError) {
+          console.error(`Failed to send email to ${user.email}:`, emailError);
+        }
       }
-
-      return res.json(updatedEvent);
     } else {
       return res
         .status(404)
