@@ -31,7 +31,13 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
             </div>
           </div>
           <div className="event-card-footer">
-            <strong>Status:</strong> {event.status}
+            <strong>Status:</strong>{" "}
+            {event.max_attendees !== null &&
+            event.number_of_attendees >= event.max_attendees
+              ? "Full"
+              : new Date(event.event_datetime) < new Date()
+              ? "Expired"
+              : "Active"}
           </div>
         </div>
       ))}

@@ -15,14 +15,17 @@ export const updateEventStatus = async (eventId: number) => {
 
     let newStatus = "active";
 
-    if (moment().isAfter(moment(event_datetime))) {
+    const now = moment();
+    const eventTime = moment(event_datetime);
+
+    if (now.isAfter(eventTime)) {
       newStatus = "expired";
     } else if (max_attendees !== null && current_attendees >= max_attendees) {
       newStatus = "full";
     }
 
     await pool.query(`UPDATE events SET status = $1 WHERE id = $2`, [
-      newStatus,
+      newStatus.trim(),
       eventId,
     ]);
   } catch (err) {
