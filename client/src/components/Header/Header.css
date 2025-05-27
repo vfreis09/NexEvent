@@ -21,8 +21,11 @@
   gap: 24px;
 }
 
-.nav-link.create-event {
-  margin-left: 20px;
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+  text-decoration: none;
 }
 
 .header-right {
@@ -31,26 +34,22 @@
   gap: 16px;
 }
 
-.logo-text {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #111;
-  text-decoration: none;
-}
-
 .nav-link {
   text-decoration: none;
   color: #333;
   font-weight: 500;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .nav-link:hover {
   text-decoration: underline;
 }
 
+.nav-link.create-event {
+  margin-left: 20px;
+}
+
 .nav-button {
-  text-decoration: none;
   padding: 8px 16px;
   border-radius: 6px;
   font-weight: 500;
@@ -58,6 +57,7 @@
   transition: background-color 0.2s ease;
   cursor: pointer;
   border: none;
+  text-decoration: none;
 }
 
 .login-button {
@@ -87,53 +87,53 @@
   background: none;
   color: #333;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   padding: 6px 10px;
 }
 
 .bell-button:hover {
-  background-color: #f5f5f5;
+  background-color: #f0f0f0;
   border-radius: 50%;
 }
 
 .notification-dropdown {
   position: absolute;
   right: 0;
-  top: 40px;
+  top: 38px;
   width: 300px;
   max-height: 400px;
   overflow-y: auto;
   background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   z-index: 1000;
   padding: 0.5rem 0;
 }
 
 .notification-item {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
   padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  border-bottom: 1px solid #eee;
-  line-height: 1.4;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #333;
   cursor: pointer;
-  word-wrap: break-word;
   transition: background-color 0.2s ease;
-}
-
-.notification-item:last-child {
-  border-bottom: none;
+  white-space: normal;
 }
 
 .notification-item:hover {
   background-color: #f9f9f9;
 }
 
-.notification-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
+.notification-item.unread {
+  background-color: #eef6ff;
+  font-weight: 600;
 }
 
-.notification-link:hover {
-  text-decoration: none;
+.notification-item.read {
+  background-color: transparent;
+  font-weight: 400;
 }

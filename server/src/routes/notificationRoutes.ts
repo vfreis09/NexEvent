@@ -12,4 +12,10 @@ router.get(
   notificationController.getNotifications
 );
 
+router.patch(
+  "/notifications/:id/read",
+  authenticateUser,
+  notificationController.markNotificationAsRead
+);
+
 export default router;

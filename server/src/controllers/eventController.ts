@@ -121,7 +121,6 @@ const updateEvent = async (req: Request, res: Response) => {
   }
 
   const locationPoint = `(${longitude}, ${latitude})`;
-
   const authorId = req.user?.id;
 
   try {
@@ -165,8 +164,39 @@ const updateEvent = async (req: Request, res: Response) => {
             updatedEvent.title,
             updatedEvent.id
           );
-        } catch (emailError) {
-          console.error(`Failed to send email to ${user.email}:`, emailError);
+
+          const existingNotification = await pool.query(
+            `SELECT * FROM notifications
+             WHERE user_id = $1 AND event_id = $2
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [user.user_id, updatedEvent.id]
+          );
+
+          const message = `Event "${updatedEvent.title}" has been updated.`;
+
+          if (
+            existingNotification.rows.length > 0 &&
+            !existingNotification.rows[0].is_read
+          ) {
+            await pool.query(
+              `UPDATE notifications
+               SET message = $1, created_at = CURRENT_TIMESTAMP
+               WHERE id = $2`,
+              [message, existingNotification.rows[0].id]
+            );
+          } else {
+            await pool.query(
+              `INSERT INTO notifications (user_id, event_id, message)
+               VALUES ($1, $2, $3)`,
+              [user.user_id, updatedEvent.id, message]
+            );
+          }
+        } catch (notifError) {
+          console.error(
+            `Failed to handle notification for ${user.email}:`,
+            notifError
+          );
         }
       }
     } else {

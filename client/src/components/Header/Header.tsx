@@ -19,7 +19,7 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<
-    { id: number; message: string; event_id: number }[]
+    { id: number; message: string; event_id: number; is_read: boolean }[]
   >([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -112,14 +112,38 @@ const Header: React.FC = () => {
                     <div className="notification-item">Loading...</div>
                   ) : notifications.length > 0 ? (
                     notifications.map((note) => (
-                      <Link
-                        to={`/event/${note.event_id}`}
+                      <button
                         key={note.id}
-                        className="notification-item notification-link"
-                        onClick={() => setShowNotifications(false)}
+                        className={`notification-item ${
+                          note.is_read ? "read" : "unread"
+                        }`}
+                        onClick={async () => {
+                          try {
+                            await fetch(
+                              `http://localhost:3000/api/notifications/${note.id}/read`,
+                              {
+                                method: "PATCH",
+                                credentials: "include",
+                              }
+                            );
+                            setNotifications((prev) =>
+                              prev.map((n) =>
+                                n.id === note.id ? { ...n, is_read: true } : n
+                              )
+                            );
+                          } catch (err) {
+                            console.error(
+                              "Failed to mark notification as read",
+                              err
+                            );
+                          } finally {
+                            setShowNotifications(false);
+                            navigate(`/event/${note.event_id}`);
+                          }
+                        }}
                       >
                         {note.message}
-                      </Link>
+                      </button>
                     ))
                   ) : (
                     <div className="notification-item">No notifications</div>
