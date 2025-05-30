@@ -18,15 +18,15 @@ if (!jwtSecret) {
 }
 
 const signup = async (req: Request, res: Response) => {
-  const { email, password, wantsNotifications } = req.body;
+  const { email, username, password, wantsNotifications } = req.body;
 
   try {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const result = await pool.query(
-      `INSERT INTO users (email, password, wants_notifications) VALUES ($1, $2, $3) RETURNING id, email`,
-      [email, hashedPassword, wantsNotifications]
+      `INSERT INTO users (email, password, username, wants_notifications) VALUES ($1, $2, $3, $4) RETURNING id, email, username`,
+      [email, hashedPassword, username, wantsNotifications]
     );
 
     const user = result.rows[0];
@@ -154,12 +154,12 @@ const resetPassword = async (req: Request, res: Response) => {
 
 const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { email, name, bio, contact } = req.body;
+  const { email, username, bio, contact } = req.body;
 
   try {
     const result = await pool.query(
-      "UPDATE users SET email = $1, name = $2, bio = $3, contact = $4 WHERE id = $5 RETURNING *",
-      [email, name, bio, contact, id]
+      "UPDATE users SET email = $1, username = $2, bio = $3, contact = $4 WHERE id = $5 RETURNING *",
+      [email, username, bio, contact, id]
     );
 
     const updatedUser = result.rows[0];
@@ -167,7 +167,7 @@ const updateUser = async (req: Request, res: Response) => {
     res.status(200).json({
       id: updatedUser.id,
       email: updatedUser.email,
-      name: updatedUser.name,
+      username: updatedUser.username,
       bio: updatedUser.bio,
       contact: updatedUser.contact,
       wants_notifications: updatedUser.wants_notifications,

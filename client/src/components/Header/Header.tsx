@@ -155,7 +155,7 @@ const Header: React.FC = () => {
           {user ? (
             <>
               <Link to="/settings" className="nav-link">
-                {user.email}
+                {user.username}
               </Link>
               <button onClick={handleLogout} className="nav-button">
                 Logout

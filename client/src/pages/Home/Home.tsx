@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import "./Home.css";

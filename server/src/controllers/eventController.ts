@@ -35,7 +35,6 @@ const createEvent = async (req: Request, res: Response) => {
 
     await updateEventStatus(event.id);
 
-    //return response before sending email notifications
     res.status(201).json(event);
 
     const users = await pool.query(
@@ -58,23 +57,21 @@ const createEvent = async (req: Request, res: Response) => {
 const getEvents = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM events ORDER BY created_at DESC"
+      `SELECT events.*, users.username AS author_username
+       FROM events
+       JOIN users ON events.author_id = users.id
+       ORDER BY events.created_at DESC`
     );
 
     if (result.rows.length === 0) {
       return res.status(200).json([]);
     }
 
-    // Update event statuses before sending to client
     await Promise.all(
       result.rows.map((event: any) => updateEventStatus(event.id))
     );
 
-    const updatedResult = await pool.query(
-      "SELECT * FROM events ORDER BY created_at DESC"
-    );
-
-    res.json(updatedResult.rows);
+    res.json(result.rows);
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -85,8 +82,9 @@ const getEventById = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
   try {
     const result = await pool.query(
-      `SELECT * 
+      `SELECT events.*, users.username AS author_username
        FROM events
+       JOIN users ON events.author_id = users.id
        WHERE events.id = $1`,
       [id]
     );

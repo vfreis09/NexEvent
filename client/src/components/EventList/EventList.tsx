@@ -17,6 +17,9 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
       {events.map((event) => (
         <div key={event.id} className="event-card">
           <div className="event-card-header">
+            <span>Posted by: {event.author_username}</span>
+          </div>
+          <div className="event-card-header">
             <Link to={`/event/${event.id}`}>{event.title}</Link>
           </div>
           <div className="event-card-details">

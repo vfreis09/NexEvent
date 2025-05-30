@@ -6,7 +6,7 @@ const EditUser: React.FC = () => {
   const { user, setUser } = useUser();
 
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [contact, setContact] = useState("");
   const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
@@ -16,7 +16,7 @@ const EditUser: React.FC = () => {
   useEffect(() => {
     if (user) {
       setEmail(user.email || "");
-      setName(user.name || "");
+      setUsername(user.username || "");
       setBio(user.bio || "");
       setContact(user.contact || "");
       setWantsNotifications(user.wants_notifications ?? false);
@@ -35,7 +35,7 @@ const EditUser: React.FC = () => {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ email, name, bio, contact }),
+          body: JSON.stringify({ email, username, bio, contact }),
         }
       );
 
@@ -142,11 +142,11 @@ const EditUser: React.FC = () => {
           />
         </div>
         <div>
-          <label>Name:</label>
+          <label>Username:</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
         </div>
         <div>

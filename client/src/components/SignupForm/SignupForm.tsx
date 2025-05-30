@@ -6,6 +6,7 @@ import "./SignupForm.css";
 
 const SignupForm: React.FC = () => {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [wantsNotifications, setWantsNotifications] = useState(false);
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const SignupForm: React.FC = () => {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ email, password, wantsNotifications }),
+        body: JSON.stringify({ email, username, password, wantsNotifications }),
       });
 
       if (!response.ok) {
@@ -55,6 +56,15 @@ const SignupForm: React.FC = () => {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <input
+          placeholder="Username"
+          type="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
       </div>

@@ -12,4 +12,5 @@ export interface EventData {
   author_id: number;
   status: string;
   created_at: string;
+  author_username: string;
 }

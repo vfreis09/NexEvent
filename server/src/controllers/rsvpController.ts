@@ -88,7 +88,7 @@ const getRsvps = async (req: Request, res: Response) => {
 
   try {
     const rsvps = await pool.query(
-      `SELECT u.name, r.status FROM rsvps r
+      `SELECT u.username, r.status FROM rsvps r
            JOIN users u ON r.user_id = u.id
            WHERE r.event_id = $1`,
       [id]
