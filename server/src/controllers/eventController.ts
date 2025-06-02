@@ -7,8 +7,14 @@ const createEvent = async (req: Request, res: Response) => {
   if (!req.cookies?.token) {
     return res.status(401).send("Unauthorized");
   }
-  const { title, description, eventDateTime, location, max_attendees } =
-    req.body;
+  const {
+    title,
+    description,
+    eventDateTime,
+    location,
+    max_attendees,
+    address,
+  } = req.body;
 
   const maxAttendees =
     max_attendees === "" ? null : parseInt(max_attendees, 10);
@@ -28,8 +34,18 @@ const createEvent = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      "INSERT INTO events (title, description, event_datetime, location, author_id, max_attendees) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [title, description, eventDateTime, locationPoint, authorId, maxAttendees]
+      `INSERT INTO events (title, description, event_datetime, location, address, author_id, max_attendees)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        title,
+        description,
+        eventDateTime,
+        locationPoint,
+        address,
+        authorId,
+        maxAttendees,
+      ]
     );
     const event = result.rows[0];
 
@@ -103,8 +119,14 @@ const getEventById = async (req: Request, res: Response) => {
 
 const updateEvent = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
-  const { title, description, eventDateTime, location, max_attendees } =
-    req.body;
+  const {
+    title,
+    description,
+    eventDateTime,
+    location,
+    max_attendees,
+    address,
+  } = req.body;
 
   const maxAttendees =
     max_attendees === "" ? null : parseInt(max_attendees, 10);
@@ -124,14 +146,15 @@ const updateEvent = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `UPDATE events 
-       SET title = $1, description = $2, event_datetime = $3, location = $4, max_attendees = $5 
-       WHERE id = $6 AND author_id = $7 
+       SET title = $1, description = $2, event_datetime = $3, location = $4, address = $5, max_attendees = $6
+       WHERE id = $7 AND author_id = $8 
        RETURNING *`,
       [
         title,
         description,
         eventDateTime,
         locationPoint,
+        address,
         maxAttendees,
         id,
         authorId,

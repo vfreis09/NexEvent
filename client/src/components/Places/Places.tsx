@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Form, Dropdown } from "react-bootstrap";
 
 interface PlacesProps {
-  setPosition: (position: google.maps.LatLngLiteral) => void;
+  setPosition: (position: google.maps.LatLngLiteral, address: string) => void;
 }
 
 const Places = ({ setPosition }: PlacesProps) => {
@@ -27,7 +27,8 @@ const Places = ({ setPosition }: PlacesProps) => {
 
     const results = await getGeocode({ address });
     const { lat, lng } = await getLatLng(results[0]);
-    setPosition({ lat, lng });
+
+    setPosition({ lat, lng }, results[0].formatted_address);
   };
 
   return (

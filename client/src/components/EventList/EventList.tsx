@@ -26,6 +26,11 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
             <div className="event-card-date">
               {new Date(event.event_datetime).toLocaleString()}
             </div>
+            {event.address && (
+              <div className="event-card-address">
+                {event.address.split(",")[0]}
+              </div>
+            )}
             <div>
               <strong>Attendees:</strong> {event.number_of_attendees}
             </div>

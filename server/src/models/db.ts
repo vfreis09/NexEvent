@@ -23,6 +23,7 @@ const initDb = async () => {
         number_of_attendees INT DEFAULT 0,
         max_attendees INT DEFAULT NULL,
         location POINT,
+        address TEXT,
         author_id INTEGER REFERENCES users(id),
         status VARCHAR(10) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

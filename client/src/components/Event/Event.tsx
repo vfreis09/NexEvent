@@ -24,6 +24,9 @@ const Event: React.FC<EventProps> = ({ event, onDelete }) => {
         {new Date(event.event_datetime).toLocaleString()}
       </p>
       <p>
+        <strong>Address:</strong> {event.address}
+      </p>
+      <p>
         <strong>Number of Attendees:</strong> {event.number_of_attendees}
       </p>
       <p>

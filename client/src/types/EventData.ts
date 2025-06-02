@@ -6,6 +6,7 @@ export interface EventData {
     x: number;
     y: number;
   };
+  address: string;
   event_datetime: string;
   number_of_attendees: number;
   max_attendees: number | null;

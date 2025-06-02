@@ -18,6 +18,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [description, setDescription] = useState("");
   const [eventDateTime, setEventDateTime] = useState("");
   const [location, setLocation] = useState<LatLngLiteral | null>(null);
+  const [address, setAddress] = useState<string>("");
   const [maxAttendees, setMaxAttendees] = useState<number | string>("");
 
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           };
 
           setLocation(myLocation);
+          setAddress(data.address ?? "");
           setMaxAttendees(data.max_attendees ?? "");
         } catch (error) {
           console.error("Error fetching event:", error);
@@ -95,6 +97,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           eventDateTime: utcISOString,
           location: locationPoint,
           max_attendees: maxAttendees,
+          address,
         }),
       });
 
@@ -116,8 +119,9 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
     }
   };
 
-  const handleLocationChange = (position: LatLngLiteral) => {
+  const handleLocationChange = (position: LatLngLiteral, addr: string) => {
     setLocation(position);
+    setAddress(addr);
   };
 
   if (!isLoaded) return <div>Loading...</div>;
