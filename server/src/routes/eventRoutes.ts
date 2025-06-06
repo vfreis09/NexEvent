@@ -27,6 +27,13 @@ router.delete(
   eventController.deleteEvent
 );
 
+router.put(
+  "/events/:id/cancel",
+  authenticateUser,
+  requireVerifiedUser,
+  eventController.cancelEvent
+);
+
 router.post(
   "/events/:id/rsvp",
   authenticateUser,

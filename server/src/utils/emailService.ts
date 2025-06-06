@@ -92,10 +92,27 @@ const sendEventUpdateEmail = async (
   await sendEmail(email, subject, message);
 };
 
+const sendEventCancelationEmail = async (
+  email: string,
+  eventName: string,
+  eventId: string
+) => {
+  const eventLink = `http://localhost:5173/event/${eventId}`;
+  const subject = `Event Canceled: ${eventName}`;
+  const message = `
+    <h3>Event Canceled</h3>
+    <p>We're sorry to inform you that the event "<strong>${eventName}</strong>" has been canceled.</p>
+    <p>You can check the event details here:</p>
+    <a href="${eventLink}">${eventLink}</a>
+  `;
+  await sendEmail(email, subject, message);
+};
+
 const emailServices = {
   sendVerificationEmail,
   sendEventCreationEmail,
   sendEventUpdateEmail,
+  sendEventCancelationEmail,
 };
 
 export default emailServices;

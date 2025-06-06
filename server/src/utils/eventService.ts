@@ -4,14 +4,20 @@ const pool = require("../config/dbConfig");
 export const updateEventStatus = async (eventId: number) => {
   try {
     const event = await pool.query(
-      `SELECT max_attendees, (SELECT COUNT(*) FROM rsvps WHERE event_id = $1) AS current_attendees, event_datetime 
-       FROM events WHERE id = $1`,
+      `SELECT status, max_attendees, 
+              (SELECT COUNT(*) FROM rsvps WHERE event_id = $1) AS current_attendees, 
+              event_datetime 
+       FROM events 
+       WHERE id = $1`,
       [eventId]
     );
 
     if (event.rows.length === 0) return;
 
-    const { max_attendees, current_attendees, event_datetime } = event.rows[0];
+    const { status, max_attendees, current_attendees, event_datetime } =
+      event.rows[0];
+
+    if (status === "canceled") return;
 
     let newStatus = "active";
 
@@ -25,7 +31,7 @@ export const updateEventStatus = async (eventId: number) => {
     }
 
     await pool.query(`UPDATE events SET status = $1 WHERE id = $2`, [
-      newStatus.trim(),
+      newStatus,
       eventId,
     ]);
   } catch (err) {

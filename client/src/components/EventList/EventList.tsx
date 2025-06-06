@@ -40,8 +40,10 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
           </div>
           <div className="event-card-footer">
             <strong>Status:</strong>{" "}
-            {event.max_attendees !== null &&
-            event.number_of_attendees >= event.max_attendees
+            {event.status === "canceled"
+              ? "Canceled"
+              : event.max_attendees !== null &&
+                event.number_of_attendees >= event.max_attendees
               ? "Full"
               : new Date(event.event_datetime) < new Date()
               ? "Expired"

@@ -26,8 +26,8 @@ const initDb = async () => {
         address TEXT,
         author_id INTEGER REFERENCES users(id),
         status VARCHAR(10) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired'))
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired', 'canceled'))
       );
 
       CREATE TABLE IF NOT EXISTS rsvps (

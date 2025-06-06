@@ -252,12 +252,84 @@ const deleteEvent = async (req: Request, res: Response) => {
   }
 };
 
+const cancelEvent = async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const authorId = req.user?.id;
+
+  try {
+    const result = await pool.query("SELECT * FROM events WHERE id = $1", [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    const event = result.rows[0];
+
+    if (event.author_id !== authorId) {
+      return res
+        .status(403)
+        .json({ error: "Unauthorized to cancel this event" });
+    }
+
+    if (event.status === "canceled") {
+      return res.status(400).json({ error: "Event is already canceled" });
+    }
+
+    const updateResult = await pool.query(
+      "UPDATE events SET status = $1 WHERE id = $2 RETURNING *",
+      ["canceled", id]
+    );
+
+    const canceledEvent = updateResult.rows[0];
+
+    const rsvpResult = await pool.query(
+      `SELECT r.user_id, u.email
+       FROM rsvps r
+       JOIN users u ON r.user_id = u.id
+       WHERE r.event_id = $1
+       AND r.status = 'Accepted'
+       AND u.is_verified = true
+       AND u.wants_notifications = true`,
+      [id]
+    );
+
+    for (const user of rsvpResult.rows) {
+      const message = `Event "${canceledEvent.title}" has been canceled.`;
+
+      try {
+        await emailServices.sendEventCancelationEmail(
+          user.email,
+          canceledEvent.title,
+          canceledEvent.id
+        );
+
+        await pool.query(
+          `INSERT INTO notifications (user_id, event_id, message)
+           VALUES ($1, $2, $3)`,
+          [user.user_id, canceledEvent.id, message]
+        );
+      } catch (notifError) {
+        console.error(
+          `Notification/email failed for ${user.email}:`,
+          notifError
+        );
+      }
+    }
+
+    res.status(200).json(canceledEvent);
+  } catch (error) {
+    console.error("Error cancelling event:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 const eventController = {
   createEvent,
   getEvents,
   getEventById,
   updateEvent,
   deleteEvent,
+  cancelEvent,
 };
 
 export default eventController;

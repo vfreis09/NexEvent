@@ -37,6 +37,24 @@ function EventDetails() {
     navigate("/");
   };
 
+  const handleCancel = async (eventId: number) => {
+    const response = await fetch(
+      `http://localhost:3000/api/events/${eventId}/cancel`,
+      {
+        method: "PUT",
+        credentials: "include",
+      }
+    );
+    if (!response.ok) {
+      alert("Failed to cancel event");
+      return;
+    }
+
+    const updatedEvent = await response.json();
+    setEvent(updatedEvent);
+    alert("Event cancelled successfully");
+  };
+
   useEffect(() => {
     const fetchEvent = async (eventId: number) => {
       const response = await fetch(
@@ -58,12 +76,16 @@ function EventDetails() {
 
   return event ? (
     <>
-      <Event event={event} onDelete={() => handleDelete(eventId)} />
-      {isVerified && (
+      <Event
+        event={event}
+        onDelete={() => handleDelete(eventId)}
+        onCancel={() => handleCancel(eventId)}
+      />
+      {isVerified && event.status !== "canceled" && (
         <RSVPButton
           eventId={event.id}
           userId={user?.id}
-          status={event?.status}
+          status={event.status}
         />
       )}
       <Map location={location} isLoaded={isLoaded} />
