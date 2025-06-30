@@ -323,6 +323,44 @@ const cancelEvent = async (req: Request, res: Response) => {
   }
 };
 
+const getEventsByAuthor = async (req: Request, res: Response) => {
+  const { username } = req.params;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const offset = parseInt(req.query.offset as string) || 0;
+
+  try {
+    const userResult = await pool.query(
+      `SELECT id FROM users WHERE username = $1`,
+      [username]
+    );
+
+    if (userResult.rowCount === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    const eventsResult = await pool.query(
+      `SELECT events.*, users.username AS author_username
+       FROM events
+       JOIN users ON events.author_id = users.id
+       WHERE author_id = $1
+       ORDER BY events.event_datetime DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
+    );
+
+    await Promise.all(
+      eventsResult.rows.map((event: any) => updateEventStatus(event.id))
+    );
+
+    res.json(eventsResult.rows);
+  } catch (err) {
+    console.error("Error fetching events by author:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const eventController = {
   createEvent,
   getEvents,
@@ -330,6 +368,7 @@ const eventController = {
   updateEvent,
   deleteEvent,
   cancelEvent,
+  getEventsByAuthor,
 };
 
 export default eventController;

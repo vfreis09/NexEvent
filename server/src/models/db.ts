@@ -12,7 +12,8 @@ const initDb = async () => {
         contact TEXT,
         visibility VARCHAR(7) DEFAULT 'public',
         is_verified BOOLEAN DEFAULT FALSE,
-        wants_notifications BOOLEAN DEFAULT false
+        wants_notifications BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       
       CREATE TABLE IF NOT EXISTS events(
@@ -41,8 +42,8 @@ const initDb = async () => {
 
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        event_id INTEGER REFERENCES events(id),
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
         message TEXT,
         is_read BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

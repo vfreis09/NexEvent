@@ -1,0 +1,14 @@
+.profile-card {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 1.5rem;
+  border-radius: 10px;
+}
+
+.profile-card h1 {
+  margin-bottom: 0.5rem;
+}
+
+.profile-card p {
+  margin: 0.3rem 0;
+}

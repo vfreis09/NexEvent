@@ -24,6 +24,9 @@ const Header: React.FC = () => {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (isLoggedIn && !user && !hasFetchedUser) {
       loadUser();
@@ -35,6 +38,12 @@ const Header: React.FC = () => {
         !notificationRef.current.contains(event.target as Node)
       ) {
         setShowNotifications(false);
+      }
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowUserMenu(false);
       }
     };
 
@@ -152,15 +161,35 @@ const Header: React.FC = () => {
               )}
             </div>
           )}
+
           {user ? (
-            <>
-              <Link to="/settings" className="nav-link">
+            <div className="user-menu-wrapper" ref={userMenuRef}>
+              <button
+                className="nav-button user-menu-button"
+                onClick={() => setShowUserMenu((prev) => !prev)}
+              >
                 {user.username}
-              </Link>
-              <button onClick={handleLogout} className="nav-button">
-                Logout
               </button>
-            </>
+              {showUserMenu && (
+                <div className="user-menu-dropdown">
+                  <Link
+                    to={`/user/${user.username}`}
+                    className="user-menu-item"
+                  >
+                    Profile
+                  </Link>
+                  <Link to="/settings" className="user-menu-item">
+                    Settings
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="user-menu-item logout-item"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <Link to="/login" className="nav-button login-button">

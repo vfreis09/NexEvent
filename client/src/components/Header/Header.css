@@ -137,3 +137,55 @@
   background-color: transparent;
   font-weight: 400;
 }
+
+.user-menu-wrapper {
+  position: relative;
+}
+
+.user-menu-button {
+  background: none;
+  color: #333;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.user-menu-button:hover {
+  background-color: #f0f0f0;
+  border-radius: 6px;
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 180px;
+  background-color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+}
+
+.user-menu-item {
+  padding: 10px 16px;
+  text-decoration: none;
+  color: #333;
+  font-size: 0.95rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-menu-item:hover {
+  background-color: #f9f9f9;
+}
+
+.logout-item {
+  color: #c0392b;
+}

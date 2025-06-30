@@ -262,6 +262,39 @@ const updateNotificationSettings = async (req: Request, res: Response) => {
   }
 };
 
+const getPublicUserByUsername = async (req: Request, res: Response) => {
+  const { username } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+        username,
+        email,
+        COALESCE(created_at, CURRENT_TIMESTAMP) AS created_at,
+        (SELECT COUNT(*) FROM events WHERE author_id = users.id) AS total_created_events,
+        (
+          SELECT COUNT(*) 
+          FROM rsvps 
+          WHERE rsvps.user_id = users.id 
+            AND LOWER(rsvps.status) = 'accepted'
+        ) AS total_accepted_rsvps
+      FROM users
+      WHERE username = $1`,
+      [username]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = result.rows[0];
+    res.json({ user });
+  } catch (error) {
+    console.error("Error fetching user by username:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const userController = {
   signup,
   login,
@@ -272,6 +305,7 @@ const userController = {
   verifyEmail,
   requestVerificationEmail,
   updateNotificationSettings,
+  getPublicUserByUsername,
 };
 
 export default userController;

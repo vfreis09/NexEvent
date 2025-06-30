@@ -134,10 +134,50 @@ const getSingleRsvp = async (req: Request, res: Response) => {
   }
 };
 
+const getAcceptedRsvpsByUser = async (req: Request, res: Response) => {
+  const { username } = req.params;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const offset = parseInt(req.query.offset as string) || 0;
+  const includeExpired = req.query.includeExpired === "true";
+
+  try {
+    const userResult = await pool.query(
+      `SELECT id FROM users WHERE username = $1`,
+      [username]
+    );
+
+    if (userResult.rowCount === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    const rsvpQuery = `
+      SELECT events.*, users.username AS author_username, r.status
+      FROM rsvps r
+      JOIN events ON r.event_id = events.id
+      JOIN users ON events.author_id = users.id
+      WHERE r.user_id = $1 
+        AND r.status = 'Accepted'
+        ${includeExpired ? "" : "AND events.event_datetime >= NOW()"}
+      ORDER BY events.event_datetime DESC
+      LIMIT $2 OFFSET $3
+    `;
+
+    const rsvpResult = await pool.query(rsvpQuery, [userId, limit, offset]);
+
+    res.json(rsvpResult.rows);
+  } catch (err) {
+    console.error("Error fetching RSVP events by user:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const rsvpController = {
   createRsvp,
   getRsvps,
   getSingleRsvp,
+  getAcceptedRsvpsByUser,
 };
 
 export default rsvpController;

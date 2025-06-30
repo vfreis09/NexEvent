@@ -1,5 +1,7 @@
 import { Router } from "express";
 import userController from "../controllers/userController";
+import eventController from "../controllers/eventController";
+import rsvpController from "../controllers/rsvpController";
 import authenticateUser from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -7,6 +9,7 @@ const router = Router();
 router.post("/signup", userController.signup);
 router.post("/login", userController.login);
 router.get("/user", authenticateUser, userController.getUser);
+router.get("/user/:username", userController.getPublicUserByUsername);
 router.post("/logout", authenticateUser, userController.logout);
 router.post("/reset-password", authenticateUser, userController.resetPassword);
 
@@ -24,5 +27,8 @@ router.post(
   userController.requestVerificationEmail
 );
 router.get("/verify-email", userController.verifyEmail);
+
+router.get("/user/:username/events", eventController.getEventsByAuthor);
+router.get("/user/:username/rsvps", rsvpController.getAcceptedRsvpsByUser);
 
 export default router;

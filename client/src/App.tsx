@@ -12,6 +12,10 @@ import MapProvider from "./context/MapProvider";
 import RequireVerifiedUser from "./auth/RequireVerifiedUser";
 import Header from "./components/Header/Header";
 import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
+import UserProfile from "./pages/UserProfile/UserProfile";
+import OverviewTab from "./components/OverviewTab/OverviewTab";
+import CreatedEventsTab from "./components/CreatedEventsTab/CreatedEventsTab";
+import RsvpTab from "./components/RsvpTab/RsvpTab";
 
 const App: React.FC = () => {
   return (
@@ -55,6 +59,11 @@ const App: React.FC = () => {
           }
         />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/user/:username" element={<UserProfile />}>
+          <Route index element={<OverviewTab />} />
+          <Route path="events" element={<CreatedEventsTab />} />
+          <Route path="rsvps" element={<RsvpTab />} />
+        </Route>
       </Routes>
     </UserProvider>
   );
