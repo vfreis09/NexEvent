@@ -18,7 +18,14 @@ const Event: React.FC<EventProps> = ({ event, onDelete, onCancel }) => {
   return (
     <div className="event-container">
       <h2>{event.title}</h2>
-      <p className="event-author">Posted by: {event.author_username}</p>{" "}
+      <p className="event-author">
+        <Link
+          to={`/user/${event.author_username}`}
+          title={`View ${event.author_username}'s profile`}
+        >
+          {event.author_username}
+        </Link>
+      </p>
       <p>{event.description}</p>
       <p>
         <strong>Event Date:</strong>{" "}

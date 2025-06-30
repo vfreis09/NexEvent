@@ -132,3 +132,22 @@
     justify-content: center;
   }
 }
+
+.event-title-link {
+  text-decoration: none;
+  color: #5a2d82;
+}
+
+.event-title-link:hover {
+  text-decoration: underline;
+}
+
+.author-link {
+  color: #6a0dad;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.author-link:hover {
+  text-decoration: underline;
+}
