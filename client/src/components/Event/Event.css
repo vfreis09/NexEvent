@@ -38,6 +38,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
+  margin-left: 6px;
 }
 
 .event-container button:hover {

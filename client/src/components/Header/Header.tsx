@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "react-bootstrap";
 import { FaBell } from "react-icons/fa";
 import { useUser } from "../../context/UserContext";
+import { Notification } from "../../types/Notification";
 import "./Header.css";
 
 const Header: React.FC = () => {
@@ -18,14 +19,105 @@ const Header: React.FC = () => {
 
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<
-    { id: number; message: string; event_id: number; is_read: boolean }[]
-  >([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
-
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const res = await fetch("http://localhost:3000/api/notifications", {
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch notifications");
+
+      const data: Notification[] = await res.json();
+      const limitedNotifications = data.slice(0, 5);
+      setNotifications(limitedNotifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const markNotificationRead = async (notificationId: number) => {
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/notifications/${notificationId}/read`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+      if (!res.ok) throw new Error("Failed to mark notification as read");
+
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Error marking notification read:", error);
+      return false;
+    }
+  };
+
+  const respondToInvite = async (
+    inviteId: number,
+    notificationId: number,
+    eventId: number,
+    status: "accepted" | "declined"
+  ) => {
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/invites/${inviteId}/respond`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ status }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to respond to invite");
+
+      if (status === "accepted") {
+        const rsvpRes = await fetch(
+          `http://localhost:3000/api/events/${eventId}/rsvp`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ status: "Accepted" }),
+          }
+        );
+        if (!rsvpRes.ok) throw new Error("Failed to create RSVP");
+
+        alert("You have successfully RSVP'd to the event!");
+      } else {
+        alert("You have declined the invite.");
+      }
+
+      const markRes = await markNotificationRead(notificationId);
+
+      if (markRes !== false) {
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      }
+    } catch (error) {
+      console.error(`Error responding to invite: ${status}`, error);
+      alert("Something went wrong while processing your response.");
+    }
+  };
+
+  const toggleNotifications = () => {
+    setShowNotifications((prev) => !prev);
+    if (!showNotifications) {
+      fetchNotifications();
+    }
+  };
 
   useEffect(() => {
     if (isLoggedIn && !user && !hasFetchedUser) {
@@ -69,29 +161,6 @@ const Header: React.FC = () => {
     }
   };
 
-  const toggleNotifications = async () => {
-    setShowNotifications((prev) => !prev);
-
-    if (!showNotifications) {
-      setLoadingNotifications(true);
-      try {
-        const res = await fetch("http://localhost:3000/api/notifications", {
-          credentials: "include",
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch notifications");
-
-        const data = await res.json();
-        const limitedNotifications = data.slice(0, 5);
-        setNotifications(limitedNotifications);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      } finally {
-        setLoadingNotifications(false);
-      }
-    }
-  };
-
   return (
     <Navbar sticky="top" expand="lg" className="custom-navbar">
       <div className="header-wrapper">
@@ -120,40 +189,66 @@ const Header: React.FC = () => {
                   {loadingNotifications ? (
                     <div className="notification-item">Loading...</div>
                   ) : notifications.length > 0 ? (
-                    notifications.map((note) => (
-                      <button
-                        key={note.id}
-                        className={`notification-item ${
-                          note.is_read ? "read" : "unread"
-                        }`}
-                        onClick={async () => {
-                          try {
-                            await fetch(
-                              `http://localhost:3000/api/notifications/${note.id}/read`,
-                              {
-                                method: "PATCH",
-                                credentials: "include",
-                              }
-                            );
-                            setNotifications((prev) =>
-                              prev.map((n) =>
-                                n.id === note.id ? { ...n, is_read: true } : n
+                    notifications.map((note) => {
+                      const isInvite =
+                        note.invite_id !== undefined &&
+                        note.invite_status?.toLowerCase() === "pending";
+                      if (!isInvite) {
+                        return (
+                          <button
+                            key={note.id}
+                            className={`notification-item ${
+                              note.is_read ? "read" : "unread"
+                            }`}
+                            onClick={async () => {
+                              await markNotificationRead(note.id);
+                              setShowNotifications(false);
+                              navigate(`/event/${note.event_id}`);
+                            }}
+                          >
+                            {note.message}
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={note.id}
+                          className={`notification-item ${
+                            note.is_read ? "read" : "unread"
+                          }`}
+                        >
+                          <p>{note.message}</p>
+                          <button
+                            onClick={() =>
+                              respondToInvite(
+                                note.invite_id!,
+                                note.id,
+                                note.event_id,
+                                "accepted"
                               )
-                            );
-                          } catch (err) {
-                            console.error(
-                              "Failed to mark notification as read",
-                              err
-                            );
-                          } finally {
-                            setShowNotifications(false);
-                            navigate(`/event/${note.event_id}`);
-                          }
-                        }}
-                      >
-                        {note.message}
-                      </button>
-                    ))
+                            }
+                            className="nav-button"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() =>
+                              respondToInvite(
+                                note.invite_id!,
+                                note.id,
+                                note.event_id,
+                                "declined"
+                              )
+                            }
+                            className="nav-button"
+                            style={{ marginLeft: "8px" }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="notification-item">No notifications</div>
                   )}

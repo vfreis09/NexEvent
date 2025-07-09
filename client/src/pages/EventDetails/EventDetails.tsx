@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Event from "../../components/Event/Event";
 import Map from "../../components/Map/Map";
-import { useMapContext } from "../../context/MapProvider";
 import RSVPButton from "../../components/RSVPButton/RSVPButton";
+import InviteManager from "../../components/InviteManager/InviteManager";
+import { useMapContext } from "../../context/MapProvider";
 import { useUser } from "../../context/UserContext";
 import { EventData } from "../../types/EventData";
 
@@ -81,6 +82,15 @@ function EventDetails() {
         onDelete={() => handleDelete(eventId)}
         onCancel={() => handleCancel(eventId)}
       />
+      {isVerified && user?.id === event.author_id && (
+        <InviteManager
+          eventId={event.id}
+          status={event.status}
+          eventDateTime={event.event_datetime}
+          maxAttendees={event.max_attendees}
+          currentAttendees={event.number_of_attendees}
+        />
+      )}
       {isVerified && event.status !== "canceled" && (
         <RSVPButton
           eventId={event.id}

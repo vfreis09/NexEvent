@@ -7,6 +7,7 @@ import userRoutes from "./routes/userRoutes";
 import eventRoutes from "./routes/eventRoutes";
 import rsvpRoutes from "./routes/rsvpRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
+import inviteRoutes from "./routes/inviteRoutes";
 
 dotenv.config();
 
@@ -33,7 +34,14 @@ initDb()
     console.error("Database initialization failed:", error);
   });
 
-app.use("/api", userRoutes, eventRoutes, rsvpRoutes, notificationRoutes);
+app.use(
+  "/api",
+  userRoutes,
+  eventRoutes,
+  rsvpRoutes,
+  notificationRoutes,
+  inviteRoutes
+);
 
 app.get("/", (req, res) => {
   res.send("hello world!");

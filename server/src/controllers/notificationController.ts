@@ -6,7 +6,19 @@ const getNotifications = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      `SELECT * FROM notifications WHERE user_id = $1 ORDER BY is_read ASC, created_at DESC LIMIT 5;`,
+      `SELECT 
+        notifications.*,
+        invites.status AS invite_status
+      FROM notifications
+      LEFT JOIN invites ON notifications.invite_id = invites.id
+      WHERE notifications.user_id = $1
+        AND (
+          notifications.invite_id IS NULL
+          OR (notifications.invite_id IS NOT NULL AND notifications.is_read = false)
+        )
+      ORDER BY notifications.is_read ASC, notifications.created_at DESC
+      LIMIT 5;
+      `,
       [userId]
     );
 
@@ -26,10 +38,14 @@ const markNotificationAsRead = async (req: Request, res: Response) => {
   }
 
   try {
-    await pool.query(
+    const result = await pool.query(
       `UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2`,
       [notificationId, userId]
     );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
 
     return res.status(200).json({ message: "Notification marked as read" });
   } catch (err) {

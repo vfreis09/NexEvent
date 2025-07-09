@@ -108,11 +108,28 @@ const sendEventCancelationEmail = async (
   await sendEmail(email, subject, message);
 };
 
+const sendInviteEmail = async (
+  email: string,
+  eventName: string,
+  eventId: number
+) => {
+  const eventLink = `http://localhost:5173/event/${eventId}`;
+  const subject = `You're Invited to: ${eventName}`;
+  const message = `
+    <h3>You've Been Invited</h3>
+    <p>You have been invited to join the event "<strong>${eventName}</strong>".</p>
+    <p>Click below to view and respond to the invite:</p>
+    <a href="${eventLink}">${eventLink}</a>
+  `;
+  await sendEmail(email, subject, message);
+};
+
 const emailServices = {
   sendVerificationEmail,
   sendEventCreationEmail,
   sendEventUpdateEmail,
   sendEventCancelationEmail,
+  sendInviteEmail,
 };
 
 export default emailServices;
