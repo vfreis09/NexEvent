@@ -16,6 +16,8 @@ import UserProfile from "./pages/UserProfile/UserProfile";
 import OverviewTab from "./components/OverviewTab/OverviewTab";
 import CreatedEventsTab from "./components/CreatedEventsTab/CreatedEventsTab";
 import RsvpTab from "./components/RsvpTab/RsvpTab";
+import ForgotPasswordPage from "./pages/ForgotPassword/ForgotPassword";
+import ResetPasswordPage from "./pages/ResetPassword/ResetPassword";
 
 const App: React.FC = () => {
   return (
@@ -25,6 +27,8 @@ const App: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           element={
             <>

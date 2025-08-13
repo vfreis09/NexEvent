@@ -63,7 +63,7 @@ const LoginForm: React.FC = () => {
       </div>
       <button type="submit">Login</button>
       <div className="links-container">
-        <Link to="/">Forgot your password?</Link>
+        <Link to="/forgot-password">Forgot your password?</Link>
         <p>
           First time using the app? <Link to="/signup">Signup</Link>
         </p>

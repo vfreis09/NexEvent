@@ -12,6 +12,10 @@ const EditUser: React.FC = () => {
   const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
   const [wantsNotifications, setWantsNotifications] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -105,6 +109,45 @@ const EditUser: React.FC = () => {
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordMessage(null);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage("New passwords do not match.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/user/change-password",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            oldPassword,
+            newPassword,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to change password");
+      }
+
+      setPasswordMessage("Password updated successfully!");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setPasswordMessage("Failed to change password.");
+    }
+  };
+
   if (!user) {
     return (
       <div>
@@ -177,6 +220,41 @@ const EditUser: React.FC = () => {
         </div>
         <button type="submit">Update User</button>
       </form>
+      <hr style={{ margin: "20px 0" }} />
+
+      <h3>Change Password</h3>
+      <form onSubmit={handleChangePassword}>
+        <div>
+          <label>Old Password:</label>
+          <input
+            type="password"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>New Password:</label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Confirm New Password:</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Change Password</button>
+      </form>
+
+      {passwordMessage && <p>{passwordMessage}</p>}
     </div>
   );
 };

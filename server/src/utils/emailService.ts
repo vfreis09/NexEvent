@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
+import { send } from "process";
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
@@ -125,6 +126,7 @@ const sendInviteEmail = async (
 };
 
 const emailServices = {
+  sendEmail,
   sendVerificationEmail,
   sendEventCreationEmail,
   sendEventUpdateEmail,

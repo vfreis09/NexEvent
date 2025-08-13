@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
+import * as crypto from "crypto";
 import emailServices from "../utils/emailService";
 
 const pool = require("../config/dbConfig");
@@ -126,28 +127,44 @@ const logout = async (req: Request, res: Response) => {
     .json({ message: "Logged out successfully" });
 };
 
-const resetPassword = async (req: Request, res: Response) => {
-  const { email, newPassword } = req.body;
-  try {
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+const changePassword = async (req: Request, res: Response) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user?.id;
 
+  if (!oldPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ message: "Both current and new password are required" });
+  }
+
+  try {
     const result = await pool.query(
-      "UPDATE users SET password = $1 WHERE email = $2 RETURNING id, email",
-      [hashedPassword, email]
+      "SELECT password FROM users WHERE id = $1",
+      [userId]
     );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const user = result.rows[0];
+    const storedHash = result.rows[0].password;
 
-    res
-      .status(200)
-      .json({ message: "Password reset successful", email: user.email });
+    const isMatch = await bcrypt.compare(oldPassword, storedHash);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
+      hashedPassword,
+      userId,
+    ]);
+
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
-    console.log(error);
+    console.error("Error changing password:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -295,17 +312,117 @@ const getPublicUserByUsername = async (req: Request, res: Response) => {
   }
 };
 
+const sendResetLink = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT id FROM users WHERE email = $1 LIMIT 1",
+      [email]
+    );
+
+    const genericResponse = {
+      message: "If this email exists, a reset link has been sent",
+    };
+
+    if (result.rowCount === 0) {
+      return res.status(200).json(genericResponse);
+    }
+
+    const userId = result.rows[0].id;
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    const expires = new Date(Date.now() + 60 * 60 * 1000);
+
+    await pool.query(
+      `UPDATE users 
+       SET reset_token_hash = $1, reset_token_expires = $2
+       WHERE id = $3`,
+      [hashedToken, expires, userId]
+    );
+
+    const resetUrl = `http://localhost:5173/reset-password?token=${resetToken}&id=${userId}`;
+    const message = `
+      <p>We received a request to reset your password.</p>
+      <p>Click below to reset your password. This link will expire in 1 hour.</p>
+      <a href="${resetUrl}">${resetUrl}</a>
+    `;
+
+    await emailServices.sendEmail(email, "Password Reset Request", message);
+
+    res.status(200).json(genericResponse);
+  } catch (error) {
+    console.error("Error sending reset link:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const resetForgottenPassword = async (req: Request, res: Response) => {
+  console.log("Reset password request body:", req.body);
+  const { userId, token, password } = req.body;
+
+  if (!userId || !token || !password) {
+    return res.status(400).json({ message: "Missing required fields." });
+  }
+
+  try {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const result = await pool.query(
+      `SELECT id FROM users 
+       WHERE id = $1 
+         AND reset_token_hash = $2 
+         AND reset_token_expires > NOW()`,
+      [userId, tokenHash]
+    );
+
+    if (result.rowCount === 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset token." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `UPDATE users 
+       SET password = $1, 
+           reset_token_hash = NULL, 
+           reset_token_expires = NULL 
+       WHERE id = $2`,
+      [hashedPassword, userId]
+    );
+
+    res.json({ message: "Password reset successfully." });
+  } catch (err) {
+    console.error("Error resetting password:", err);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 const userController = {
   signup,
   login,
   getUser,
   logout,
-  resetPassword,
+  changePassword,
   updateUser,
   verifyEmail,
   requestVerificationEmail,
   updateNotificationSettings,
   getPublicUserByUsername,
+  sendResetLink,
+  resetForgottenPassword,
 };
 
 export default userController;
