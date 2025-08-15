@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./ForgotPasswordForm.css";
 
 interface ForgotPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
@@ -32,21 +33,33 @@ function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="email"
-        placeholder="Your email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        disabled={loading}
-      />
-      <button type="submit" disabled={loading}>
-        {loading ? "Sending..." : "Send Reset Link"}
-      </button>
-
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </form>
+    <div className="forgot-password-container d-flex justify-content-center align-items-center">
+      <form
+        onSubmit={handleSubmit}
+        className="card forgot-password-card shadow-sm d-flex flex-column"
+      >
+        <div>
+          <h3 className="mb-4 text-center">Forgot Password</h3>
+          <input
+            type="email"
+            className="form-control mb-3"
+            placeholder="Your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+          />
+          {message && <p className="text-success mt-3">{message}</p>}
+          {error && <p className="text-danger mt-3">{error}</p>}
+        </div>
+        <button
+          type="submit"
+          className="btn btn-primary w-100 mt-auto"
+          disabled={loading}
+        >
+          {loading ? "Sending..." : "Change Password"}
+        </button>
+      </form>
+    </div>
   );
 }
 

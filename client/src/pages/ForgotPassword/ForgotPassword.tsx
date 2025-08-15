@@ -20,7 +20,6 @@ function ForgotPasswordPage() {
 
   return (
     <div>
-      <h1>Forgot Password</h1>
       <ForgotPasswordForm onSubmit={handleForgotPassword} />
     </div>
   );

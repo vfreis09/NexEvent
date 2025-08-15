@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import "./EditUser.css";
 
 const EditUser: React.FC = () => {
   const { user, setUser } = useUser();
@@ -35,20 +36,15 @@ const EditUser: React.FC = () => {
         `http://localhost:3000/api/user/${user?.id}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ email, username, bio, contact }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to update user");
-      }
+      if (!response.ok) throw new Error("Failed to update user");
 
       const updatedUser = await response.json();
-
       const fixedUser = {
         ...updatedUser,
         is_verified: updatedUser.is_verified ?? user?.is_verified,
@@ -56,7 +52,6 @@ const EditUser: React.FC = () => {
 
       setUser(fixedUser);
       setIsVerified(fixedUser.is_verified ?? false);
-
       alert("User updated successfully");
     } catch (error) {
       console.error("Failed to update user", error);
@@ -67,16 +62,13 @@ const EditUser: React.FC = () => {
     try {
       const response = await fetch("http://localhost:3000/api/user/settings", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ wants_notifications: !wantsNotifications }),
       });
 
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error("Failed to update notification settings");
-      }
 
       setWantsNotifications(!wantsNotifications);
     } catch (error) {
@@ -91,16 +83,12 @@ const EditUser: React.FC = () => {
         "http://localhost:3000/api/send-verification-email",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to send verification email");
-      }
+      if (!response.ok) throw new Error("Failed to send verification email");
 
       setVerifyMessage("Verification email sent successfully!");
     } catch (error) {
@@ -114,7 +102,7 @@ const EditUser: React.FC = () => {
     setPasswordMessage(null);
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage("New passwords do not match.");
+      setPasswordMessage("⚠ New passwords do not match.");
       return;
     }
 
@@ -123,20 +111,13 @@ const EditUser: React.FC = () => {
         "http://localhost:3000/api/user/change-password",
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            oldPassword,
-            newPassword,
-          }),
+          body: JSON.stringify({ oldPassword, newPassword }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to change password");
-      }
+      if (!response.ok) throw new Error("Failed to change password");
 
       setPasswordMessage("Password updated successfully!");
       setOldPassword("");
@@ -150,111 +131,133 @@ const EditUser: React.FC = () => {
 
   if (!user) {
     return (
-      <div>
+      <div className="text-center mt-5">
         <h2>You have to login to access this content</h2>
-        <Link to="/login">Login</Link>
+        <Link to="/login" className="btn btn-primary mt-3">
+          Login
+        </Link>
       </div>
     );
   }
 
   return (
-    <div>
-      {isVerified ? (
-        <div style={{ marginBottom: "1rem" }}>
-          <p style={{ color: "green" }}>Your email is verified.</p>
-        </div>
-      ) : (
-        <div style={{ marginBottom: "1rem" }}>
-          <p style={{ color: "red" }}>
-            Your email is not verified. Please verify it to access all features.
-          </p>
-          <button onClick={handleSendVerificationEmail}>
+    <div className="container edit-user-container">
+      <div
+        className={`alert ${
+          isVerified ? "alert-success" : "alert-danger"
+        } verification-status`}
+      >
+        {isVerified
+          ? "Your email is verified."
+          : "Your email is not verified. Please verify it to access all features."}
+      </div>
+      {!isVerified && (
+        <div className="mb-3">
+          <button
+            onClick={handleSendVerificationEmail}
+            className="btn btn-warning btn-sm"
+          >
             Send Verification Email
           </button>
-          {verifyMessage && <p>{verifyMessage}</p>}
+          {verifyMessage && <p className="mt-2">{verifyMessage}</p>}
         </div>
       )}
-      <form onSubmit={handleUserUpdate}>
-        <div>
-          <label>Email:</label>
+      <form onSubmit={handleUserUpdate} className="card p-4 shadow-sm mb-4">
+        <h4 className="mb-3">Edit Profile</h4>
+        <div className="mb-3">
+          <label className="form-label">Email</label>
           <input
             type="email"
+            className="form-control"
             value={email}
             required
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-        <div>
-          <label>Username:</label>
+        <div className="mb-3">
+          <label className="form-label">Username</label>
           <input
             type="text"
+            className="form-control"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
         </div>
-        <div>
-          <label>Bio:</label>
+        <div className="mb-3">
+          <label className="form-label">Bio</label>
           <input
             type="text"
+            className="form-control"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
           />
         </div>
-        <div>
-          <label>Contact:</label>
+        <div className="mb-3">
+          <label className="form-label">Contact</label>
           <input
             type="text"
+            className="form-control"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
           />
         </div>
-        <div style={{ margin: "10px 0" }}>
-          <label>
-            <input
-              type="checkbox"
-              checked={wantsNotifications}
-              onChange={handleNotificationToggle}
-            />
-            &nbsp; Receive event notification emails
+        <div className="form-check mb-3">
+          <input
+            type="checkbox"
+            className="form-check-input"
+            checked={wantsNotifications}
+            onChange={handleNotificationToggle}
+          />
+          <label className="form-check-label">
+            Receive event notification emails
           </label>
         </div>
-        <button type="submit">Update User</button>
+        <button type="submit" className="btn btn-primary w-100">
+          Update User
+        </button>
       </form>
-      <hr style={{ margin: "20px 0" }} />
-
-      <h3>Change Password</h3>
-      <form onSubmit={handleChangePassword}>
-        <div>
-          <label>Old Password:</label>
+      <form
+        onSubmit={handleChangePassword}
+        className="card p-4 shadow-sm change-password-form"
+      >
+        <h4 className="mb-3">Change Password</h4>
+        <div className="mb-3">
+          <label className="form-label">Old Password</label>
           <input
             type="password"
+            className="form-control"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
             required
           />
         </div>
-        <div>
-          <label>New Password:</label>
+        <div className="mb-3">
+          <label className="form-label">New Password</label>
           <input
             type="password"
+            className="form-control"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
           />
         </div>
-        <div>
-          <label>Confirm New Password:</label>
+        <div className="mb-3">
+          <label className="form-label">Confirm New Password</label>
           <input
             type="password"
+            className="form-control"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
         </div>
-        <button type="submit">Change Password</button>
+        <button type="submit" className="btn btn-secondary w-100">
+          Change Password
+        </button>
+        {passwordMessage && (
+          <p className="mt-3 text-center">{passwordMessage}</p>
+        )}
       </form>
-
-      {passwordMessage && <p>{passwordMessage}</p>}
     </div>
   );
 };
