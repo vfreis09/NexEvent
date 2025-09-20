@@ -8,6 +8,7 @@ interface JwtPayload {
   id: string;
   email: string;
   isVerified?: boolean;
+  role?: string;
 }
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -33,7 +34,6 @@ const authenticateUser = async (
 
   try {
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
-    req.user = decoded;
 
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
       decoded.id,
@@ -49,6 +49,7 @@ const authenticateUser = async (
       id: user.id,
       email: user.email,
       isVerified: user.is_verified,
+      role: user.role,
     } as JwtPayload;
 
     next();

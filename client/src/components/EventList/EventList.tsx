@@ -11,7 +11,7 @@ interface EventListProps {
 
 const EventList: React.FC<EventListProps> = ({ events }) => {
   const { user, isVerified } = useUser();
-  const { deleteEvent, cancelEvent } = useEventActions();
+  const { cancelEvent } = useEventActions();
 
   if (!Array.isArray(events) || events.length === 0) {
     return <div>No events available. Try again later!</div>;
@@ -67,18 +67,11 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                 ? "Expired"
                 : "Active"}
             </div>
-
-            {isVerified && isOwner && (
+            {isVerified && user?.role !== "banned" && isOwner && (
               <div className="event-card-actions">
                 <Link to={`/edit/${event.id}`} className="edit-btn">
                   Edit
                 </Link>
-                <button
-                  className="delete-btn"
-                  onClick={() => deleteEvent(event.id)}
-                >
-                  Delete
-                </button>
                 {event.status !== "canceled" && (
                   <button
                     className="cancel-btn"

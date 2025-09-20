@@ -201,17 +201,19 @@ const EditUser: React.FC = () => {
             onChange={(e) => setContact(e.target.value)}
           />
         </div>
-        <div className="form-check mb-3">
-          <input
-            type="checkbox"
-            className="form-check-input"
-            checked={wantsNotifications}
-            onChange={handleNotificationToggle}
-          />
-          <label className="form-check-label">
-            Receive event notification emails
-          </label>
-        </div>
+        {user?.role !== "banned" && (
+          <div className="form-check mb-3">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={wantsNotifications}
+              onChange={handleNotificationToggle}
+            />
+            <label className="form-check-label">
+              Receive event notification emails
+            </label>
+          </div>
+        )}
         <button type="submit" className="btn btn-primary w-100">
           Update User
         </button>

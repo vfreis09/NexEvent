@@ -76,6 +76,8 @@ const getEvents = async (req: Request, res: Response) => {
       `SELECT events.*, users.username AS author_username
        FROM events
        JOIN users ON events.author_id = users.id
+       WHERE events.status != 'canceled'
+         AND events.event_datetime > NOW()
        ORDER BY events.created_at DESC`
     );
 
@@ -231,27 +233,6 @@ const updateEvent = async (req: Request, res: Response) => {
   }
 };
 
-const deleteEvent = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  const authorId = req.user?.id;
-
-  try {
-    const result = await pool.query(
-      "DELETE FROM events WHERE id = $1 AND author_id = $2 RETURNING *",
-      [id, authorId]
-    );
-
-    if (result.rows.length > 0) {
-      res.json({ message: "Event deleted successfully" });
-    } else {
-      res.status(404).json({ message: "Event not found or not authorized" });
-    }
-  } catch (error) {
-    console.error("Error deleting event:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
 const cancelEvent = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
   const authorId = req.user?.id;
@@ -366,7 +347,6 @@ const eventController = {
   getEvents,
   getEventById,
   updateEvent,
-  deleteEvent,
   cancelEvent,
   getEventsByAuthor,
 };

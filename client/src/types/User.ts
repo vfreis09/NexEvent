@@ -6,4 +6,5 @@ export interface User {
   contact: string;
   is_verified: boolean;
   wants_notifications: boolean;
+  role: "user" | "admin" | "banned";
 }

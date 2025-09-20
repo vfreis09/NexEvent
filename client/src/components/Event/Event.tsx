@@ -6,11 +6,10 @@ import "./Event.css";
 
 interface EventProps {
   event: EventType;
-  onDelete: (id: number) => void;
   onCancel: (id: number) => void;
 }
 
-const Event: React.FC<EventProps> = ({ event, onDelete, onCancel }) => {
+const Event: React.FC<EventProps> = ({ event, onCancel }) => {
   const { isVerified, user } = useUser();
 
   const isOwner = user && event.author_id === user.id;
@@ -44,10 +43,9 @@ const Event: React.FC<EventProps> = ({ event, onDelete, onCancel }) => {
       <p>
         <strong>Event Status:</strong> {event.status}
       </p>
-      {isVerified && isOwner && (
+      {isVerified && user?.role !== "banned" && isOwner && (
         <>
           <Link to={`/edit/${event.id}`}>Edit</Link>
-          <button onClick={() => onDelete(event.id)}>Delete</button>
           {event.status !== "canceled" && (
             <button onClick={() => onCancel(event.id)}>Cancel Event</button>
           )}

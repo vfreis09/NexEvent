@@ -105,9 +105,12 @@ const getUser = async (req: Request, res: Response) => {
     const decoded = jwt.verify(token, jwtSecret) as { id: string };
     const userId = decoded.id;
 
-    const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
-      userId,
-    ]);
+    const { rows } = await pool.query(
+      `SELECT id, username, email, bio, role, contact, visibility, is_verified, wants_notifications, created_at
+       FROM users 
+       WHERE id = $1`,
+      [userId]
+    );
 
     if (rows.length > 0) {
       return res.json({ isLoggedIn: true, user: rows[0] });

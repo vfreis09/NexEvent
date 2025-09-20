@@ -70,7 +70,7 @@ const Header: React.FC = () => {
     inviteId: number,
     notificationId: number,
     eventId: number,
-    status: "accepted" | "declined"
+    status: "accepted" | "declined" | "banned"
   ) => {
     try {
       const res = await fetch(
@@ -168,7 +168,7 @@ const Header: React.FC = () => {
           <Link to="/" className="logo-text">
             NexEvent
           </Link>
-          {user && isVerified && (
+          {user && isVerified && user.role !== "banned" && (
             <Link to="/create" className="nav-link create-event">
               Create Event
             </Link>
@@ -276,6 +276,11 @@ const Header: React.FC = () => {
                   <Link to="/settings" className="user-menu-item">
                     Settings
                   </Link>
+                  {user.role === "admin" && (
+                    <Link to="/admin" className="user-menu-item">
+                      Admin Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="user-menu-item logout-item"

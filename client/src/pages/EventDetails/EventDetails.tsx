@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Event from "../../components/Event/Event";
 import Map from "../../components/Map/Map";
 import RSVPButton from "../../components/RSVPButton/RSVPButton";
@@ -13,7 +13,6 @@ function EventDetails() {
   const { user, isVerified } = useUser();
   const { id } = useParams<{ id: string }>();
   const eventId = parseInt(id ?? "");
-  const navigate = useNavigate();
 
   const { isLoaded } = useMapContext();
 
@@ -21,22 +20,6 @@ function EventDetails() {
     console.error("Invalid eventId:", eventId);
     return <p>Invalid post ID</p>;
   }
-
-  const handleDelete = async (eventId: number) => {
-    const response = await fetch(
-      `http://localhost:3000/api/events/${eventId}`,
-      {
-        method: "DELETE",
-        credentials: "include",
-      }
-    );
-    if (!response.ok) {
-      throw new Error("Error deleting event");
-    }
-    setEvent(null);
-    alert("Event deleted successfully");
-    navigate("/");
-  };
 
   const handleCancel = async (eventId: number) => {
     const response = await fetch(
@@ -77,21 +60,19 @@ function EventDetails() {
 
   return event ? (
     <>
-      <Event
-        event={event}
-        onDelete={() => handleDelete(eventId)}
-        onCancel={() => handleCancel(eventId)}
-      />
-      {isVerified && user?.id === event.author_id && (
-        <InviteManager
-          eventId={event.id}
-          status={event.status}
-          eventDateTime={event.event_datetime}
-          maxAttendees={event.max_attendees}
-          currentAttendees={event.number_of_attendees}
-        />
-      )}
-      {isVerified && event.status !== "canceled" && (
+      <Event event={event} onCancel={() => handleCancel(eventId)} />
+      {isVerified &&
+        user?.role !== "banned" &&
+        user?.id === event.author_id && (
+          <InviteManager
+            eventId={event.id}
+            status={event.status}
+            eventDateTime={event.event_datetime}
+            maxAttendees={event.max_attendees}
+            currentAttendees={event.number_of_attendees}
+          />
+        )}
+      {isVerified && user?.role !== "banned" && event.status !== "canceled" && (
         <RSVPButton
           eventId={event.id}
           userId={user?.id}

@@ -1,0 +1,30 @@
+.manage-users {
+  padding: 0 20px 40px 20px;
+}
+
+.page-title {
+  text-align: center;
+  margin-top: 60px;
+  margin-bottom: 40px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.user-table th,
+.user-table td {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.role-text {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.manage-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px;
+}

@@ -8,15 +8,16 @@ const initDb = async () => {
       password VARCHAR(255) NOT NULL,
       username VARCHAR(255) UNIQUE NOT NULL,
       bio TEXT,
-      role VARCHAR(5) DEFAULT 'user',
+      role VARCHAR(20) DEFAULT 'user',
       contact TEXT,
       visibility VARCHAR(7) DEFAULT 'public',
       is_verified BOOLEAN DEFAULT FALSE,
       wants_notifications BOOLEAN DEFAULT false,
       reset_token_hash TEXT,
       reset_token_expires TIMESTAMP,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT role_check CHECK (role IN ('user', 'admin', 'banned'))
+);
 
     CREATE TABLE IF NOT EXISTS events(
       id SERIAL PRIMARY KEY,

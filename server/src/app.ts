@@ -8,6 +8,7 @@ import eventRoutes from "./routes/eventRoutes";
 import rsvpRoutes from "./routes/rsvpRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import inviteRoutes from "./routes/inviteRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 dotenv.config();
 
@@ -40,7 +41,8 @@ app.use(
   eventRoutes,
   rsvpRoutes,
   notificationRoutes,
-  inviteRoutes
+  inviteRoutes,
+  adminRoutes
 );
 
 app.get("/", (req, res) => {
