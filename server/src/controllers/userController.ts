@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import path from "path";
 import * as crypto from "crypto";
 import emailServices from "../utils/emailService";
+import { isStrongPassword } from "../utils/password";
 
 const pool = require("../config/dbConfig");
 
@@ -20,6 +21,13 @@ if (!jwtSecret) {
 
 const signup = async (req: Request, res: Response) => {
   const { email, username, password, wantsNotifications } = req.body;
+
+  if (!isStrongPassword(password)) {
+    return res.status(400).json({
+      message:
+        "Password is not strong enough. Must be 8+ chars, include uppercase, lowercase, number, and special character.",
+    });
+  }
 
   try {
     const salt = await bcrypt.genSalt();
@@ -138,6 +146,13 @@ const changePassword = async (req: Request, res: Response) => {
     return res
       .status(400)
       .json({ message: "Both current and new password are required" });
+  }
+
+  if (!isStrongPassword(newPassword)) {
+    return res.status(400).json({
+      message:
+        "Password is not strong enough. Must be 8+ chars, include uppercase, lowercase, number, and special character.",
+    });
   }
 
   try {
@@ -371,11 +386,17 @@ const sendResetLink = async (req: Request, res: Response) => {
 };
 
 const resetForgottenPassword = async (req: Request, res: Response) => {
-  console.log("Reset password request body:", req.body);
   const { userId, token, password } = req.body;
 
   if (!userId || !token || !password) {
     return res.status(400).json({ message: "Missing required fields." });
+  }
+
+  if (!isStrongPassword(password)) {
+    return res.status(400).json({
+      message:
+        "Password is not strong enough. Must be 8+ chars, include uppercase, lowercase, number, and special character.",
+    });
   }
 
   try {

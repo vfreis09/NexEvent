@@ -33,3 +33,7 @@ form h4 {
 .change-password-form {
   margin-bottom: 30px;
 }
+
+.password-feedback {
+  padding: 0.5rem 0;
+}

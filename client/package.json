@@ -21,12 +21,14 @@
     "react-is": "^19.1.1",
     "react-router-dom": "^6.25.1",
     "recharts": "^3.2.1",
-    "use-places-autocomplete": "^4.0.1"
+    "use-places-autocomplete": "^4.0.1",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@types/google.maps": "^3.58.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@types/zxcvbn": "^4.4.5",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
     "@vitejs/plugin-react": "^4.3.1",

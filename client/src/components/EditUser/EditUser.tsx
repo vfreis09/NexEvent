@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import zxcvbn from "zxcvbn";
+import { getPasswordFeedback } from "../../utils/password";
 import "./EditUser.css";
 
 const EditUser: React.FC = () => {
@@ -13,10 +15,16 @@ const EditUser: React.FC = () => {
   const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
   const [wantsNotifications, setWantsNotifications] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+
+  const [passwordScore, setPasswordScore] = useState(0);
+  const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
+    []
+  );
 
   useEffect(() => {
     if (user) {
@@ -28,6 +36,17 @@ const EditUser: React.FC = () => {
       setIsVerified(user.is_verified ?? false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (newPassword) {
+      const result = zxcvbn(newPassword);
+      setPasswordScore(result.score);
+      setPasswordFeedbackList(getPasswordFeedback(newPassword));
+    } else {
+      setPasswordScore(0);
+      setPasswordFeedbackList([]);
+    }
+  }, [newPassword]);
 
   const handleUserUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +121,12 @@ const EditUser: React.FC = () => {
     setPasswordMessage(null);
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage("⚠ New passwords do not match.");
+      setPasswordMessage("New passwords do not match.");
+      return;
+    }
+
+    if (passwordScore < 2) {
+      setPasswordMessage("Please choose a stronger password.");
       return;
     }
 
@@ -126,6 +150,40 @@ const EditUser: React.FC = () => {
     } catch (error) {
       console.error("Error changing password:", error);
       setPasswordMessage("Failed to change password.");
+    }
+  };
+
+  const getStrengthLabel = (score: number) => {
+    switch (score) {
+      case 0:
+        return "Very Weak";
+      case 1:
+        return "Weak";
+      case 2:
+        return "Fair";
+      case 3:
+        return "Good";
+      case 4:
+        return "Strong";
+      default:
+        return "";
+    }
+  };
+
+  const getStrengthColor = (score: number) => {
+    switch (score) {
+      case 0:
+        return "text-danger";
+      case 1:
+        return "text-warning";
+      case 2:
+        return "text-warning";
+      case 3:
+        return "text-success";
+      case 4:
+        return "text-success";
+      default:
+        return "text-muted";
     }
   };
 
@@ -242,6 +300,26 @@ const EditUser: React.FC = () => {
             onChange={(e) => setNewPassword(e.target.value)}
             required
           />
+
+          {newPassword && (
+            <div className="password-feedback mt-3 mb-3">
+              <div
+                className={`fw-semibold ${getStrengthColor(
+                  passwordScore
+                )} mb-1`}
+              >
+                Strength: {getStrengthLabel(passwordScore)}
+              </div>
+
+              {passwordFeedbackList.length > 0 && (
+                <ul className="text-danger small ps-3 mb-0">
+                  {passwordFeedbackList.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
         <div className="mb-3">
           <label className="form-label">Confirm New Password</label>
@@ -252,6 +330,11 @@ const EditUser: React.FC = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
+          {confirmPassword && newPassword !== confirmPassword && (
+            <div className="text-danger small mt-1">
+              Passwords do not match.
+            </div>
+          )}
         </div>
         <button type="submit" className="btn btn-secondary w-100">
           Change Password
