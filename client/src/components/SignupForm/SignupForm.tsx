@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import zxcvbn from "zxcvbn";
 import { useUser } from "../../context/UserContext";
 import { getPasswordFeedback } from "../../utils/password";
+import { useToast } from "../../hooks/useToast";
+import AppToast from "../ToastComponent/ToastComponent";
 import "./SignupForm.css";
 
 const SignupForm: React.FC = () => {
@@ -17,6 +19,7 @@ const SignupForm: React.FC = () => {
 
   const navigate = useNavigate();
   const { loadUser, isLoggedIn } = useUser();
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   useEffect(() => {
     if (isLoggedIn) navigate("/", { replace: true });
@@ -66,7 +69,7 @@ const SignupForm: React.FC = () => {
     e.preventDefault();
 
     if (passwordScore < 2) {
-      alert("Please choose a stronger password.");
+      showNotification("Please choose a stronger password.", "Error", "danger");
       return;
     }
 
@@ -78,97 +81,121 @@ const SignupForm: React.FC = () => {
         body: JSON.stringify({ email, username, password, wantsNotifications }),
       });
 
-      if (!response.ok) throw new Error("Signup failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Signup failed");
+      }
 
       await loadUser();
 
-      navigate("/", {
-        state: {
-          successMessage:
-            "Account created! Please check your email to verify your account.",
-        },
-      });
-    } catch (error) {
+      showNotification(
+        "Account created! Please check your email to verify your account.",
+        "Success",
+        "success"
+      );
+
+      setTimeout(() => {
+        navigate("/", {
+          state: {
+            successMessage:
+              "Account created! Please check your email to verify your account.",
+          },
+        });
+      }, 2000);
+    } catch (error: any) {
       console.error("Signup failed", error);
+      showNotification(error.message || "Signup failed", "Error", "danger");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="signup-form">
-      <h1 className="text-center mb-4">Register</h1>
-      <div className="mb-3">
-        <input
-          placeholder="Email"
-          type="email"
-          className="form-control"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+    <>
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+          onClose={hideToast}
         />
-      </div>
-      <div className="mb-3">
-        <input
-          placeholder="Username"
-          type="text"
-          className="form-control"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-      </div>
-      <div className="mb-3">
-        <input
-          placeholder="Password"
-          type="password"
-          className="form-control"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+      )}
+      <form onSubmit={handleSubmit} className="signup-form">
+        <h1 className="text-center mb-4">Register</h1>
+        <div className="mb-3">
+          <input
+            placeholder="Email"
+            type="email"
+            className="form-control"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            placeholder="Username"
+            type="text"
+            className="form-control"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            placeholder="Password"
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-        {password && (
-          <div className="password-feedback mt-2 mb-3">
-            <div
-              className={`password-strength ${getStrengthColor(
-                passwordScore
-              )} mb-1`}
-            >
-              Strength: {getStrengthLabel(passwordScore)}
+          {password && (
+            <div className="password-feedback mt-2 mb-3">
+              <div
+                className={`password-strength ${getStrengthColor(
+                  passwordScore
+                )} mb-1`}
+              >
+                Strength: {getStrengthLabel(passwordScore)}
+              </div>
+
+              {passwordFeedbackList.length > 0 && (
+                <ul className="password-feedback-list mb-0">
+                  {passwordFeedbackList.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              )}
             </div>
+          )}
+        </div>
+        <div className="form-check mb-3">
+          <input
+            type="checkbox"
+            id="notificationsCheck"
+            className="form-check-input"
+            checked={wantsNotifications}
+            onChange={(e) => setWantsNotifications(e.target.checked)}
+          />
+          <label className="form-check-label" htmlFor="notificationsCheck">
+            Receive email notifications about events
+          </label>
+        </div>
 
-            {passwordFeedbackList.length > 0 && (
-              <ul className="password-feedback-list mb-0">
-                {passwordFeedbackList.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="form-check mb-3">
-        <input
-          type="checkbox"
-          id="notificationsCheck"
-          className="form-check-input"
-          checked={wantsNotifications}
-          onChange={(e) => setWantsNotifications(e.target.checked)}
-        />
-        <label className="form-check-label" htmlFor="notificationsCheck">
-          Receive email notifications about events
-        </label>
-      </div>
+        <button type="submit" className="btn btn-primary w-100">
+          Signup
+        </button>
 
-      <button type="submit" className="btn btn-primary w-100">
-        Signup
-      </button>
-
-      <div className="links-container mt-3 text-center">
-        <p>
-          Already part of the app? <Link to="/login">Login</Link>
-        </p>
-      </div>
-    </form>
+        <div className="links-container mt-3 text-center">
+          <p>
+            Already part of the app? <Link to="/login">Login</Link>
+          </p>
+        </div>
+      </form>
+    </>
   );
 };
 

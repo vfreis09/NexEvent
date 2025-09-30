@@ -3,10 +3,13 @@ import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import zxcvbn from "zxcvbn";
 import { getPasswordFeedback } from "../../utils/password";
+import { useToast } from "../../hooks/useToast";
+import AppToast from "../ToastComponent/ToastComponent";
 import "./EditUser.css";
 
 const EditUser: React.FC = () => {
   const { user, setUser } = useUser();
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -19,7 +22,6 @@ const EditUser: React.FC = () => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
 
   const [passwordScore, setPasswordScore] = useState(0);
   const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
@@ -71,9 +73,10 @@ const EditUser: React.FC = () => {
 
       setUser(fixedUser);
       setIsVerified(fixedUser.is_verified ?? false);
-      alert("User updated successfully");
+      showNotification("User updated successfully!", "Success", "success");
     } catch (error) {
       console.error("Failed to update user", error);
+      showNotification("Failed to update user.", "Error", "danger");
     }
   };
 
@@ -90,8 +93,14 @@ const EditUser: React.FC = () => {
         throw new Error("Failed to update notification settings");
 
       setWantsNotifications(!wantsNotifications);
+      showNotification("Notification settings updated.", "Success", "success");
     } catch (error) {
       console.error("Error updating notification preference:", error);
+      showNotification(
+        "Failed to update notification settings.",
+        "Error",
+        "danger"
+      );
     }
   };
 
@@ -110,23 +119,28 @@ const EditUser: React.FC = () => {
       if (!response.ok) throw new Error("Failed to send verification email");
 
       setVerifyMessage("Verification email sent successfully!");
+      showNotification(
+        "Verification email sent successfully!",
+        "Success",
+        "success"
+      );
     } catch (error) {
       console.error("Error sending verification email:", error);
       setVerifyMessage("Failed to send verification email.");
+      showNotification("Failed to send verification email.", "Error", "danger");
     }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPasswordMessage(null);
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage("New passwords do not match.");
+      showNotification("New passwords do not match.", "Error", "danger");
       return;
     }
 
     if (passwordScore < 2) {
-      setPasswordMessage("Please choose a stronger password.");
+      showNotification("Please choose a stronger password.", "Error", "danger");
       return;
     }
 
@@ -143,13 +157,13 @@ const EditUser: React.FC = () => {
 
       if (!response.ok) throw new Error("Failed to change password");
 
-      setPasswordMessage("Password updated successfully!");
+      showNotification("Password updated successfully!", "Success", "success");
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       console.error("Error changing password:", error);
-      setPasswordMessage("Failed to change password.");
+      showNotification("Failed to change password.", "Error", "danger");
     }
   };
 
@@ -199,151 +213,160 @@ const EditUser: React.FC = () => {
   }
 
   return (
-    <div className="container edit-user-container">
-      <div
-        className={`alert ${
-          isVerified ? "alert-success" : "alert-danger"
-        } verification-status`}
-      >
-        {isVerified
-          ? "Your email is verified."
-          : "Your email is not verified. Please verify it to access all features."}
-      </div>
-      {!isVerified && (
-        <div className="mb-3">
-          <button
-            onClick={handleSendVerificationEmail}
-            className="btn btn-warning btn-sm"
-          >
-            Send Verification Email
-          </button>
-          {verifyMessage && <p className="mt-2">{verifyMessage}</p>}
-        </div>
+    <>
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+          onClose={hideToast}
+        />
       )}
-      <form onSubmit={handleUserUpdate} className="card p-4 shadow-sm mb-4">
-        <h4 className="mb-3">Edit Profile</h4>
-        <div className="mb-3">
-          <label className="form-label">Email</label>
-          <input
-            type="email"
-            className="form-control"
-            value={email}
-            required
-            onChange={(e) => setEmail(e.target.value)}
-          />
+      <div className="container edit-user-container">
+        <div
+          className={`alert ${
+            isVerified ? "alert-success" : "alert-danger"
+          } verification-status`}
+        >
+          {isVerified
+            ? "Your email is verified."
+            : "Your email is not verified. Please verify it to access all features."}
         </div>
-        <div className="mb-3">
-          <label className="form-label">Username</label>
-          <input
-            type="text"
-            className="form-control"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Bio</label>
-          <input
-            type="text"
-            className="form-control"
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Contact</label>
-          <input
-            type="text"
-            className="form-control"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-          />
-        </div>
-        {user?.role !== "banned" && (
-          <div className="form-check mb-3">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              checked={wantsNotifications}
-              onChange={handleNotificationToggle}
-            />
-            <label className="form-check-label">
-              Receive event notification emails
-            </label>
+        {!isVerified && (
+          <div className="mb-3">
+            <button
+              onClick={handleSendVerificationEmail}
+              className="btn btn-warning btn-sm"
+            >
+              Send Verification Email
+            </button>
+            {verifyMessage && <p className="mt-2">{verifyMessage}</p>}
           </div>
         )}
-        <button type="submit" className="btn btn-primary w-100">
-          Update User
-        </button>
-      </form>
-      <form
-        onSubmit={handleChangePassword}
-        className="card p-4 shadow-sm change-password-form"
-      >
-        <h4 className="mb-3">Change Password</h4>
-        <div className="mb-3">
-          <label className="form-label">Old Password</label>
-          <input
-            type="password"
-            className="form-control"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">New Password</label>
-          <input
-            type="password"
-            className="form-control"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-          />
+        <form onSubmit={handleUserUpdate} className="card p-4 shadow-sm mb-4">
+          <h4 className="mb-3">Edit Profile</h4>
+          <div className="mb-3">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              className="form-control"
+              value={email}
+              required
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Username</label>
+            <input
+              type="text"
+              className="form-control"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Bio</label>
+            <input
+              type="text"
+              className="form-control"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Contact</label>
+            <input
+              type="text"
+              className="form-control"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+            />
+          </div>
+          {user?.role !== "banned" && (
+            <div className="form-check mb-3">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                checked={wantsNotifications}
+                onChange={handleNotificationToggle}
+              />
+              <label className="form-check-label">
+                Receive event notification emails
+              </label>
+            </div>
+          )}
+          <button type="submit" className="btn btn-primary w-100">
+            Update User
+          </button>
+        </form>
+        <form
+          onSubmit={handleChangePassword}
+          className="card p-4 shadow-sm change-password-form"
+        >
+          <h4 className="mb-3">Change Password</h4>
+          <div className="mb-3">
+            <label className="form-label">Old Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">New Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
 
-          {newPassword && (
-            <div className="password-feedback mt-3 mb-3">
-              <div
-                className={`fw-semibold ${getStrengthColor(
-                  passwordScore
-                )} mb-1`}
-              >
-                Strength: {getStrengthLabel(passwordScore)}
+            {newPassword && (
+              <div className="password-feedback mt-3 mb-3">
+                <div
+                  className={`fw-semibold ${getStrengthColor(
+                    passwordScore
+                  )} mb-1`}
+                >
+                  Strength: {getStrengthLabel(passwordScore)}
+                </div>
+
+                {passwordFeedbackList.length > 0 && (
+                  <ul className="text-danger small ps-3 mb-0">
+                    {passwordFeedbackList.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-
-              {passwordFeedbackList.length > 0 && (
-                <ul className="text-danger small ps-3 mb-0">
-                  {passwordFeedbackList.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Confirm New Password</label>
-          <input
-            type="password"
-            className="form-control"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-          {confirmPassword && newPassword !== confirmPassword && (
-            <div className="text-danger small mt-1">
-              Passwords do not match.
-            </div>
-          )}
-        </div>
-        <button type="submit" className="btn btn-secondary w-100">
-          Change Password
-        </button>
-        {passwordMessage && (
-          <p className="mt-3 text-center">{passwordMessage}</p>
-        )}
-      </form>
-    </div>
+            )}
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Confirm New Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+            {confirmPassword && newPassword !== confirmPassword && (
+              <div className="text-danger small mt-1">
+                Passwords do not match.
+              </div>
+            )}
+          </div>
+          <button type="submit" className="btn btn-secondary w-100">
+            Change Password
+          </button>
+        </form>
+      </div>
+    </>
   );
 };
 

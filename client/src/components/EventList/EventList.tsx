@@ -7,15 +7,32 @@ import "./EventList.css";
 
 interface EventListProps {
   events: EventData[];
+  onEventUpdate: (updatedEvent: EventData) => void;
+  showNotification: (
+    message: string,
+    header: string,
+    bg: string,
+    textColor?: string
+  ) => void;
 }
 
-const EventList: React.FC<EventListProps> = ({ events }) => {
+const EventList: React.FC<EventListProps> = ({
+  events,
+  onEventUpdate,
+  showNotification,
+}) => {
   const { user, isVerified } = useUser();
-  const { cancelEvent } = useEventActions();
+  const { cancelEvent } = useEventActions(showNotification);
 
   if (!Array.isArray(events) || events.length === 0) {
     return <div>No events available. Try again later!</div>;
   }
+
+  const handleCancelClick = async (eventId: number) => {
+    await cancelEvent(eventId, (data) => {
+      onEventUpdate(data.event);
+    });
+  };
 
   return (
     <div>
@@ -75,7 +92,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                 {event.status !== "canceled" && (
                   <button
                     className="cancel-btn"
-                    onClick={() => cancelEvent(event.id)}
+                    onClick={() => handleCancelClick(event.id)}
                   >
                     Cancel Event
                   </button>

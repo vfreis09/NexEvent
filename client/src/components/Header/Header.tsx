@@ -4,6 +4,8 @@ import { Navbar } from "react-bootstrap";
 import { FaBell } from "react-icons/fa";
 import { useUser } from "../../context/UserContext";
 import { Notification } from "../../types/Notification";
+import { useToast } from "../../hooks/useToast";
+import AppToast from "../ToastComponent/ToastComponent";
 import "./Header.css";
 
 const Header: React.FC = () => {
@@ -25,6 +27,8 @@ const Header: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+
   const fetchNotifications = async () => {
     setLoadingNotifications(true);
     try {
@@ -38,7 +42,11 @@ const Header: React.FC = () => {
       const limitedNotifications = data.slice(0, 5);
       setNotifications(limitedNotifications);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      showNotification(
+        "We couldn't load your recent notifications.",
+        "Error",
+        "danger"
+      );
     } finally {
       setLoadingNotifications(false);
     }
@@ -96,19 +104,29 @@ const Header: React.FC = () => {
         );
         if (!rsvpRes.ok) throw new Error("Failed to create RSVP");
 
-        alert("You have successfully RSVP'd to the event!");
+        showNotification(
+          "Invite accepted! You are now RSVP'd to the event.",
+          "Success",
+          "success"
+        );
       } else {
-        alert("You have declined the invite.");
+        showNotification(
+          "Invite declined. You will not receive further reminders.",
+          "Success",
+          "success"
+        );
       }
 
       const markRes = await markNotificationRead(notificationId);
-
-      if (markRes !== false) {
+      if (markRes) {
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       }
     } catch (error) {
-      console.error(`Error responding to invite: ${status}`, error);
-      alert("Something went wrong while processing your response.");
+      showNotification(
+        "Something went wrong while processing your invitation response.",
+        "Error",
+        "danger"
+      );
     }
   };
 
@@ -156,153 +174,174 @@ const Header: React.FC = () => {
       setUser(null);
       setIsLoggedIn(false);
       navigate("/");
+      showNotification(
+        "You've been successfully logged out.",
+        "Success",
+        "success"
+      );
     } catch (error) {
-      console.error("Error logging out:", error);
+      showNotification(
+        "There was an issue logging you out. Please try refreshing.",
+        "Error",
+        "danger"
+      );
     }
   };
 
   return (
-    <Navbar sticky="top" expand="lg" className="custom-navbar">
-      <div className="header-wrapper">
-        <div className="header-left">
-          <Link to="/" className="logo-text">
-            NexEvent
-          </Link>
-          {user && isVerified && user.role !== "banned" && (
-            <Link to="/create" className="nav-link create-event">
-              Create Event
+    <>
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+          onClose={hideToast}
+        />
+      )}
+      <Navbar sticky="top" expand="lg" className="custom-navbar">
+        <div className="header-wrapper">
+          <div className="header-left">
+            <Link to="/" className="logo-text">
+              NexEvent
             </Link>
-          )}
-        </div>
+            {user && isVerified && user.role !== "banned" && (
+              <Link to="/create" className="nav-link create-event">
+                Create Event
+              </Link>
+            )}
+          </div>
 
-        <div className="header-right">
-          {user && (
-            <div className="notification-wrapper" ref={notificationRef}>
-              <button
-                className="nav-button bell-button"
-                onClick={toggleNotifications}
-              >
-                <FaBell />
-              </button>
-              {showNotifications && (
-                <div className="notification-dropdown">
-                  {loadingNotifications ? (
-                    <div className="notification-item">Loading...</div>
-                  ) : notifications.length > 0 ? (
-                    notifications.map((note) => {
-                      const isInvite =
-                        note.invite_id !== undefined &&
-                        note.invite_status?.toLowerCase() === "pending";
-                      if (!isInvite) {
+          <div className="header-right">
+            {user && (
+              <div className="notification-wrapper" ref={notificationRef}>
+                <button
+                  className="nav-button bell-button"
+                  onClick={toggleNotifications}
+                >
+                  <FaBell />
+                </button>
+                {showNotifications && (
+                  <div className="notification-dropdown">
+                    {loadingNotifications ? (
+                      <div className="notification-item">Loading...</div>
+                    ) : notifications.length > 0 ? (
+                      notifications.map((note) => {
+                        const isInvite =
+                          note.invite_id !== undefined &&
+                          note.invite_status?.toLowerCase() === "pending";
+                        if (!isInvite) {
+                          return (
+                            <button
+                              key={note.id}
+                              className={`notification-item ${
+                                note.is_read ? "read" : "unread"
+                              }`}
+                              onClick={async () => {
+                                await markNotificationRead(note.id);
+                                setShowNotifications(false);
+                                navigate(`/event/${note.event_id}`);
+                              }}
+                            >
+                              {note.message}
+                            </button>
+                          );
+                        }
+
                         return (
-                          <button
+                          <div
                             key={note.id}
                             className={`notification-item ${
                               note.is_read ? "read" : "unread"
                             }`}
-                            onClick={async () => {
-                              await markNotificationRead(note.id);
-                              setShowNotifications(false);
-                              navigate(`/event/${note.event_id}`);
-                            }}
                           >
-                            {note.message}
-                          </button>
+                            <p>{note.message}</p>
+                            <button
+                              onClick={() =>
+                                respondToInvite(
+                                  note.invite_id!,
+                                  note.id,
+                                  note.event_id,
+                                  "accepted"
+                                )
+                              }
+                              className="nav-button"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() =>
+                                respondToInvite(
+                                  note.invite_id!,
+                                  note.id,
+                                  note.event_id,
+                                  "declined"
+                                )
+                              }
+                              className="nav-button"
+                              style={{ marginLeft: "8px" }}
+                            >
+                              Reject
+                            </button>
+                          </div>
                         );
-                      }
+                      })
+                    ) : (
+                      <div className="notification-item">No notifications</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
-                      return (
-                        <div
-                          key={note.id}
-                          className={`notification-item ${
-                            note.is_read ? "read" : "unread"
-                          }`}
-                        >
-                          <p>{note.message}</p>
-                          <button
-                            onClick={() =>
-                              respondToInvite(
-                                note.invite_id!,
-                                note.id,
-                                note.event_id,
-                                "accepted"
-                              )
-                            }
-                            className="nav-button"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() =>
-                              respondToInvite(
-                                note.invite_id!,
-                                note.id,
-                                note.event_id,
-                                "declined"
-                              )
-                            }
-                            className="nav-button"
-                            style={{ marginLeft: "8px" }}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="notification-item">No notifications</div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {user ? (
-            <div className="user-menu-wrapper" ref={userMenuRef}>
-              <button
-                className="nav-button user-menu-button"
-                onClick={() => setShowUserMenu((prev) => !prev)}
-              >
-                {user.username}
-              </button>
-              {showUserMenu && (
-                <div className="user-menu-dropdown">
-                  <Link
-                    to={`/user/${user.username}`}
-                    className="user-menu-item"
-                  >
-                    Profile
-                  </Link>
-                  <Link to="/settings" className="user-menu-item">
-                    Settings
-                  </Link>
-                  {user.role === "admin" && (
-                    <Link to="/admin" className="user-menu-item">
-                      Admin Dashboard
+            {user ? (
+              <div className="user-menu-wrapper" ref={userMenuRef}>
+                <button
+                  className="nav-button user-menu-button"
+                  onClick={() => setShowUserMenu((prev) => !prev)}
+                >
+                  {user.username}
+                </button>
+                {showUserMenu && (
+                  <div className="user-menu-dropdown">
+                    <Link
+                      to={`/user/${user.username}`}
+                      className="user-menu-item"
+                    >
+                      Profile
                     </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="user-menu-item logout-item"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <Link to="/login" className="nav-button login-button">
-                Login
-              </Link>
-              <Link to="/signup" className="nav-button signup-button">
-                Start for Free
-              </Link>
-            </>
-          )}
+                    <Link to="/settings" className="user-menu-item">
+                      Settings
+                    </Link>
+                    {user.role === "admin" && (
+                      <Link to="/admin" className="user-menu-item">
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="user-menu-item logout-item"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className="nav-button login-button">
+                  Login
+                </Link>
+                <Link to="/signup" className="nav-button signup-button">
+                  Start for Free
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </Navbar>
+      </Navbar>
+    </>
   );
 };
 

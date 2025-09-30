@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useToast } from "../../hooks/useToast";
+import AppToast from "../ToastComponent/ToastComponent";
 import "./RSVP.css";
 
 type RSVPProps = {
@@ -10,6 +12,8 @@ type RSVPProps = {
 const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
   const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   useEffect(() => {
     const fetchRSVPStatus = async () => {
@@ -32,10 +36,18 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
         } else if (response.status === 404) {
           setRsvpStatus(null);
         } else {
-          console.error("Failed to fetch RSVP status.");
+          showNotification(
+            "Could not load your current RSVP status.",
+            "Error",
+            "danger"
+          );
         }
       } catch (err) {
-        console.error(err);
+        showNotification(
+          "Could not load your current RSVP status.",
+          "Error",
+          "danger"
+        );
       } finally {
         setLoading(false);
       }
@@ -44,7 +56,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
     fetchRSVPStatus();
   }, [eventId, userId]);
 
-  const handleRSVP = async (rsvpStatus: string) => {
+  const handleRSVP = async (newRsvpStatus: string) => {
     try {
       const response = await fetch(
         `http://localhost:3000/api/events/${eventId}/rsvp`,
@@ -55,22 +67,37 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
           },
           body: JSON.stringify({
             userId,
-            status: rsvpStatus,
+            status: newRsvpStatus,
           }),
           credentials: "include",
         }
       );
 
       if (response.ok) {
-        const data = await response.json();
-        setRsvpStatus(rsvpStatus);
-        alert(data.message);
+        await response.json();
+        setRsvpStatus(newRsvpStatus);
+
+        const message =
+          newRsvpStatus === "Accepted"
+            ? "You're in! Event spot secured."
+            : "Invitation declined. We hope to see you next time!";
+
+        showNotification(message, "Success", "success");
       } else {
-        alert("Failed to update RSVP.");
+        const errorData = await response.json();
+
+        showNotification(
+          errorData.message || "Failed to update your RSVP. Please try again.",
+          "Error",
+          "danger"
+        );
       }
     } catch (err) {
-      console.error(err);
-      alert("Failed to update RSVP.");
+      showNotification(
+        "Failed to connect and update your RSVP.",
+        "Error",
+        "danger"
+      );
     }
   };
 
@@ -91,34 +118,46 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
   }
 
   return (
-    <div className="rsvp-container">
-      {loading ? (
-        <p>Loading RSVP status...</p>
-      ) : !userId ? (
-        <p>Please log in to RSVP for this event.</p>
-      ) : (
-        <>
-          <p>Please let us know if you'll be attending:</p>
-          <div className="rsvp-buttons">
-            <button
-              onClick={() => handleRSVP("Accepted")}
-              className={rsvpStatus === "Accepted" ? "active" : ""}
-            >
-              Accept
-            </button>
-            <button
-              onClick={() => handleRSVP("Declined")}
-              className={rsvpStatus === "Declined" ? "active" : ""}
-            >
-              Decline
-            </button>
-          </div>
-          {rsvpStatus && (
-            <p>You have {rsvpStatus.toLowerCase()} the invitation.</p>
-          )}
-        </>
+    <>
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+          onClose={hideToast}
+        />
       )}
-    </div>
+      <div className="rsvp-container">
+        {loading ? (
+          <p>Loading RSVP status...</p>
+        ) : !userId ? (
+          <p>Please log in to RSVP for this event.</p>
+        ) : (
+          <>
+            <p>Please let us know if you'll be attending:</p>
+            <div className="rsvp-buttons">
+              <button
+                onClick={() => handleRSVP("Accepted")}
+                className={rsvpStatus === "Accepted" ? "active" : ""}
+              >
+                Accept
+              </button>
+              <button
+                onClick={() => handleRSVP("Declined")}
+                className={rsvpStatus === "Declined" ? "active" : ""}
+              >
+                Decline
+              </button>
+            </div>
+            {rsvpStatus && (
+              <p>You have {rsvpStatus.toLowerCase()} the invitation.</p>
+            )}
+          </>
+        )}
+      </div>
+    </>
   );
 };
 

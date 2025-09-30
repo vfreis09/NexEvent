@@ -2,30 +2,31 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
+import { useToast } from "../../hooks/useToast";
+import AppToast from "../../components/ToastComponent/ToastComponent";
 import "./Home.css";
 
 function HomePage() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const location = useLocation();
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   useEffect(() => {
     const state = location.state as { successMessage?: string } | null;
 
     if (state?.successMessage) {
-      setSuccessMessage(state.successMessage);
-
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-      }, 5000);
+      showNotification(
+        "Success! Your event is live and ready for RSVPs.",
+        "Success",
+        "success",
+        "white"
+      );
 
       window.history.replaceState({}, document.title, window.location.pathname);
-
-      return () => clearTimeout(timer);
     }
-  }, [location.state]);
+  }, [location.state, showNotification]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -34,21 +35,42 @@ function HomePage() {
         const data = await response.json();
         setEvents(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Error fetching posts:", error);
+        showNotification(
+          "Uh oh, we couldn't fetch the events right now.",
+          "Error",
+          "danger",
+          "white"
+        );
         setEvents([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPosts();
-  }, []);
+  }, [showNotification]);
+
+  const handleEventUpdate = (updatedEvent: EventData) => {
+    if (!updatedEvent || typeof updatedEvent.id === "undefined") {
+    }
+
+    setEvents((prevEvents) =>
+      prevEvents.map((event) =>
+        event.id === updatedEvent.id ? updatedEvent : event
+      )
+    );
+  };
+
   return (
     <>
-      {successMessage && (
-        <div className="bottom-toast" role="alert">
-          {successMessage}
-        </div>
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+          onClose={hideToast}
+        />
       )}
       <div className="home-page">
         {loading ? (
@@ -56,7 +78,11 @@ function HomePage() {
         ) : (
           <>
             <h2>Upcoming Events</h2>
-            <EventList events={events} />
+            <EventList
+              events={events}
+              onEventUpdate={handleEventUpdate}
+              showNotification={showNotification}
+            />
           </>
         )}
       </div>

@@ -1,11 +1,19 @@
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-export const useEventActions = () => {
-  const navigate = useNavigate();
+export const useEventActions = (
+  showNotification: (
+    message: string,
+    header: string,
+    bg: string,
+    textColor?: string
+  ) => void
+) => {
   const [loading, setLoading] = useState(false);
 
-  const cancelEvent = async (eventId: number) => {
+  const cancelEvent = async (
+    eventId: number,
+    onSuccess: (data: any) => void
+  ) => {
     setLoading(true);
     try {
       const res = await fetch(
@@ -15,33 +23,29 @@ export const useEventActions = () => {
           credentials: "include",
         }
       );
-      if (!res.ok) throw new Error("Failed to cancel");
-      alert("Event cancelled successfully");
+      if (!res.ok) throw new Error("Failed to cancel event.");
+
+      const data = await res.json();
+
+      onSuccess(data);
+
+      showNotification(
+        "Event successfully closed. The event status is now Canceled.",
+        "Success",
+        "success",
+        "white"
+      );
     } catch (err) {
-      console.error(err);
-      alert("Error cancelling event");
+      showNotification(
+        "We couldn't cancel the event. Please try again.",
+        "Error",
+        "danger",
+        "white"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteEvent = async (eventId: number) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`http://localhost:3000/api/events/${eventId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to delete");
-      alert("Event deleted successfully");
-      navigate("/");
-    } catch (err) {
-      console.error(err);
-      alert("Error deleting event");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { cancelEvent, deleteEvent, loading };
+  return { cancelEvent, loading };
 };

@@ -5,6 +5,7 @@ import Places from "../Places/Places";
 import { useMapContext } from "../../context/MapProvider";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
+import { useToast } from "../../hooks/useToast";
 import "./EventForm.css";
 
 interface EventFormProps {
@@ -24,6 +25,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { isLoaded } = useMapContext();
+  const { showNotification } = useToast();
 
   const eventId = id ? parseInt(id) : null;
 
@@ -59,12 +61,13 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           setMaxAttendees(data.max_attendees ?? "");
         } catch (error) {
           console.error("Error fetching event:", error);
+          showNotification("Failed to load event details.", "Error", "danger");
         }
       };
 
       fetchEvent();
     }
-  }, [isEditing, eventId, timeZone]);
+  }, [isEditing, eventId, timeZone, showNotification]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,14 +110,22 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         );
       }
 
-      navigate("/");
-      alert(
-        isEditing ? "Event updated successfully" : "Event created successfully"
-      );
+      navigate("/", {
+        state: {
+          successMessage: isEditing
+            ? "Event updated successfully"
+            : "Event created successfully",
+        },
+      });
     } catch (error) {
       console.error(
         isEditing ? "Event update failed" : "Event creation failed",
         error
+      );
+      showNotification(
+        isEditing ? "Event update failed" : "Event creation failed",
+        "Error",
+        "danger"
       );
     }
   };
@@ -127,66 +138,68 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   if (!isLoaded) return <div>Loading...</div>;
 
   return (
-    <form onSubmit={handleSubmit} className="container mt-4 mb-5">
-      <div className="card p-4 shadow-sm">
-        <h2 className="mb-4">{isEditing ? "Edit Event" : "Create Event"}</h2>
-        <div className="mb-3">
-          <label className="form-label">Title:</label>
-          <input
-            type="text"
-            className="form-control"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Description:</label>
-          <textarea
-            className="form-control"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Event Date and Time:</label>
-          <input
-            type="datetime-local"
-            className="form-control"
-            value={eventDateTime}
-            onChange={(e) => setEventDateTime(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Max Attendees:</label>
-          <input
-            type="number"
-            className="form-control"
-            value={maxAttendees}
-            onChange={(e) => setMaxAttendees(e.target.value)}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Search Location:</label>
-          <div className="border p-2 rounded">
-            <Places setPosition={handleLocationChange} />
+    <>
+      <form onSubmit={handleSubmit} className="container mt-4 mb-5">
+        <div className="card p-4 shadow-sm">
+          <h2 className="mb-4">{isEditing ? "Edit Event" : "Create Event"}</h2>
+          <div className="mb-3">
+            <label className="form-label">Title:</label>
+            <input
+              type="text"
+              className="form-control"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Description:</label>
+            <textarea
+              className="form-control"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Event Date and Time:</label>
+            <input
+              type="datetime-local"
+              className="form-control"
+              value={eventDateTime}
+              onChange={(e) => setEventDateTime(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Max Attendees:</label>
+            <input
+              type="number"
+              className="form-control"
+              value={maxAttendees}
+              onChange={(e) => setMaxAttendees(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Search Location:</label>
+            <div className="border p-2 rounded">
+              <Places setPosition={handleLocationChange} />
+            </div>
+          </div>
+          <div className="mb-3">
+            <div className="map-container mb-3">
+              <Map location={location} isLoaded={isLoaded} />
+            </div>
+          </div>
+          <div className="text-end">
+            <button type="submit" className="btn btn-primary">
+              {isEditing ? "Update Event" : "Create Event"}
+            </button>
           </div>
         </div>
-        <div className="mb-3">
-          <div className="map-container mb-3">
-            <Map location={location} isLoaded={isLoaded} />
-          </div>
-        </div>
-        <div className="text-end">
-          <button type="submit" className="btn btn-primary">
-            {isEditing ? "Update Event" : "Create Event"}
-          </button>
-        </div>
-      </div>
-    </form>
+      </form>
+    </>
   );
 };
 

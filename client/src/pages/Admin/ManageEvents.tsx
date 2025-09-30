@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Alert, Spinner } from "react-bootstrap";
 import { EventType } from "../../types/EventType";
+import { useToast } from "../../hooks/useToast";
+import AppToast from "../../components/ToastComponent/ToastComponent";
 import "./ManageEvents.css";
 
 const ManageEvents: React.FC = () => {
   const [events, setEvents] = useState<EventType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   const fetchEvents = async () => {
     try {
@@ -18,6 +22,7 @@ const ManageEvents: React.FC = () => {
       setEvents(data);
     } catch (err: any) {
       setError(err.message);
+      showNotification("Failed to fetch events.", "Error", "danger");
     } finally {
       setLoading(false);
     }
@@ -25,9 +30,9 @@ const ManageEvents: React.FC = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [showNotification]);
 
-  const handleCancel = async (id: number) => {
+  const handleCancel = async (id: number, title: string) => {
     try {
       const res = await fetch(
         `http://localhost:3000/api/admin/events/${id}/cancel`,
@@ -38,12 +43,18 @@ const ManageEvents: React.FC = () => {
       setEvents((prev) =>
         prev.map((e) => (e.id === id ? { ...e, status: data.event.status } : e))
       );
+      showNotification(
+        `Event '${title}' was successfully canceled.`,
+        "Success",
+        "success"
+      );
     } catch (err: any) {
       setError(err.message);
+      showNotification(`Failed to cancel event '${title}'.`, "Error", "danger");
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, title: string) => {
     try {
       const res = await fetch(`http://localhost:3000/api/admin/events/${id}`, {
         method: "DELETE",
@@ -51,8 +62,14 @@ const ManageEvents: React.FC = () => {
       });
       if (!res.ok) throw new Error("Failed to delete event");
       setEvents((prev) => prev.filter((e) => e.id !== id));
+      showNotification(
+        `Event '${title}' was successfully deleted.`,
+        "Success",
+        "success"
+      );
     } catch (err: any) {
       setError(err.message);
+      showNotification(`Failed to delete event '${title}'.`, "Error", "danger");
     }
   };
 
@@ -64,60 +81,74 @@ const ManageEvents: React.FC = () => {
     );
 
   return (
-    <Container className="manage-events">
-      <h1 className="page-title">Manage Events</h1>
+    <>
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+          onClose={hideToast}
+        />
+      )}
+      <Container className="manage-events">
+        <h1 className="page-title">Manage Events</h1>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+        {error && <Alert variant="danger">{error}</Alert>}
 
-      <Table
-        striped
-        bordered
-        hover
-        responsive
-        className="events-table shadow-sm"
-      >
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Address</th>
-            <th>Date & Time</th>
-            <th>Author</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {events.map((event) => (
-            <tr key={event.id}>
-              <td>{event.title}</td>
-              <td>{event.description}</td>
-              <td>{event.address}</td>
-              <td>{new Date(event.event_datetime).toLocaleString()}</td>
-              <td>{event.author_username}</td>
-              <td className={`status-text ${event.status}`}>{event.status}</td>
-              <td className="actions-col">
-                <Button
-                  variant="warning"
-                  size="sm"
-                  onClick={() => handleCancel(event.id)}
-                  disabled={event.status === "canceled"}
-                >
-                  Cancel
-                </Button>{" "}
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleDelete(event.id)}
-                >
-                  Delete
-                </Button>
-              </td>
+        <Table
+          striped
+          bordered
+          hover
+          responsive
+          className="events-table shadow-sm"
+        >
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Address</th>
+              <th>Date & Time</th>
+              <th>Author</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
-    </Container>
+          </thead>
+          <tbody>
+            {events.map((event) => (
+              <tr key={event.id}>
+                <td>{event.title}</td>
+                <td>{event.description}</td>
+                <td>{event.address}</td>
+                <td>{new Date(event.event_datetime).toLocaleString()}</td>
+                <td>{event.author_username}</td>
+                <td className={`status-text ${event.status}`}>
+                  {event.status}
+                </td>
+                <td className="actions-col">
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    onClick={() => handleCancel(event.id, event.title)}
+                    disabled={event.status === "canceled"}
+                  >
+                    Cancel
+                  </Button>{" "}
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDelete(event.id, event.title)}
+                  >
+                    Delete
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Container>
+    </>
   );
 };
 
