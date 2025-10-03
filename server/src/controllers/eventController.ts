@@ -53,20 +53,35 @@ const createEvent = async (req: Request, res: Response) => {
 
     res.status(201).json(event);
 
-    const users = await pool.query(
-      "SELECT email FROM users WHERE is_verified = true"
-    );
+    (async () => {
+      try {
+        const users = await pool.query(
+          "SELECT email FROM users WHERE is_verified = true"
+        );
 
-    for (const user of users.rows) {
-      await emailServices.sendEventCreationEmail(
-        user.email,
-        event.title,
-        event.id
-      );
-    }
+        for (const user of users.rows as { email: string }[]) {
+          await emailServices
+            .sendEventCreationEmail(user.email, event.title, event.id)
+            .catch((e) => {
+              console.error(
+                `Failed to send creation email to ${user.email}:`,
+                e.message
+              );
+            });
+        }
+        console.log("All event creation emails processed.");
+      } catch (backgroundError) {
+        console.error(
+          "Critical background email process failure:",
+          backgroundError
+        );
+      }
+    })();
   } catch (error) {
-    console.error("Error creating event:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error creating event (DB failure):", error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Internal Server Error" });
+    }
   }
 };
 
