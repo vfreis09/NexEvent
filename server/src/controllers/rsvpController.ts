@@ -134,11 +134,8 @@ const getSingleRsvp = async (req: Request, res: Response) => {
   }
 };
 
-const getAcceptedRsvpsByUser = async (req: Request, res: Response) => {
+const getEventsUserRsvpedTo = async (req: Request, res: Response) => {
   const { username } = req.params;
-  const limit = parseInt(req.query.limit as string) || 10;
-  const offset = parseInt(req.query.offset as string) || 0;
-  const includeExpired = req.query.includeExpired === "true";
 
   try {
     const userResult = await pool.query(
@@ -152,23 +149,23 @@ const getAcceptedRsvpsByUser = async (req: Request, res: Response) => {
 
     const userId = userResult.rows[0].id;
 
-    const rsvpQuery = `
-      SELECT events.*, users.username AS author_username, r.status
+    const eventsQuery = `
+      SELECT 
+        e.*, 
+        u.username AS author_username, 
+        r.status AS user_rsvp_status
       FROM rsvps r
-      JOIN events ON r.event_id = events.id
-      JOIN users ON events.author_id = users.id
+      JOIN events e ON r.event_id = e.id
+      JOIN users u ON e.author_id = u.id
       WHERE r.user_id = $1 
-        AND r.status = 'Accepted'
-        ${includeExpired ? "" : "AND events.event_datetime >= NOW()"}
-      ORDER BY events.event_datetime DESC
-      LIMIT $2 OFFSET $3
+      ORDER BY e.event_datetime DESC
     `;
 
-    const rsvpResult = await pool.query(rsvpQuery, [userId, limit, offset]);
+    const eventsResult = await pool.query(eventsQuery, [userId]);
 
-    res.json(rsvpResult.rows);
-  } catch (err) {
-    console.error("Error fetching RSVP events by user:", err);
+    res.json(eventsResult.rows);
+  } catch (error) {
+    console.error("Error fetching user RSVPs:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -177,7 +174,7 @@ const rsvpController = {
   createRsvp,
   getRsvps,
   getSingleRsvp,
-  getAcceptedRsvpsByUser,
+  getEventsUserRsvpedTo,
 };
 
 export default rsvpController;

@@ -8,20 +8,57 @@
   display: flex;
   gap: 1rem;
   margin: 2rem 0 1rem;
+  border-bottom: 1px solid #ddd;
 }
 
 .tab-nav a {
   padding: 0.5rem 1rem;
   text-decoration: none;
-  color: #333;
+  color: #555;
   border-bottom: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.tab-nav a:hover {
+  color: #007bff;
 }
 
 .tab-nav a.active {
   border-color: #007bff;
   font-weight: bold;
+  color: #007bff;
 }
 
 .tab-content {
   margin-top: 1rem;
+}
+
+.rsvps-tab-view,
+.created-events-tab-view {
+  padding: 1rem 0;
+}
+
+.rsvps-tab-view h3,
+.created-events-tab-view h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.past-rsvps-header,
+.past-events-header {
+  color: #6c757d;
+  border-bottom: 2px dashed #ccc;
+}
+
+.no-events-message {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-left: 5px solid #007bff;
+  color: #495057;
+  border-radius: 4px;
+  margin-bottom: 1rem;
 }

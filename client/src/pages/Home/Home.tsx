@@ -7,7 +7,8 @@ import AppToast from "../../components/ToastComponent/ToastComponent";
 import "./Home.css";
 
 function HomePage() {
-  const [events, setEvents] = useState<EventData[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<EventData[]>([]);
+  const [pastEvents, setPastEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const location = useLocation();
@@ -33,7 +34,28 @@ function HomePage() {
       try {
         const response = await fetch("http://localhost:3000/api/events/");
         const data = await response.json();
-        setEvents(Array.isArray(data) ? data : []);
+
+        const allEvents: EventData[] = Array.isArray(data) ? data : [];
+        const now = new Date();
+
+        const sortedUpcoming = allEvents
+          .filter((event) => new Date(event.event_datetime) >= now)
+          .sort(
+            (a, b) =>
+              new Date(a.event_datetime).getTime() -
+              new Date(b.event_datetime).getTime()
+          );
+
+        const sortedPast = allEvents
+          .filter((event) => new Date(event.event_datetime) < now)
+          .sort(
+            (a, b) =>
+              new Date(b.event_datetime).getTime() -
+              new Date(a.event_datetime).getTime()
+          );
+
+        setUpcomingEvents(sortedUpcoming);
+        setPastEvents(sortedPast);
       } catch (error) {
         showNotification(
           "Uh oh, we couldn't fetch the events right now.",
@@ -41,7 +63,8 @@ function HomePage() {
           "danger",
           "white"
         );
-        setEvents([]);
+        setUpcomingEvents([]);
+        setPastEvents([]);
       } finally {
         setLoading(false);
       }
@@ -51,13 +74,16 @@ function HomePage() {
 
   const handleEventUpdate = (updatedEvent: EventData) => {
     if (!updatedEvent || typeof updatedEvent.id === "undefined") {
+      return;
     }
 
-    setEvents((prevEvents) =>
+    const updateList = (prevEvents: EventData[]): EventData[] =>
       prevEvents.map((event) =>
         event.id === updatedEvent.id ? updatedEvent : event
-      )
-    );
+      );
+
+    setUpcomingEvents(updateList);
+    setPastEvents(updateList);
   };
 
   return (
@@ -78,11 +104,28 @@ function HomePage() {
         ) : (
           <>
             <h2>Upcoming Events</h2>
-            <EventList
-              events={events}
-              onEventUpdate={handleEventUpdate}
-              showNotification={showNotification}
-            />
+            {upcomingEvents.length > 0 ? (
+              <EventList
+                events={upcomingEvents}
+                onEventUpdate={handleEventUpdate}
+                showNotification={showNotification}
+              />
+            ) : (
+              <p className="no-events-message">
+                No upcoming events right now. Check back soon!
+              </p>
+            )}
+            <h2 className="past-events-header">Past Events</h2>
+            {pastEvents.length > 0 ? (
+              <EventList
+                events={pastEvents}
+                onEventUpdate={handleEventUpdate}
+                showNotification={showNotification}
+                isPast={true}
+              />
+            ) : (
+              <p className="no-events-message">No past events to display.</p>
+            )}
           </>
         )}
       </div>

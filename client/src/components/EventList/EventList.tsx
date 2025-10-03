@@ -14,12 +14,16 @@ interface EventListProps {
     bg: string,
     textColor?: string
   ) => void;
+  isPast?: boolean;
+  isCompact?: boolean;
 }
 
 const EventList: React.FC<EventListProps> = ({
   events,
   onEventUpdate,
   showNotification,
+  isPast = false,
+  isCompact = false,
 }) => {
   const { user, isVerified } = useUser();
   const { cancelEvent } = useEventActions(showNotification);
@@ -38,9 +42,17 @@ const EventList: React.FC<EventListProps> = ({
     <div>
       {events.map((event) => {
         const isOwner = user && event.author_id === user.id;
+        const eventIsExpired = new Date(event.event_datetime) < new Date();
+        let cardClass = "event-card";
+
+        if (isPast) {
+          cardClass += " past-event-card";
+        } else if (isCompact) {
+          cardClass += " compact-event-card";
+        }
 
         return (
-          <div key={event.id} className="event-card">
+          <div key={event.id} className={cardClass}>
             <div className="event-card-header">
               <span>
                 Posted by:{" "}
@@ -66,39 +78,50 @@ const EventList: React.FC<EventListProps> = ({
                   {event.address.split(",")[0]}
                 </div>
               )}
-              <div>
-                <strong>Attendees:</strong> {event.number_of_attendees}
-              </div>
+              {!isCompact && (
+                <div>
+                  <strong>Attendees:</strong> {event.number_of_attendees}
+                </div>
+              )}
               <div className="event-card-description">
-                {event.description.slice(0, 100)}
+                {event.description.slice(0, isCompact ? 50 : 100)}
+                {isCompact && "..."}
               </div>
             </div>
             <div className="event-card-footer">
               <strong>Status:</strong>{" "}
               {event.status === "canceled"
                 ? "Canceled"
+                : eventIsExpired && isPast
+                ? "Completed"
                 : event.max_attendees !== null &&
                   event.number_of_attendees >= event.max_attendees
                 ? "Full"
-                : new Date(event.event_datetime) < new Date()
+                : isCompact
+                ? "Upcoming"
+                : eventIsExpired
                 ? "Expired"
                 : "Active"}
             </div>
-            {isVerified && user?.role !== "banned" && isOwner && (
-              <div className="event-card-actions">
-                <Link to={`/edit/${event.id}`} className="edit-btn">
-                  Edit
-                </Link>
-                {event.status !== "canceled" && (
-                  <button
-                    className="cancel-btn"
-                    onClick={() => handleCancelClick(event.id)}
-                  >
-                    Cancel Event
-                  </button>
-                )}
-              </div>
-            )}
+            {isVerified &&
+              user?.role !== "banned" &&
+              isOwner &&
+              !isPast &&
+              !isCompact && (
+                <div className="event-card-actions">
+                  <Link to={`/edit/${event.id}`} className="edit-btn">
+                    Edit
+                  </Link>
+                  {event.status !== "canceled" && (
+                    <button
+                      className="cancel-btn"
+                      onClick={() => handleCancelClick(event.id)}
+                    >
+                      Cancel Event
+                    </button>
+                  )}
+                </div>
+              )}
           </div>
         );
       })}

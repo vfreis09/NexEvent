@@ -21,6 +21,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [location, setLocation] = useState<LatLngLiteral | null>(null);
   const [address, setAddress] = useState<string>("");
   const [maxAttendees, setMaxAttendees] = useState<number | string>("");
+  const [isEventExpired, setIsEventExpired] = useState(false);
 
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -42,7 +43,19 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
           const data = await response.json();
 
-          const utcDate = new Date(data.event_datetime);
+          const eventDate = new Date(data.event_datetime);
+          const now = new Date();
+
+          if (eventDate < now) {
+            setIsEventExpired(true);
+            showNotification(
+              "This event has passed. Date/Location editing is disabled.",
+              "Notice",
+              "warning"
+            );
+          }
+
+          const utcDate = eventDate;
           const localDate = toZonedTime(utcDate, timeZone);
 
           const formattedDateTime = format(localDate, "yyyy-MM-dd'T'HH:mm");
@@ -80,13 +93,16 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
       const latitude = location?.lat ?? null;
       const longitude = location?.lng ?? null;
-
       const locationPoint =
         latitude && longitude ? `${longitude} ${latitude}` : null;
 
-      const localDate = new Date(eventDateTime);
-      const utcDate = toZonedTime(localDate, timeZone);
-      const utcISOString = utcDate.toISOString();
+      let finalEventDateTime = eventDateTime;
+
+      if (!isEditing || !isEventExpired) {
+        const localDate = new Date(eventDateTime);
+        const utcDate = toZonedTime(localDate, timeZone);
+        finalEventDateTime = utcDate.toISOString();
+      }
 
       const response = await fetch(url, {
         method,
@@ -97,7 +113,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         body: JSON.stringify({
           title,
           description,
-          eventDateTime: utcISOString,
+          eventDateTime: finalEventDateTime,
           location: locationPoint,
           max_attendees: maxAttendees,
           address,
@@ -131,6 +147,14 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   };
 
   const handleLocationChange = (position: LatLngLiteral, addr: string) => {
+    if (isEditing && isEventExpired) {
+      showNotification(
+        "Cannot change location for a past event.",
+        "Warning",
+        "warning"
+      );
+      return;
+    }
     setLocation(position);
     setAddress(addr);
   };
@@ -170,7 +194,13 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
               value={eventDateTime}
               onChange={(e) => setEventDateTime(e.target.value)}
               required
+              disabled={isEditing && isEventExpired}
             />
+            {isEditing && isEventExpired && (
+              <small className="text-danger">
+                The date and time of a past event cannot be changed.
+              </small>
+            )}
           </div>
           <div className="mb-3">
             <label className="form-label">Max Attendees:</label>
@@ -183,9 +213,21 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           </div>
           <div className="mb-3">
             <label className="form-label">Search Location:</label>
-            <div className="border p-2 rounded">
-              <Places setPosition={handleLocationChange} />
+            <div
+              className={`border p-2 rounded ${
+                isEditing && isEventExpired ? "disabled-search" : ""
+              }`}
+            >
+              <Places
+                setPosition={handleLocationChange}
+                isDisabled={isEditing && isEventExpired}
+              />
             </div>
+            {isEditing && isEventExpired && (
+              <small className="text-danger">
+                The location of a past event cannot be changed.
+              </small>
+            )}
           </div>
           <div className="mb-3">
             <div className="map-container mb-3">

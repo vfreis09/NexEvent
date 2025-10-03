@@ -8,6 +8,20 @@
   text-align: center;
 }
 
+.past-events-header {
+  margin-top: 50px;
+  color: #6c757d;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 5px;
+}
+
+.no-events-message {
+  text-align: center;
+  color: #888;
+  margin-top: 20px;
+  font-style: italic;
+}
+
 .bottom-toast {
   position: fixed;
   bottom: 20px;

@@ -7,9 +7,10 @@ import { Form, Dropdown } from "react-bootstrap";
 
 interface PlacesProps {
   setPosition: (position: google.maps.LatLngLiteral, address: string) => void;
+  isDisabled?: boolean;
 }
 
-const Places = ({ setPosition }: PlacesProps) => {
+const Places = ({ setPosition, isDisabled = false }: PlacesProps) => {
   const {
     ready,
     value,
@@ -40,10 +41,10 @@ const Places = ({ setPosition }: PlacesProps) => {
           setValue(e.target.value);
           setShowSuggestions(true);
         }}
-        disabled={!ready}
+        disabled={!ready || isDisabled}
         placeholder="Search a location"
       />
-      {showSuggestions && status === "OK" && (
+      {showSuggestions && status === "OK" && !isDisabled && (
         <Dropdown show>
           <Dropdown.Menu style={{ width: "100%" }}>
             {data.map(({ place_id, description }) => (

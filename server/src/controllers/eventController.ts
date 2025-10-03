@@ -77,8 +77,7 @@ const getEvents = async (req: Request, res: Response) => {
        FROM events
        JOIN users ON events.author_id = users.id
        WHERE events.status != 'canceled'
-         AND events.event_datetime > NOW()
-       ORDER BY events.created_at DESC`
+       ORDER BY events.event_datetime DESC, events.created_at DESC`
     );
 
     if (result.rows.length === 0) {
@@ -121,31 +120,63 @@ const getEventById = async (req: Request, res: Response) => {
 
 const updateEvent = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
-  const {
-    title,
-    description,
-    eventDateTime,
-    location,
-    max_attendees,
-    address,
-  } = req.body;
+  let { title, description, eventDateTime, location, max_attendees, address } =
+    req.body;
 
-  const maxAttendees =
-    max_attendees === "" ? null : parseInt(max_attendees, 10);
-
-  if (!location) {
-    return res.status(400).json({ message: "Location is required." });
-  }
-
-  const [longitude, latitude] = location.split(" ").map(Number);
-  if (isNaN(longitude) || isNaN(latitude)) {
-    return res.status(400).json({ message: "Invalid location format." });
-  }
-
-  const locationPoint = `(${longitude}, ${latitude})`;
   const authorId = req.user?.id;
 
   try {
+    const existingEventResult = await pool.query(
+      `SELECT event_datetime, author_id, location, address
+       FROM events 
+       WHERE id = $1`,
+      [id]
+    );
+
+    if (existingEventResult.rows.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const existingEvent = existingEventResult.rows[0];
+
+    if (existingEvent.author_id !== authorId) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update this event" });
+    }
+
+    const eventIsExpired = new Date(existingEvent.event_datetime) < new Date();
+
+    if (eventIsExpired) {
+      eventDateTime = existingEvent.event_datetime.toISOString();
+
+      location = existingEvent.location;
+
+      address = existingEvent.address;
+    }
+
+    const maxAttendees =
+      max_attendees === "" ? null : parseInt(max_attendees, 10);
+
+    let locationPoint: string;
+
+    if (typeof location === "string") {
+      const [longitude, latitude] = location.split(" ").map(Number);
+      if (isNaN(longitude) || isNaN(latitude)) {
+        return res.status(400).json({ message: "Invalid location format." });
+      }
+      locationPoint = `(${longitude}, ${latitude})`;
+    } else if (typeof existingEvent.location === "string") {
+      const [longitude, latitude] = location.split(" ").map(Number);
+      if (isNaN(longitude) || isNaN(latitude)) {
+        return res.status(400).json({ message: "Invalid location format." });
+      }
+      locationPoint = `(${longitude}, ${latitude})`;
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Location data is missing or invalid." });
+    }
     const result = await pool.query(
       `UPDATE events 
        SET title = $1, description = $2, event_datetime = $3, location = $4, address = $5, max_attendees = $6

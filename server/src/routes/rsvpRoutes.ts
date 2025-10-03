@@ -7,6 +7,12 @@ import checkBannedUser from "../middlewares/checkBannedUser";
 const router = Router();
 
 router.get(
+  "/rsvps/user/:username",
+  checkBannedUser,
+  rsvpController.getEventsUserRsvpedTo
+);
+
+router.get(
   "/events/:id/rsvps",
   authenticateUser,
   requireVerifiedUser,

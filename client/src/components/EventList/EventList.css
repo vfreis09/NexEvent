@@ -24,6 +24,47 @@
   transform: translateY(-4px);
 }
 
+.past-event-card {
+  opacity: 0.7;
+  background-color: #f8f9fa;
+  border: 1px dashed #ced4da;
+  cursor: default !important;
+  pointer-events: none;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.past-event-card:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.past-event-card .event-title-link {
+  color: #888 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.past-event-card .author-link {
+  color: #888 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.past-event-card .event-card-header,
+.past-event-card .event-card-header span {
+  color: #888 !important;
+  text-decoration: none !important;
+  cursor: default !important;
+}
+
+.past-event-card .event-card-date {
+  color: #6c757d !important;
+}
+
 .event-card-header {
   font-size: 1.25rem;
   font-weight: 700;

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import userController from "../controllers/userController";
 import eventController from "../controllers/eventController";
-import rsvpController from "../controllers/rsvpController";
 import authenticateUser from "../middlewares/authMiddleware";
 import checkBannedUser from "../middlewares/checkBannedUser";
 
@@ -48,7 +47,6 @@ router.post(
 router.get("/verify-email", checkBannedUser, userController.verifyEmail);
 
 router.get("/user/:username/events", eventController.getEventsByAuthor);
-router.get("/user/:username/rsvps", rsvpController.getAcceptedRsvpsByUser);
 router.get("/user/:username", userController.getPublicUserByUsername);
 
 router.put(
