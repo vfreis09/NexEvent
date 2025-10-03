@@ -28,6 +28,21 @@ const createEvent = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Invalid location format." });
   }
 
+  // ✅ 1. PREVENT PAST/EXPIRED EVENTS
+  const scheduledTime = new Date(eventDateTime);
+  const now = new Date();
+
+  // Allow a 60-second buffer to account for network/server lag.
+  const oneMinuteAgo = new Date(now.getTime() - 60000);
+
+  if (scheduledTime < oneMinuteAgo) {
+    return res.status(400).json({
+      message:
+        "Cannot create an event in the past. Please select a future date and time.",
+    });
+  }
+  // END PAST EVENT CHECK
+
   const locationPoint = `(${longitude}, ${latitude})`;
 
   const authorId = req.user?.id;
@@ -51,8 +66,10 @@ const createEvent = async (req: Request, res: Response) => {
 
     await updateEventStatus(event.id);
 
+    // 2. Send SUCCESS RESPONSE immediately (Crucial for rate-limit safety)
     res.status(201).json(event);
 
+    // 3. ASYNCHRONOUS BACKGROUND TASK for emails (still prone to Mailtrap rate-limit errors in the console)
     (async () => {
       try {
         const users = await pool.query(
@@ -63,6 +80,7 @@ const createEvent = async (req: Request, res: Response) => {
           await emailServices
             .sendEventCreationEmail(user.email, event.title, event.id)
             .catch((e) => {
+              // Logs the error but does not break the app flow
               console.error(
                 `Failed to send creation email to ${user.email}:`,
                 e.message

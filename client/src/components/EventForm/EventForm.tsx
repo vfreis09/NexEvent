@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Map from "../Map/Map";
 import Places from "../Places/Places";
@@ -13,6 +13,15 @@ interface EventFormProps {
 }
 
 type LatLngLiteral = google.maps.LatLngLiteral;
+
+const isTimeInPast = (dateTimeString: string): boolean => {
+  if (!dateTimeString) return false;
+
+  const selectedTime = new Date(dateTimeString).getTime();
+  const now = new Date().getTime();
+
+  return selectedTime < now - 60000;
+};
 
 const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [title, setTitle] = useState("");
@@ -31,6 +40,23 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const eventId = id ? parseInt(id) : null;
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const hasTimeError = useMemo(() => {
+    if (!isEditing || (isEditing && !isEventExpired)) {
+      return isTimeInPast(eventDateTime);
+    }
+    return false;
+  }, [eventDateTime, isEditing, isEventExpired]);
+
+  const isFormInvalid = useMemo(() => {
+    const hasRequiredFields =
+      title.trim() !== "" &&
+      description.trim() !== "" &&
+      eventDateTime.trim() !== "" &&
+      location !== null;
+
+    return !hasRequiredFields || hasTimeError;
+  }, [title, description, eventDateTime, location, hasTimeError]);
 
   useEffect(() => {
     if (isEditing && eventId && !isNaN(eventId)) {
@@ -85,6 +111,15 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isFormInvalid) {
+      showNotification(
+        "Please correct the form errors before submitting.",
+        "Warning",
+        "warning"
+      );
+      return;
+    }
+
     try {
       const url = `http://localhost:3000/api/events/${
         isEditing ? `${eventId}` : ""
@@ -121,9 +156,11 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       });
 
       if (!response.ok) {
-        throw new Error(
-          isEditing ? "Event update failed" : "Event creation failed"
-        );
+        const errorData = await response.json();
+        const errorMessage =
+          errorData.message ||
+          (isEditing ? "Event update failed" : "Event creation failed");
+        throw new Error(errorMessage);
       }
 
       navigate("/", {
@@ -133,13 +170,14 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             : "Event created successfully",
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         isEditing ? "Event update failed" : "Event creation failed",
         error
       );
       showNotification(
-        isEditing ? "Event update failed" : "Event creation failed",
+        error.message ||
+          (isEditing ? "Event update failed" : "Event creation failed"),
         "Error",
         "danger"
       );
@@ -190,12 +228,17 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             <label className="form-label">Event Date and Time:</label>
             <input
               type="datetime-local"
-              className="form-control"
+              className={`form-control ${hasTimeError ? "is-invalid" : ""}`}
               value={eventDateTime}
               onChange={(e) => setEventDateTime(e.target.value)}
               required
               disabled={isEditing && isEventExpired}
             />
+            {hasTimeError && (
+              <div className="invalid-feedback d-block">
+                Error: Event time must be in the future.
+              </div>
+            )}
             {isEditing && isEventExpired && (
               <small className="text-danger">
                 The date and time of a past event cannot be changed.
@@ -235,7 +278,11 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             </div>
           </div>
           <div className="text-end">
-            <button type="submit" className="btn btn-primary">
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isFormInvalid}
+            >
               {isEditing ? "Update Event" : "Create Event"}
             </button>
           </div>
