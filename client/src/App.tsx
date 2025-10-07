@@ -24,6 +24,7 @@ import ManageUsers from "./pages/Admin/ManageUsers";
 import ManageEvents from "./pages/Admin/ManageEvents";
 import AdminStats from "./pages/Admin/AdminStats";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import SearchResults from "./pages/SearchResults/SearchResults";
 
 const App: React.FC = () => {
   return (
@@ -35,6 +36,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/search/results" element={<SearchResults />} />
         <Route
           element={
             <>

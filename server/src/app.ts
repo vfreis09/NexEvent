@@ -9,6 +9,7 @@ import rsvpRoutes from "./routes/rsvpRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import inviteRoutes from "./routes/inviteRoutes";
 import adminRoutes from "./routes/adminRoutes";
+import searchRoutes from "./routes/searchRoutes";
 
 dotenv.config();
 
@@ -42,7 +43,8 @@ app.use(
   rsvpRoutes,
   notificationRoutes,
   inviteRoutes,
-  adminRoutes
+  adminRoutes,
+  searchRoutes
 );
 
 app.get("/", (req, res) => {

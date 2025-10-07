@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "react-bootstrap";
 import { FaBell } from "react-icons/fa";
@@ -6,6 +6,7 @@ import { useUser } from "../../context/UserContext";
 import { Notification } from "../../types/Notification";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
+import { SearchType } from "../../types/SearchType";
 import "./Header.css";
 
 const Header: React.FC = () => {
@@ -26,6 +27,14 @@ const Header: React.FC = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<{
+    events: SearchType[];
+    users: SearchType[];
+  }>({ events: [], users: [] });
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const searchBarRef = useRef<HTMLDivElement>(null);
 
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
@@ -137,6 +146,44 @@ const Header: React.FC = () => {
     }
   };
 
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSuggestions({ events: [], users: [] });
+      setLoadingSearch(false);
+      return;
+    }
+
+    setLoadingSearch(true);
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/search?q=${query}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data);
+      }
+    } catch (error) {
+      console.error("Search suggestion error:", error);
+      setSuggestions({ events: [], users: [] });
+    } finally {
+      setLoadingSearch(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let debounceTimer: NodeJS.Timeout;
+
+    if (searchQuery.length > 1) {
+      debounceTimer = setTimeout(() => {
+        fetchSuggestions(searchQuery);
+      }, 300);
+    } else {
+      setSuggestions({ events: [], users: [] });
+    }
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, fetchSuggestions]);
+
   useEffect(() => {
     if (isLoggedIn && !user && !hasFetchedUser) {
       loadUser();
@@ -154,6 +201,12 @@ const Header: React.FC = () => {
         !userMenuRef.current.contains(event.target as Node)
       ) {
         setShowUserMenu(false);
+      }
+      if (
+        searchBarRef.current &&
+        !searchBarRef.current.contains(event.target as Node)
+      ) {
+        setSuggestions({ events: [], users: [] });
       }
     };
 
@@ -188,6 +241,38 @@ const Header: React.FC = () => {
     }
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search/results?q=${searchQuery.trim()}`);
+      setSuggestions({ events: [], users: [] });
+    }
+  };
+
+  const handleSuggestionClick = (
+    type: "event" | "user",
+    id: number,
+    username?: string
+  ) => {
+    if (type === "event") {
+      navigate(`/event/${id}`);
+    } else if (type === "user" && username) {
+      navigate(`/user/${username}`);
+    }
+    setSuggestions({ events: [], users: [] });
+    setSearchQuery("");
+  };
+
+  const formatEventDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const hasSuggestions =
+    suggestions.events.length > 0 || suggestions.users.length > 0;
+
   return (
     <>
       {showToast && toastInfo && (
@@ -212,7 +297,78 @@ const Header: React.FC = () => {
               </Link>
             )}
           </div>
-
+          <div className="search-bar-container" ref={searchBarRef}>
+            <form
+              onSubmit={handleSearchSubmit}
+              className="position-relative d-flex me-4"
+            >
+              <input
+                type="search"
+                className="form-control me-2"
+                placeholder="Search events or users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="btn btn-outline-primary">
+                Search
+              </button>
+              {(hasSuggestions ||
+                (loadingSearch && searchQuery.length > 1)) && (
+                <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll bg-white shadow rounded p-2">
+                  {loadingSearch && searchQuery.length > 1 && (
+                    <div className="p-1 text-center text-muted">Loading...</div>
+                  )}
+                  {suggestions.events.length > 0 && (
+                    <>
+                      <h6 className="mt-1 mb-1 text-primary search-category-title">
+                        Events
+                      </h6>
+                      <ul className="list-unstyled mb-1">
+                        {suggestions.events.map((item) => (
+                          <li
+                            key={`event-${item.id}`}
+                            onClick={() =>
+                              handleSuggestionClick("event", item.id)
+                            }
+                            className="p-1 rounded suggestion-item"
+                          >
+                            <strong>{item.title}</strong>
+                            <small className="text-muted ms-2 suggestion-date">
+                              ({formatEventDate(item.event_datetime!)})
+                            </small>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {suggestions.users.length > 0 && (
+                    <>
+                      <h6 className="mt-1 mb-1 text-success search-category-title">
+                        Users
+                      </h6>
+                      <ul className="list-unstyled mb-1">
+                        {suggestions.users.map((item) => (
+                          <li
+                            key={`user-${item.id}`}
+                            onClick={() =>
+                              handleSuggestionClick(
+                                "user",
+                                item.id,
+                                item.username
+                              )
+                            }
+                            className="p-1 rounded suggestion-item"
+                          >
+                            {item.username}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              )}
+            </form>
+          </div>
           <div className="header-right">
             {user && (
               <div className="notification-wrapper" ref={notificationRef}>
