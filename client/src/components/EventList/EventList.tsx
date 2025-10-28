@@ -4,6 +4,7 @@ import { useUser } from "../../context/UserContext";
 import { useEventActions } from "../../hooks/useEventActions";
 import { EventData } from "../../types/EventData";
 import "./EventList.css";
+import PaginationControls from "../PaginationControls/PaginationControls";
 
 interface EventListProps {
   events: EventData[];
@@ -16,6 +17,9 @@ interface EventListProps {
   ) => void;
   isPast?: boolean;
   isCompact?: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 const EventList: React.FC<EventListProps> = ({
@@ -24,12 +28,19 @@ const EventList: React.FC<EventListProps> = ({
   showNotification,
   isPast = false,
   isCompact = false,
+  currentPage,
+  totalPages,
+  onPageChange,
 }) => {
   const { user, isVerified } = useUser();
   const { cancelEvent } = useEventActions(showNotification);
 
   if (!Array.isArray(events) || events.length === 0) {
-    return <div>No events available. Try again later!</div>;
+    return (
+      <div className="no-events-message">
+        No events available. Try again later!
+      </div>
+    );
   }
 
   const handleCancelClick = async (eventId: number) => {
@@ -125,6 +136,15 @@ const EventList: React.FC<EventListProps> = ({
           </div>
         );
       })}
+      {currentPage !== undefined &&
+        totalPages !== undefined &&
+        onPageChange && (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        )}
     </div>
   );
 };

@@ -56,7 +56,6 @@ const UserProfilePage = () => {
         <NavLink to="events">Created Events</NavLink>
         <NavLink to="rsvps">RSVPs</NavLink>
       </nav>
-
       <div className="tab-content">
         <Outlet context={{ profileUser }} />
       </div>

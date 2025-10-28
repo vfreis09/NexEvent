@@ -9,11 +9,19 @@ const router = Router();
 router.get(
   "/rsvps/user/:username",
   checkBannedUser,
-  rsvpController.getEventsUserRsvpedTo
+  rsvpController.getEventsRsvpedByUser
+);
+
+router.post(
+  "/rsvps/events/:id",
+  authenticateUser,
+  requireVerifiedUser,
+  checkBannedUser,
+  rsvpController.createRsvp
 );
 
 router.get(
-  "/events/:id/rsvps",
+  "/rsvps/events/:id/rsvps",
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
@@ -21,7 +29,7 @@ router.get(
 );
 
 router.get(
-  "/events/:id/rsvp",
+  "/rsvps/events/:id/rsvp",
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,

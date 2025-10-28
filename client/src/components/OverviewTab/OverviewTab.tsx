@@ -3,8 +3,8 @@ import { useOutletContext, Link } from "react-router-dom";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
-import "./OverviewTab.css";
 import { useToast } from "../../hooks/useToast";
+import "./OverviewTab.css";
 
 const MAX_EVENTS_TO_SHOW = 3;
 
@@ -21,33 +21,17 @@ const OverviewTab = () => {
       setLoading(true);
       try {
         const createdRes = await fetch(
-          `http://localhost:3000/api/user/${profileUser.username}/events`
+          `http://localhost:3000/api/user/${profileUser.username}/events?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`
         );
         const rsvpRes = await fetch(
-          `http://localhost:3000/api/rsvps/user/${profileUser.username}`
+          `http://localhost:3000/api/rsvps/user/${profileUser.username}?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`
         );
 
         const createdData: EventData[] = await createdRes.json();
         const rsvpData: EventData[] = await rsvpRes.json();
 
-        const now = new Date();
-
-        const filterAndSort = (events: EventData[]) =>
-          events
-            .filter(
-              (event) =>
-                new Date(event.event_datetime) >= now &&
-                event.status !== "canceled"
-            )
-            .sort(
-              (a, b) =>
-                new Date(a.event_datetime).getTime() -
-                new Date(b.event_datetime).getTime()
-            )
-            .slice(0, MAX_EVENTS_TO_SHOW);
-
-        setCreatedEvents(filterAndSort(createdData || []));
-        setRsvpedEvents(filterAndSort(rsvpData || []));
+        setCreatedEvents(createdData || []);
+        setRsvpedEvents(rsvpData || []);
       } catch (err) {
         console.error("Error loading overview data", err);
         showNotification("Failed to load overview data.", "Error", "danger");

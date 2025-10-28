@@ -1,73 +1,86 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
+import PaginationControls from "../../components/PaginationControls/PaginationControls";
+import { PaginatedResponse } from "../../types/PaginationTypes";
+
+const EventsPerPage = 10;
 
 const RsvpTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
 
   const [upcomingRsvps, setUpcomingRsvps] = useState<EventData[]>([]);
   const [pastRsvps, setPastRsvps] = useState<EventData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+  const [loadingPast, setLoadingPast] = useState(true);
+
+  const [upcPage, setUpcPage] = useState(1);
+  const [upcTotalPages, setUpcTotalPages] = useState(1);
+  const [pastPage, setPastPage] = useState(1);
+  const [pastTotalPages, setPastTotalPages] = useState(1);
 
   const { showNotification } = useToast();
 
-  useEffect(() => {
-    const fetchRsvpEvents = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `http://localhost:3000/api/rsvps/user/${profileUser.username}`
-        );
+  const fetchRsvps = useCallback(
+    async (page: number, type: "upcoming" | "past") => {
+      const isUpcoming = type === "upcoming";
+      if (isUpcoming) setLoadingUpcoming(true);
+      else setLoadingPast(true);
 
+      const url = `http://localhost:3000/api/rsvps/user/${profileUser.username}?page=${page}&limit=${EventsPerPage}&type=${type}`;
+
+      try {
+        const res = await fetch(url);
         if (!res.ok) throw new Error("Failed to fetch RSVPs.");
 
-        const data: EventData[] = await res.json();
-        const allRsvps: EventData[] = Array.isArray(data) ? data : [];
-        const now = new Date();
+        const data: PaginatedResponse = await res.json();
 
-        const sortedUpcoming = allRsvps
-          .filter(
-            (event) =>
-              new Date(event.event_datetime) >= now &&
-              event.status !== "canceled"
-          )
-          .sort(
-            (a, b) =>
-              new Date(a.event_datetime).getTime() -
-              new Date(b.event_datetime).getTime()
-          );
-
-        const sortedPast = allRsvps
-          .filter(
-            (event) =>
-              new Date(event.event_datetime) < now ||
-              event.status === "canceled"
-          )
-          .sort(
-            (a, b) =>
-              new Date(b.event_datetime).getTime() -
-              new Date(a.event_datetime).getTime()
-          );
-
-        setUpcomingRsvps(sortedUpcoming);
-        setPastRsvps(sortedPast);
+        if (isUpcoming) {
+          setUpcomingRsvps(data.events);
+          setUpcPage(data.pagination.currentPage);
+          setUpcTotalPages(data.pagination.totalPages);
+        } else {
+          setPastRsvps(data.events);
+          setPastPage(data.pagination.currentPage);
+          setPastTotalPages(data.pagination.totalPages);
+        }
       } catch (err) {
-        console.error("Failed to load RSVP'd events", err);
-        showNotification("Failed to load RSVP'd events.", "Error", "danger");
-        setUpcomingRsvps([]);
-        setPastRsvps([]);
+        console.error(`Failed to load ${type} RSVPs`, err);
+        showNotification(`Failed to load ${type} RSVPs.`, "Error", "danger");
+        if (isUpcoming) setUpcomingRsvps([]);
+        else setPastRsvps([]);
       } finally {
-        setLoading(false);
+        if (isUpcoming) setLoadingUpcoming(false);
+        else setLoadingPast(false);
       }
-    };
+    },
+    [profileUser.username, showNotification]
+  );
 
+  useEffect(() => {
     if (profileUser?.username) {
-      fetchRsvpEvents();
+      fetchRsvps(upcPage, "upcoming");
     }
-  }, [profileUser.username, showNotification]);
+  }, [profileUser.username, upcPage, fetchRsvps]);
+
+  useEffect(() => {
+    if (profileUser?.username) {
+      fetchRsvps(pastPage, "past");
+    }
+  }, [profileUser.username, pastPage, fetchRsvps]);
+
+  const handleUpcomingPageChange = (page: number) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setUpcPage(page);
+  };
+
+  const handlePastPageChange = (page: number) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPastPage(page);
+  };
 
   const handleEventUpdate = (updatedEvent: EventData) => {
     const updateList = (prevEvents: EventData[]): EventData[] =>
@@ -79,28 +92,47 @@ const RsvpTab = () => {
     setPastRsvps(updateList);
   };
 
-  if (loading) return <p>Loading RSVP'd events...</p>;
+  if (loadingUpcoming && loadingPast) return <p>Loading RSVP'd events...</p>;
 
   return (
     <div className="rsvps-tab-view">
       <h3>Upcoming RSVPs</h3>
-      {upcomingRsvps.length > 0 ? (
-        <EventList
-          events={upcomingRsvps}
-          onEventUpdate={handleEventUpdate}
-          showNotification={showNotification}
-        />
+      {loadingUpcoming ? (
+        <p>Loading upcoming RSVPs...</p>
+      ) : upcomingRsvps.length > 0 ? (
+        <>
+          <EventList
+            events={upcomingRsvps}
+            onEventUpdate={handleEventUpdate}
+            showNotification={showNotification}
+          />
+          <PaginationControls
+            currentPage={upcPage}
+            totalPages={upcTotalPages}
+            onPageChange={handleUpcomingPageChange}
+          />
+        </>
       ) : (
         <p className="no-events-message">This user has no upcoming RSVPs.</p>
       )}
+
       <h3 className="past-rsvps-header">Past & Canceled History</h3>
-      {pastRsvps.length > 0 ? (
-        <EventList
-          events={pastRsvps}
-          onEventUpdate={handleEventUpdate}
-          showNotification={showNotification}
-          isPast={true}
-        />
+      {loadingPast ? (
+        <p>Loading history...</p>
+      ) : pastRsvps.length > 0 ? (
+        <>
+          <EventList
+            events={pastRsvps}
+            onEventUpdate={handleEventUpdate}
+            showNotification={showNotification}
+            isPast={true}
+          />
+          <PaginationControls
+            currentPage={pastPage}
+            totalPages={pastTotalPages}
+            onPageChange={handlePastPageChange}
+          />
+        </>
       ) : (
         <p className="no-events-message">No past or canceled RSVPs.</p>
       )}

@@ -192,3 +192,45 @@
 .author-link:hover {
   text-decoration: underline;
 }
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  gap: 8px;
+}
+
+.pagination-button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  color: #5a2d82;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+  border-color: #7e42b8;
+}
+
+.pagination-button.active-page {
+  background-color: #5a2d82;
+  color: white;
+  border-color: #5a2d82;
+  pointer-events: none;
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pagination-ellipsis {
+  padding: 8px 0;
+  color: #888;
+  user-select: none;
+}

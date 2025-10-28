@@ -28,11 +28,9 @@ const createEvent = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Invalid location format." });
   }
 
-  // ✅ 1. PREVENT PAST/EXPIRED EVENTS
   const scheduledTime = new Date(eventDateTime);
   const now = new Date();
 
-  // Allow a 60-second buffer to account for network/server lag.
   const oneMinuteAgo = new Date(now.getTime() - 60000);
 
   if (scheduledTime < oneMinuteAgo) {
@@ -41,7 +39,6 @@ const createEvent = async (req: Request, res: Response) => {
         "Cannot create an event in the past. Please select a future date and time.",
     });
   }
-  // END PAST EVENT CHECK
 
   const locationPoint = `(${longitude}, ${latitude})`;
 
@@ -66,11 +63,10 @@ const createEvent = async (req: Request, res: Response) => {
 
     await updateEventStatus(event.id);
 
-    // 2. Send SUCCESS RESPONSE immediately (Crucial for rate-limit safety)
     res.status(201).json(event);
 
-    // 3. ASYNCHRONOUS BACKGROUND TASK for emails (still prone to Mailtrap rate-limit errors in the console)
-    (async () => {
+    /** comment out so i dont have problems with mailtrap
+     * (async () => {
       try {
         const users = await pool.query(
           "SELECT email FROM users WHERE is_verified = true"
@@ -80,7 +76,6 @@ const createEvent = async (req: Request, res: Response) => {
           await emailServices
             .sendEventCreationEmail(user.email, event.title, event.id)
             .catch((e) => {
-              // Logs the error but does not break the app flow
               console.error(
                 `Failed to send creation email to ${user.email}:`,
                 e.message
@@ -93,8 +88,8 @@ const createEvent = async (req: Request, res: Response) => {
           "Critical background email process failure:",
           backgroundError
         );
-      }
-    })();
+      } 
+    }())**/
   } catch (error) {
     console.error("Error creating event (DB failure):", error);
     if (!res.headersSent) {
@@ -104,26 +99,62 @@ const createEvent = async (req: Request, res: Response) => {
 };
 
 const getEvents = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const filterType = req.query.type as string;
+  const offset = (page - 1) * limit;
+
+  if (limit <= 0 || page <= 0) {
+    return res.status(400).json({ message: "Invalid page or limit value." });
+  }
+
+  const now = new Date().toISOString();
+  let whereClause = `events.status != 'canceled'`;
+  let orderByClause = `ORDER BY events.event_datetime DESC, events.created_at DESC`;
+
+  if (filterType === "upcoming") {
+    whereClause += ` AND events.event_datetime >= '${now}'`;
+    orderByClause = `ORDER BY events.event_datetime ASC, events.created_at DESC`;
+  } else if (filterType === "past") {
+    whereClause += ` AND events.event_datetime < '${now}'`;
+    orderByClause = `ORDER BY events.event_datetime DESC, events.created_at DESC`;
+  }
+
   try {
-    const result = await pool.query(
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM events WHERE ${whereClause}`
+    );
+    const totalEvents = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalEvents / limit);
+
+    const eventsResult = await pool.query(
       `SELECT events.*, users.username AS author_username
        FROM events
        JOIN users ON events.author_id = users.id
-       WHERE events.status != 'canceled'
-       ORDER BY events.event_datetime DESC, events.created_at DESC`
+       WHERE ${whereClause}
+       ${orderByClause}
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(200).json([]);
-    }
 
     await Promise.all(
-      result.rows.map((event: any) => updateEventStatus(event.id))
+      eventsResult.rows.map((event: any) => updateEventStatus(event.id))
     );
 
-    res.json(result.rows);
+    res.json({
+      events: eventsResult.rows,
+      pagination: {
+        totalEvents,
+        totalPages,
+        currentPage: page,
+        limit: limit,
+      },
+    });
   } catch (error) {
-    console.error("Error fetching events:", error);
+    console.error(
+      `Error fetching paginated events (Type: ${filterType}):`,
+      error
+    );
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -370,8 +401,15 @@ const cancelEvent = async (req: Request, res: Response) => {
 
 const getEventsByAuthor = async (req: Request, res: Response) => {
   const { username } = req.params;
+  const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
-  const offset = parseInt(req.query.offset as string) || 0;
+  const filterType = req.query.type as string;
+  const queryLimit = parseInt(req.query.limit as string) || limit;
+  const offset = (page - 1) * queryLimit;
+
+  if (queryLimit <= 0 || page <= 0) {
+    return res.status(400).json({ message: "Invalid page or limit value." });
+  }
 
   try {
     const userResult = await pool.query(
@@ -384,24 +422,62 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
     }
 
     const userId = userResult.rows[0].id;
+    const now = new Date().toISOString();
+
+    let whereClause = `e.author_id = $1`;
+    let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
+
+    if (filterType === "upcoming") {
+      whereClause += ` AND e.event_datetime >= '${now}' AND e.status != 'canceled'`;
+      orderByClause = `ORDER BY e.event_datetime ASC, e.created_at DESC`;
+    } else if (filterType === "past") {
+      whereClause += ` AND (e.event_datetime < '${now}' OR e.status = 'canceled')`;
+      orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
+    }
+
+    let totalEvents = 0;
+    let totalPages = 1;
+
+    if (queryLimit > 3) {
+      const countResult = await pool.query(
+        `SELECT COUNT(*) FROM events e WHERE ${whereClause.replace(
+          "$1",
+          userId
+        )}`
+      );
+      totalEvents = parseInt(countResult.rows[0].count, 10);
+      totalPages = Math.ceil(totalEvents / queryLimit);
+    }
 
     const eventsResult = await pool.query(
-      `SELECT events.*, users.username AS author_username
-       FROM events
-       JOIN users ON events.author_id = users.id
-       WHERE author_id = $1
-       ORDER BY events.event_datetime DESC
+      `SELECT e.*, u.username AS author_username
+       FROM events e
+       JOIN users u ON e.author_id = u.id
+       WHERE ${whereClause}
+       ${orderByClause}
        LIMIT $2 OFFSET $3`,
-      [userId, limit, offset]
+      [userId, queryLimit, offset]
     );
 
     await Promise.all(
       eventsResult.rows.map((event: any) => updateEventStatus(event.id))
     );
 
-    res.json(eventsResult.rows);
+    if (queryLimit <= 3) {
+      return res.json(eventsResult.rows);
+    }
+
+    res.json({
+      events: eventsResult.rows,
+      pagination: {
+        totalEvents: totalEvents,
+        totalPages: totalPages,
+        currentPage: page,
+        limit: queryLimit,
+      },
+    });
   } catch (err) {
-    console.error("Error fetching events by author:", err);
+    console.error(`Error fetching events by author (${username}):`, err);
     res.status(500).json({ message: "Internal server error" });
   }
 };

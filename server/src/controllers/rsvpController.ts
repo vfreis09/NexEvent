@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 const pool = require("../config/dbConfig");
+import { updateEventStatus } from "../utils/eventService";
 
 const createRsvp = async (req: Request, res: Response): Promise<void> => {
   const { id: eventId } = req.params;
@@ -134,8 +135,17 @@ const getSingleRsvp = async (req: Request, res: Response) => {
   }
 };
 
-const getEventsUserRsvpedTo = async (req: Request, res: Response) => {
+const getEventsRsvpedByUser = async (req: Request, res: Response) => {
   const { username } = req.params;
+
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const filterType = req.query.type as string;
+  const offset = (page - 1) * limit;
+
+  if (limit <= 0 || page <= 0) {
+    return res.status(400).json({ message: "Invalid page or limit value." });
+  }
 
   try {
     const userResult = await pool.query(
@@ -148,25 +158,66 @@ const getEventsUserRsvpedTo = async (req: Request, res: Response) => {
     }
 
     const userId = userResult.rows[0].id;
+    const now = new Date().toISOString();
 
-    const eventsQuery = `
-      SELECT 
-        e.*, 
-        u.username AS author_username, 
-        r.status AS user_rsvp_status
-      FROM rsvps r
-      JOIN events e ON r.event_id = e.id
-      JOIN users u ON e.author_id = u.id
-      WHERE r.user_id = $1 
-      ORDER BY e.event_datetime DESC
-    `;
+    let whereClause = `r.user_id = $1 AND r.status = 'Accepted'`;
+    let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
 
-    const eventsResult = await pool.query(eventsQuery, [userId]);
+    if (filterType === "upcoming") {
+      whereClause += ` AND e.event_datetime >= '${now}' AND e.status != 'canceled'`;
+      orderByClause = `ORDER BY e.event_datetime ASC, e.created_at DESC`;
+    } else if (filterType === "past") {
+      whereClause += ` AND (e.event_datetime < '${now}' OR e.status = 'canceled')`;
+      orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
+    }
 
-    res.json(eventsResult.rows);
+    const isPaginatedView = limit > 3;
+    let totalEvents = 0;
+    let totalPages = 1;
+
+    if (isPaginatedView) {
+      const countResult = await pool.query(
+        `SELECT COUNT(e.id)
+           FROM rsvps r
+           JOIN events e ON r.event_id = e.id
+           WHERE ${whereClause}`,
+        [userId]
+      );
+      totalEvents = parseInt(countResult.rows[0].count, 10);
+      totalPages = Math.ceil(totalEvents / limit);
+    }
+
+    const eventsResult = await pool.query(
+      `SELECT e.*, u.username AS author_username
+       FROM rsvps r
+       JOIN events e ON r.event_id = e.id
+       JOIN users u ON e.author_id = u.id
+       WHERE ${whereClause}
+       ${orderByClause}
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
+    );
+
+    await Promise.all(
+      eventsResult.rows.map((event: any) => updateEventStatus(event.id))
+    );
+
+    if (!isPaginatedView) {
+      return res.json(eventsResult.rows);
+    }
+
+    res.json({
+      events: eventsResult.rows,
+      pagination: {
+        totalEvents,
+        totalPages,
+        currentPage: page,
+        limit: limit,
+      },
+    });
   } catch (error) {
-    console.error("Error fetching user RSVPs:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error(`Error fetching RSVP events for ${username}:`, error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -174,7 +225,7 @@ const rsvpController = {
   createRsvp,
   getRsvps,
   getSingleRsvp,
-  getEventsUserRsvpedTo,
+  getEventsRsvpedByUser,
 };
 
 export default rsvpController;
