@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Invite } from "../../types/Invite";
+import { useTheme } from "../../context/ThemeContext";
 import "./InviteManager.css";
 
 interface InviteManagerProps {
@@ -21,6 +22,8 @@ const InviteManager: React.FC<InviteManagerProps> = ({
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  useTheme();
 
   const isInviteDisabled =
     status === "canceled" ||

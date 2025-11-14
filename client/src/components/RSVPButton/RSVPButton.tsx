@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
+import { useTheme } from "../../context/ThemeContext";
 import "./RSVP.css";
 
 type RSVPProps = {
@@ -15,16 +16,15 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
 
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
+  useTheme();
+
   useEffect(() => {
     const fetchRSVPStatus = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/events/${eventId}/rsvp?userId=${userId}`,
+          `http://localhost:3000/api/rsvps/events/${eventId}/rsvp?userId=${userId}`,
           {
             credentials: "include",
           }
@@ -32,7 +32,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
 
         if (response.ok) {
           const data = await response.json();
-          setRsvpStatus(data.status || null);
+          setRsvpStatus(data.status ? data.status.toLowerCase() : null);
         } else if (response.status === 404) {
           setRsvpStatus(null);
         } else {
@@ -41,6 +41,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
             "Error",
             "danger"
           );
+          setRsvpStatus(null);
         }
       } catch (err) {
         showNotification(
@@ -48,18 +49,28 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
           "Error",
           "danger"
         );
+        setRsvpStatus(null);
       } finally {
         setLoading(false);
       }
     };
+
+    if (userId === undefined) return;
+    if (userId === null) {
+      setRsvpStatus(null);
+      setLoading(false);
+      return;
+    }
 
     fetchRSVPStatus();
   }, [eventId, userId]);
 
   const handleRSVP = async (newRsvpStatus: string) => {
     try {
+      const lowerStatus = newRsvpStatus.toLowerCase();
+
       const response = await fetch(
-        `http://localhost:3000/api/events/${eventId}/rsvp`,
+        `http://localhost:3000/api/rsvps/events/${eventId}`,
         {
           method: "POST",
           headers: {
@@ -67,7 +78,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
           },
           body: JSON.stringify({
             userId,
-            status: newRsvpStatus,
+            status: lowerStatus,
           }),
           credentials: "include",
         }
@@ -75,10 +86,10 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
 
       if (response.ok) {
         await response.json();
-        setRsvpStatus(newRsvpStatus);
+        setRsvpStatus(lowerStatus);
 
         const message =
-          newRsvpStatus === "Accepted"
+          lowerStatus === "accepted"
             ? "You're in! Event spot secured."
             : "Invitation declined. We hope to see you next time!";
 
@@ -139,20 +150,29 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
             <p>Please let us know if you'll be attending:</p>
             <div className="rsvp-buttons">
               <button
-                onClick={() => handleRSVP("Accepted")}
-                className={rsvpStatus === "Accepted" ? "active" : ""}
+                onClick={() => handleRSVP("accepted")}
+                className={
+                  rsvpStatus === "accepted" ? "active accept-btn" : "accept-btn"
+                }
               >
                 Accept
               </button>
               <button
-                onClick={() => handleRSVP("Declined")}
-                className={rsvpStatus === "Declined" ? "active" : ""}
+                onClick={() => handleRSVP("declined")}
+                className={
+                  rsvpStatus === "declined"
+                    ? "active decline-btn"
+                    : "decline-btn"
+                }
               >
                 Decline
               </button>
             </div>
             {rsvpStatus && (
-              <p>You have {rsvpStatus.toLowerCase()} the invitation.</p>
+              <p>
+                You have {rsvpStatus === "accepted" ? "accepted" : "declined"}{" "}
+                the invitation.
+              </p>
             )}
           </>
         )}

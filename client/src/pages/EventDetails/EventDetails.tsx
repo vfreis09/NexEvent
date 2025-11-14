@@ -6,6 +6,7 @@ import RSVPButton from "../../components/RSVPButton/RSVPButton";
 import InviteManager from "../../components/InviteManager/InviteManager";
 import { useMapContext } from "../../context/MapProvider";
 import { useUser } from "../../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
 import { EventData } from "../../types/EventData";
 import Toast from "react-bootstrap/Toast";
 import ToastContainer from "react-bootstrap/ToastContainer";
@@ -17,6 +18,8 @@ function EventDetails() {
   const eventId = parseInt(id ?? "");
 
   const { isLoaded } = useMapContext();
+
+  useTheme();
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -39,7 +42,7 @@ function EventDetails() {
 
   if (isNaN(eventId)) {
     console.error("Invalid eventId:", eventId);
-    return <p>Invalid post ID</p>;
+    return <p className="event-detail-error">Invalid post ID</p>;
   }
 
   const handleCancel = async (eventId: number) => {
@@ -135,7 +138,7 @@ function EventDetails() {
           <Map location={location} isLoaded={isLoaded} />
         </>
       ) : (
-        <p>No post found</p>
+        <p className="event-detail-error">No post found</p>
       )}
     </>
   );

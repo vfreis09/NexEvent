@@ -114,7 +114,7 @@ const getUser = async (req: Request, res: Response) => {
     const userId = decoded.id;
 
     const { rows } = await pool.query(
-      `SELECT id, username, email, bio, role, contact, visibility, is_verified, wants_notifications, created_at
+      `SELECT id, username, email, bio, role, contact, visibility, is_verified, wants_notifications, theme_preference, created_at
        FROM users 
        WHERE id = $1`,
       [userId]
@@ -207,6 +207,7 @@ const updateUser = async (req: Request, res: Response) => {
       contact: updatedUser.contact,
       wants_notifications: updatedUser.wants_notifications,
       is_verified: updatedUser.is_verified,
+      theme_preference: updatedUser.theme_preference,
     });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -294,6 +295,40 @@ const updateNotificationSettings = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating notification settings:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const updateThemePreference = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const { theme_preference } = req.body;
+
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  if (theme_preference !== "light" && theme_preference !== "dark") {
+    return res.status(400).json({
+      message: "Invalid theme preference value. Must be 'light' or 'dark'.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE users SET theme_preference = $1 WHERE id = $2 RETURNING theme_preference`,
+      [theme_preference, userId]
+    );
+
+    if (result.rowCount > 0) {
+      res.json({
+        message: "Theme preference updated.",
+        theme_preference: result.rows[0].theme_preference,
+      });
+    } else {
+      res.status(404).json({ message: "User not found." });
+    }
+  } catch (error) {
+    console.error("Error updating theme preference:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -444,6 +479,7 @@ const userController = {
   verifyEmail,
   requestVerificationEmail,
   updateNotificationSettings,
+  updateThemePreference,
   getPublicUserByUsername,
   sendResetLink,
   resetForgottenPassword,

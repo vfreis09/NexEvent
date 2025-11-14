@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
 import zxcvbn from "zxcvbn";
 import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
@@ -9,6 +10,7 @@ import "./EditUser.css";
 
 const EditUser: React.FC = () => {
   const { user, setUser } = useUser();
+  const { theme, toggleTheme } = useTheme();
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   const [email, setEmail] = useState("");
@@ -69,6 +71,8 @@ const EditUser: React.FC = () => {
       const fixedUser = {
         ...updatedUser,
         is_verified: updatedUser.is_verified ?? user?.is_verified,
+        theme_preference:
+          updatedUser.theme_preference ?? user?.theme_preference,
       };
 
       setUser(fixedUser);
@@ -82,12 +86,15 @@ const EditUser: React.FC = () => {
 
   const handleNotificationToggle = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/user/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ wants_notifications: !wantsNotifications }),
-      });
+      const response = await fetch(
+        "http://localhost:3000/api/user/settings/notifications",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ wants_notifications: !wantsNotifications }),
+        }
+      );
 
       if (!response.ok)
         throw new Error("Failed to update notification settings");
@@ -101,6 +108,31 @@ const EditUser: React.FC = () => {
         "Error",
         "danger"
       );
+    }
+  };
+
+  const handleThemeToggle = async () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/user/settings/theme",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ theme_preference: newTheme }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update theme settings");
+
+      toggleTheme();
+
+      showNotification(`Switched to ${newTheme} mode.`, "Success", "success");
+    } catch (error) {
+      console.error("Error updating theme preference:", error);
+      showNotification("Failed to update theme preference.", "Error", "danger");
     }
   };
 
@@ -284,15 +316,31 @@ const EditUser: React.FC = () => {
               onChange={(e) => setContact(e.target.value)}
             />
           </div>
+          <h5 className="mt-3 mb-3 border-top pt-3">Application Settings</h5>
           {user?.role !== "banned" && (
-            <div className="form-check mb-3">
+            <div className="form-check form-switch mb-3 dark-mode-toggle-group">
               <input
                 type="checkbox"
                 className="form-check-input"
+                id="darkModeSwitch"
+                checked={theme === "dark"}
+                onChange={handleThemeToggle}
+              />
+              <label className="form-check-label" htmlFor="darkModeSwitch">
+                Enable Dark Mode
+              </label>
+            </div>
+          )}
+          {user?.role !== "banned" && (
+            <div className="form-check form-switch mb-4 notification-toggle-group">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                id="notificationSwitch"
                 checked={wantsNotifications}
                 onChange={handleNotificationToggle}
               />
-              <label className="form-check-label">
+              <label className="form-check-label" htmlFor="notificationSwitch">
                 Receive event notification emails
               </label>
             </div>
@@ -325,7 +373,6 @@ const EditUser: React.FC = () => {
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
-
             {newPassword && (
               <div className="password-feedback mt-3 mb-3">
                 <div
@@ -335,7 +382,6 @@ const EditUser: React.FC = () => {
                 >
                   Strength: {getStrengthLabel(passwordScore)}
                 </div>
-
                 {passwordFeedbackList.length > 0 && (
                   <ul className="text-danger small ps-3 mb-0">
                     {passwordFeedbackList.map((item, idx) => (

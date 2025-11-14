@@ -11,7 +11,7 @@ interface UserContextProps {
   user: User | null;
   isLoggedIn: boolean;
   isVerified: boolean;
-  setUser: (user: User | null) => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   loadUser: () => Promise<void>;
   hasFetchedUser: boolean;

@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "react-bootstrap";
-import { FaBell } from "react-icons/fa";
+import { FaBell, FaMoon } from "react-icons/fa";
+import { FiSun } from "react-icons/fi";
 import { useUser } from "../../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
 import { Notification } from "../../types/Notification";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
@@ -19,6 +21,8 @@ const Header: React.FC = () => {
     isVerified,
     hasFetchedUser,
   } = useUser();
+
+  const { theme, toggleTheme } = useTheme();
 
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -314,7 +318,7 @@ const Header: React.FC = () => {
               </button>
               {(hasSuggestions ||
                 (loadingSearch && searchQuery.length > 1)) && (
-                <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll bg-white shadow rounded p-2">
+                <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll shadow rounded p-2">
                   {loadingSearch && searchQuery.length > 1 && (
                     <div className="p-1 text-center text-muted">Loading...</div>
                   )}
@@ -370,6 +374,20 @@ const Header: React.FC = () => {
             </form>
           </div>
           <div className="header-right">
+            {!isLoggedIn && (
+              <button
+                className="nav-button theme-toggle-button"
+                onClick={toggleTheme}
+                aria-label={
+                  theme === "light"
+                    ? "Switch to Dark Mode"
+                    : "Switch to Light Mode"
+                }
+              >
+                {theme === "light" ? <FaMoon /> : <FiSun />}
+              </button>
+            )}
+
             {user && (
               <div className="notification-wrapper" ref={notificationRef}>
                 <button

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { EventType } from "../../types/EventType";
+import { useTheme } from "../../context/ThemeContext";
 import "./Event.css";
 
 interface EventProps {
@@ -11,6 +12,8 @@ interface EventProps {
 
 const Event: React.FC<EventProps> = ({ event, onCancel }) => {
   const { isVerified, user } = useUser();
+
+  useTheme();
 
   const isOwner = user && event.author_id === user.id;
 

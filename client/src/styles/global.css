@@ -1,5 +1,29 @@
 @import "bootstrap/dist/css/bootstrap.min.css";
 
+:root {
+  --color-text-primary: #212529;
+  --color-text-secondary: #343a40;
+  --color-background-primary: #f8f9fa;
+  --color-background-secondary: #ffffff;
+  --color-border: #cccccc;
+  --color-link: #0d6efd;
+  --color-scrollbar-thumb: #ced4da;
+  --color-alert-danger-bg: #f8d7da;
+  --color-alert-danger-text: #721c24;
+}
+
+.dark-mode {
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #f8f9fa;
+  --color-background-primary: #121212;
+  --color-background-secondary: #1e1e1e;
+  --color-border: #444444;
+  --color-link: #9bbffb;
+  --color-scrollbar-thumb: #495057;
+  --color-alert-danger-bg: #58151c;
+  --color-alert-danger-text: #f1b0b7;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -8,8 +32,9 @@
 
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8f9fa;
-  color: #212529;
+  background-color: var(--color-background-primary);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s, color 0.3s;
   line-height: 1.6;
 }
 
@@ -37,13 +62,13 @@ body {
   width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: #ced4da;
+  background-color: var(--color-scrollbar-thumb);
   border-radius: 4px;
 }
 
 a {
   text-decoration: none;
-  color: #0d6efd;
+  color: var(--color-link);
 }
 a:hover {
   text-decoration: underline;
@@ -56,5 +81,18 @@ h4,
 h5,
 h6 {
   font-weight: 600;
-  color: #343a40;
+  color: var(--color-text-secondary);
+}
+
+.dark-mode .card,
+.dark-mode .form-control {
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+.dark-mode .alert-danger {
+  background-color: var(--color-alert-danger-bg) !important;
+  color: var(--color-alert-danger-text) !important;
+  border-color: var(--color-alert-danger-bg) !important;
 }

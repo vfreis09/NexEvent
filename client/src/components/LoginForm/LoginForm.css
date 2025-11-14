@@ -5,6 +5,7 @@
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  color: #333;
 }
 
 .login-form label {
@@ -72,4 +73,37 @@
 
 .login-form .links-container a {
   margin-bottom: 10px;
+}
+
+.dark-mode .login-form {
+  background-color: #252525;
+  border: 1px solid #444;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  color: #f0f0f0;
+}
+
+.dark-mode .login-form h1 {
+  color: white;
+}
+
+.dark-mode .login-form input {
+  background-color: #333;
+  border: 1px solid #555;
+  color: #f0f0f0;
+}
+
+.dark-mode .login-form input::placeholder {
+  color: #888;
+}
+
+.dark-mode .login-form button {
+  background-color: #9370db;
+}
+
+.dark-mode .login-form button:hover {
+  background-color: #a780e5;
+}
+
+.dark-mode .login-form a {
+  color: #add8e6;
 }

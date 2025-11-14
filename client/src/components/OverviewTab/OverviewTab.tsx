@@ -4,6 +4,7 @@ import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
+import { useTheme } from "../../context/ThemeContext";
 import "./OverviewTab.css";
 
 const MAX_EVENTS_TO_SHOW = 3;
@@ -15,6 +16,8 @@ const OverviewTab = () => {
   const [loading, setLoading] = useState(true);
 
   const { showNotification } = useToast();
+
+  useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,7 +66,8 @@ const OverviewTab = () => {
     );
   };
 
-  if (loading) return <p>Loading summary...</p>;
+  if (loading)
+    return <p className="overview-loading-message">Loading summary...</p>;
 
   return (
     <div className="overview-tab-view">

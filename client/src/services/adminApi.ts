@@ -3,7 +3,10 @@ const API_URL = "http://localhost:3000/api/admin";
 export async function getUsers() {
   const res = await fetch(`${API_URL}/users`, { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch users");
-  return res.json();
+
+  const body = await res.json();
+
+  return body.users;
 }
 
 export async function updateUserRole(id: string, role: string) {

@@ -3,12 +3,28 @@
   border: 1px solid #ddd;
   padding: 1.5rem;
   border-radius: 10px;
+  color: #333;
 }
 
 .profile-card h1 {
   margin-bottom: 0.5rem;
+  color: #111;
 }
 
 .profile-card p {
   margin: 0.3rem 0;
+}
+
+.dark-mode .profile-card {
+  background: #252525;
+  border: 1px solid #444;
+  color: #f0f0f0;
+}
+
+.dark-mode .profile-card h1 {
+  color: white;
+}
+
+.dark-mode .profile-card p strong {
+  color: #ccc;
 }

@@ -1,4 +1,5 @@
 import { PublicUser } from "../../types/PublicUser";
+import { useTheme } from "../../context/ThemeContext";
 import "./UserProfileCard.css";
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
 }
 
 const UserProfileCard = ({ profileUser, isOwner }: Props) => {
+  useTheme();
+
   return (
     <div className="profile-card">
       <h1>{profileUser.username}</h1>

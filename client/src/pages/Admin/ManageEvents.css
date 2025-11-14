@@ -48,3 +48,39 @@
 .manage-events .pagination-container {
   margin-bottom: 50px;
 }
+
+.dark-mode {
+  background-color: #121212;
+}
+
+.dark-mode .manage-events {
+  background-color: #121212;
+}
+
+.dark-mode .page-title {
+  color: #f0f0f0;
+}
+
+.dark-mode .status-text.active {
+  color: #4cd964;
+}
+
+.dark-mode .status-text.canceled {
+  color: #ff3b30;
+}
+
+.dark-mode .status-text.expired {
+  color: #8e8e93;
+}
+
+.dark-mode .alert-danger {
+  background-color: #4f3333;
+  color: #ff8888;
+  border-color: #ff8888;
+}
+
+.dark-mode .alert-info {
+  background-color: #334e4f;
+  color: #88ffff;
+  border-color: #88ffff;
+}

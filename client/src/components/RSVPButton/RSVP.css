@@ -40,4 +40,29 @@
 .rsvp-buttons button.active {
   background: #4b0082;
   transform: scale(1.05);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #4b0082;
+}
+
+.dark-mode .rsvp-container {
+  background: #252525;
+  border: 1px solid #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .rsvp-container p {
+  color: #ccc;
+}
+
+.dark-mode .rsvp-buttons button {
+  background: #9370db;
+}
+
+.dark-mode .rsvp-buttons button:hover {
+  background: #a780e5;
+}
+
+.dark-mode .rsvp-buttons button.active {
+  background: #4b0082;
+  box-shadow: 0 0 0 2px #252525, 0 0 0 4px #9370db;
+  transform: scale(1.05);
 }

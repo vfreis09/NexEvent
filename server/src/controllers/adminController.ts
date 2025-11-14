@@ -12,8 +12,8 @@ const getUsers = async (req: Request, res: Response) => {
 
   try {
     const countResult = await pool.query(`SELECT COUNT(*) FROM users`);
-    const totalEvents = parseInt(countResult.rows[0].count, 10);
-    const totalPages = Math.ceil(totalEvents / limit);
+    const totalItems = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalItems / limit);
 
     const result = await pool.query(
       `SELECT id, email, username, role, created_at, is_verified, visibility
@@ -26,7 +26,7 @@ const getUsers = async (req: Request, res: Response) => {
     res.json({
       users: result.rows,
       pagination: {
-        totalEvents,
+        totalItems,
         totalPages,
         currentPage: page,
         limit: limit,

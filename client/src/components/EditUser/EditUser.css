@@ -1,39 +1,44 @@
-.edit-user-container {
-  max-width: 600px;
-  margin-top: 30px;
+.form-check {
+  padding-left: 2.5rem !important;
+  margin-bottom: 1rem;
+}
+
+.form-check .form-check-input {
+  margin-left: -2.5rem;
+  position: relative;
+  top: 0;
+}
+
+.form-check-label {
+  margin-bottom: 0;
+
+  padding-left: 0.25rem;
+}
+
+.card .form-check:last-of-type {
+  margin-bottom: 1rem;
+}
+
+.card h5.mt-3.mb-3.border-top.pt-3 {
+  color: var(--color-text-secondary);
+  margin-top: 1rem !important;
+  padding-top: 1rem !important;
+  border-top: 1px solid var(--color-border) !important;
+  font-size: 1.15rem;
+}
+
+.dark-mode .edit-user-container .form-check-label {
+  color: #f0f0f0;
+}
+
+.dark-mode .edit-user-container .form-check p {
+  color: #ccc;
 }
 
 .verification-status {
-  margin-top: 20px;
-}
-
-.card {
-  border-radius: 12px;
-}
-
-.btn-primary:hover,
-.btn-secondary:hover,
-.btn-warning:hover {
-  opacity: 0.9;
-}
-
-.alert {
-  font-size: 0.95rem;
-  padding: 0.75rem 1rem;
-}
-
-form h4 {
-  font-weight: 600;
-}
-
-.mb-3 p {
-  margin-bottom: 0;
+  margin-top: 2rem;
 }
 
 .change-password-form {
-  margin-bottom: 30px;
-}
-
-.password-feedback {
-  padding: 0.5rem 0;
+  margin-bottom: 4rem;
 }

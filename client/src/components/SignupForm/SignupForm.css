@@ -5,6 +5,37 @@
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.signup-form h1 {
+  text-align: center;
+  color: #333;
+}
+
+.signup-form .mb-3 {
+  margin-bottom: 1.5rem !important;
+}
+
+.signup-form input.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-check-label {
+  color: #333;
+}
+
+.signup-form .form-check {
+  padding-left: 0 !important;
+  width: 100%;
+}
+
+.signup-form .form-check-input {
+  margin-left: 0 !important;
 }
 
 .password-feedback {
@@ -21,6 +52,10 @@
   margin: 0;
 }
 
+.links-container p {
+  margin: 0;
+}
+
 .links-container a {
   color: #0d6efd;
   text-decoration: none;
@@ -28,4 +63,63 @@
 
 .links-container a:hover {
   text-decoration: underline;
+}
+
+.dark-mode .signup-form {
+  background-color: #252525;
+  border: 1px solid #444;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  color: #f0f0f0;
+}
+
+.dark-mode .signup-form h1 {
+  color: white;
+}
+
+.dark-mode .signup-form input.form-control {
+  background-color: #333;
+  border: 1px solid #555;
+  color: #f0f0f0;
+}
+
+.dark-mode .signup-form input.form-control::placeholder {
+  color: #888;
+}
+
+.dark-mode .form-check-label {
+  color: #ccc;
+}
+
+.dark-mode .password-feedback-list {
+  color: #ff8888;
+}
+
+.dark-mode .text-danger {
+  color: #dc3545 !important;
+}
+
+.dark-mode .text-warning {
+  color: #ffc107 !important;
+}
+
+.dark-mode .text-success {
+  color: #28a745 !important;
+}
+
+.dark-mode .btn-primary {
+  background-color: #9370db !important;
+  border-color: #9370db !important;
+}
+
+.dark-mode .btn-primary:hover {
+  background-color: #a780e5 !important;
+  border-color: #a780e5 !important;
+}
+
+.dark-mode .links-container a {
+  color: #add8e6;
+}
+
+.dark-mode .links-container p {
+  color: #f0f0f0;
 }

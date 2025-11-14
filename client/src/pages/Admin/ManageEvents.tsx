@@ -5,6 +5,7 @@ import { useToast } from "../../hooks/useToast";
 import AppToast from "../../components/ToastComponent/ToastComponent";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
+import { useTheme } from "../../context/ThemeContext";
 import "./ManageEvents.css";
 
 const ManageEvents: React.FC = () => {
@@ -17,6 +18,8 @@ const ManageEvents: React.FC = () => {
   const eventsPerPage = 10;
 
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
+
+  useTheme();
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -137,6 +140,7 @@ const ManageEvents: React.FC = () => {
               bordered
               hover
               responsive
+              variant="dark"
               className="events-table shadow-sm"
             >
               <thead>

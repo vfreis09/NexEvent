@@ -15,6 +15,7 @@
   border-radius: 12px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   padding: 20px;
+  background-color: #ffffff;
 }
 
 .stat-card:hover {
@@ -44,6 +45,10 @@
   font-weight: bold;
   margin-top: 10px;
   color: #222;
+}
+
+.stat-card .card-title {
+  color: #666;
 }
 
 .users-card {
@@ -100,4 +105,26 @@
   background-color: #7f53d1 !important;
   border-color: #7f53d1 !important;
   color: #fff !important;
+}
+
+.dark-mode .dashboard-title {
+  color: #f0f0f0;
+}
+
+.dark-mode .stat-card {
+  background-color: #252525;
+  border: 1px solid #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .stat-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.dark-mode .stat-card .card-title {
+  color: #b0b0b0;
+}
+
+.dark-mode .stat-value {
+  color: #ffffff;
 }

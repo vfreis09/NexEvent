@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "../../context/UserContext";
 import UserProfileCard from "../../components/UserProfileCard/UserProfileCard";
 import { PublicUser } from "../../types/PublicUser";
+import { useTheme } from "../../context/ThemeContext";
 import "./UserProfilePage.css";
 
 const UserProfilePage = () => {
@@ -11,6 +12,8 @@ const UserProfilePage = () => {
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
+
+  useTheme();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -39,8 +42,9 @@ const UserProfilePage = () => {
     }
   }, [username]);
 
-  if (loading) return <p>Loading profile...</p>;
-  if (notFound) return <p>User not found</p>;
+  if (loading)
+    return <p className="profile-loading-message">Loading profile...</p>;
+  if (notFound) return <p className="profile-error-message">User not found</p>;
 
   return (
     <div className="user-profile-container">
@@ -48,7 +52,6 @@ const UserProfilePage = () => {
         profileUser={profileUser!}
         isOwner={user?.username === profileUser?.username}
       />
-
       <nav className="tab-nav">
         <NavLink to="." end>
           Overview

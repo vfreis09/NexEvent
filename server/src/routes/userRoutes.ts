@@ -31,10 +31,17 @@ router.post(
 );
 
 router.put(
-  "/user/settings",
+  "/user/settings/notifications",
   authenticateUser,
   checkBannedUser,
   userController.updateNotificationSettings
+);
+
+router.put(
+  "/user/settings/theme",
+  authenticateUser,
+  checkBannedUser,
+  userController.updateThemePreference
 );
 
 router.post(

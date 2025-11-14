@@ -7,4 +7,5 @@ export interface User {
   is_verified: boolean;
   wants_notifications: boolean;
   role: "user" | "admin" | "banned";
+  theme_preference: string;
 }

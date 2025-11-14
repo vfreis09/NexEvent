@@ -23,10 +23,14 @@
 .event-container a {
   display: inline-block;
   text-decoration: none;
-
   font-weight: bold;
   margin-right: 1rem;
   transition: color 0.2s;
+  color: #5a2d82;
+}
+
+.event-container a:hover {
+  text-decoration: none;
 }
 
 .event-container button {
@@ -50,4 +54,36 @@
   color: #6f42c1;
   font-weight: 600;
   margin-bottom: 1rem;
+}
+
+.dark-mode .event-detail-error {
+  text-align: center;
+  color: #f0f0f0;
+  padding-top: 2rem;
+}
+
+.dark-mode .event-container {
+  background: #252525;
+  border: 1px solid #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .event-container h2 {
+  color: white;
+}
+
+.dark-mode .event-container p {
+  color: #ccc;
+}
+
+.dark-mode .event-container p strong {
+  color: #9370db;
+}
+
+.dark-mode .event-container a {
+  color: #add8e6;
+}
+
+.dark-mode .event-author {
+  color: #9370db;
 }

@@ -180,7 +180,7 @@
 }
 
 .event-title-link:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .author-link {
@@ -190,7 +190,7 @@
 }
 
 .author-link:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .pagination-container {
@@ -233,4 +233,88 @@
   padding: 8px 0;
   color: #888;
   user-select: none;
+}
+
+.dark-mode .event-card {
+  background: #252525;
+  border: 1px solid #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .event-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .past-event-card {
+  background-color: #1e1e1e;
+  border: 1px dashed #555;
+  opacity: 0.8;
+}
+
+.dark-mode .event-card-header {
+  color: #e0e0e0;
+}
+
+.dark-mode .event-card-header span {
+  color: #aaa;
+}
+
+.dark-mode .event-card-details {
+  color: #ccc;
+}
+
+.dark-mode .event-card-date {
+  color: #7abaff;
+}
+
+.dark-mode .event-card-description {
+  color: #999;
+}
+
+.dark-mode .event-card-footer {
+  color: #ccc;
+}
+
+.dark-mode .event-title-link {
+  color: #9370db;
+}
+
+.dark-mode .event-title-link:hover {
+  color: #b19cd9;
+}
+
+.dark-mode .author-link {
+  color: #add8e6;
+}
+
+.dark-mode .pagination-button {
+  background-color: #333;
+  color: #9370db;
+  border: 1px solid #555;
+}
+
+.dark-mode .pagination-button:hover:not(:disabled) {
+  background-color: #444;
+  border-color: #9370db;
+}
+
+.dark-mode .pagination-button.active-page {
+  background-color: #9370db;
+  color: white;
+  border-color: #9370db;
+}
+
+.dark-mode .pagination-ellipsis {
+  color: #888;
+}
+
+.dark-mode .past-event-card .event-title-link,
+.dark-mode .past-event-card .author-link,
+.dark-mode .past-event-card .event-card-header,
+.dark-mode .past-event-card .event-card-header span {
+  color: #888 !important;
+}
+
+.dark-mode .past-event-card .event-card-date {
+  color: #777 !important;
 }

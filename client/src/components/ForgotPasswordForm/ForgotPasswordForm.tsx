@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "../../context/ThemeContext"; // 👈 ADDED
 import "./ForgotPasswordForm.css";
 
 interface ForgotPasswordFormProps {
@@ -10,6 +11,8 @@ function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  useTheme();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

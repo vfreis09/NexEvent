@@ -5,6 +5,7 @@ import { EventData } from "../../types/EventData";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../../components/ToastComponent/ToastComponent";
 import { PaginatedResponse } from "../../types/PaginationTypes";
+import { useTheme } from "../../context/ThemeContext";
 import "./Home.css";
 
 function HomePage() {
@@ -21,6 +22,8 @@ function HomePage() {
 
   const location = useLocation();
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
+
+  useTheme();
 
   useEffect(() => {
     const state = location.state as { successMessage?: string } | null;

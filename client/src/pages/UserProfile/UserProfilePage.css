@@ -2,6 +2,14 @@
   max-width: 900px;
   margin: 2rem auto;
   padding: 1rem;
+  color: #333;
+}
+
+.profile-loading-message,
+.profile-error-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
 }
 
 .tab-nav {
@@ -16,7 +24,7 @@
   text-decoration: none;
   color: #555;
   border-bottom: 2px solid transparent;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, color 0.2s;
 }
 
 .tab-nav a:hover {
@@ -61,4 +69,48 @@
   color: #495057;
   border-radius: 4px;
   margin-bottom: 1rem;
+}
+
+.dark-mode .user-profile-container {
+  color: #f0f0f0;
+}
+
+.dark-mode .profile-loading-message,
+.dark-mode .profile-error-message {
+  color: #ccc;
+}
+
+.dark-mode .tab-nav {
+  border-bottom: 1px solid #444;
+}
+
+.dark-mode .tab-nav a {
+  color: #aaa;
+}
+
+.dark-mode .tab-nav a:hover {
+  color: #9370db;
+}
+
+.dark-mode .tab-nav a.active {
+  border-color: #9370db;
+  color: #9370db;
+}
+
+.dark-mode .rsvps-tab-view h3,
+.dark-mode .created-events-tab-view h3 {
+  color: #fff;
+  border-bottom: 2px solid #444;
+}
+
+.dark-mode .past-rsvps-header,
+.dark-mode .past-events-header {
+  color: #888;
+  border-bottom: 2px dashed #555;
+}
+
+.dark-mode .no-events-message {
+  background-color: #333;
+  border-left: 5px solid #9370db;
+  color: #ccc;
 }

@@ -84,3 +84,56 @@
   color: #777;
   font-size: 0.95rem;
 }
+
+.dark-mode .invite-manager {
+  background-color: #252525;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .invite-manager h3 {
+  color: white;
+}
+
+.dark-mode .invite-disabled-text {
+  color: #aaa;
+}
+
+.dark-mode .invite-form input {
+  background-color: #333;
+  border: 1px solid #555;
+  color: #f0f0f0;
+}
+
+.dark-mode .invite-form input::placeholder {
+  color: #888;
+}
+
+.dark-mode .invite-form button {
+  background-color: #9370db;
+}
+
+.dark-mode .invite-form button:hover:not(:disabled) {
+  background-color: #a780e5;
+}
+
+.dark-mode .invite-message {
+  color: #9370db;
+}
+
+.dark-mode .invite-list h4 {
+  color: #ccc;
+}
+
+.dark-mode .invite-list li {
+  color: #bbb;
+}
+
+.dark-mode .invite-list li strong {
+  color: #fff;
+}
+
+.dark-mode .invite-empty {
+  color: #999;
+}

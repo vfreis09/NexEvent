@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
 import { FaUsers, FaCalendarAlt, FaClipboardList } from "react-icons/fa";
 import { getStats } from "../../services/adminApi";
+import { useTheme } from "../../context/ThemeContext";
 import "./AdminDashboard.css";
 
 interface Stats {
@@ -19,6 +20,8 @@ const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useTheme();
 
   useEffect(() => {
     getStats()

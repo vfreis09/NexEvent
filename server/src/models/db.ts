@@ -13,6 +13,7 @@ const initDb = async () => {
       visibility VARCHAR(7) DEFAULT 'public',
       is_verified BOOLEAN DEFAULT FALSE,
       wants_notifications BOOLEAN DEFAULT false,
+      theme_preference VARCHAR(5) DEFAULT 'light' CHECK (theme_preference IN ('light', 'dark')),
       reset_token_hash TEXT,
       reset_token_expires TIMESTAMP,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

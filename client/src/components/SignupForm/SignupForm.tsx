@@ -4,6 +4,7 @@ import zxcvbn from "zxcvbn";
 import { useUser } from "../../context/UserContext";
 import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
+import { useTheme } from "../../context/ThemeContext";
 import AppToast from "../ToastComponent/ToastComponent";
 import "./SignupForm.css";
 
@@ -16,6 +17,8 @@ const SignupForm: React.FC = () => {
   const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
     []
   );
+
+  useTheme();
 
   const navigate = useNavigate();
   const { loadUser, isLoggedIn } = useUser();
@@ -151,7 +154,6 @@ const SignupForm: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-
           {password && (
             <div className="password-feedback mt-2 mb-3">
               <div
@@ -161,7 +163,6 @@ const SignupForm: React.FC = () => {
               >
                 Strength: {getStrengthLabel(passwordScore)}
               </div>
-
               {passwordFeedbackList.length > 0 && (
                 <ul className="password-feedback-list mb-0">
                   {passwordFeedbackList.map((item, idx) => (
@@ -181,14 +182,12 @@ const SignupForm: React.FC = () => {
             onChange={(e) => setWantsNotifications(e.target.checked)}
           />
           <label className="form-check-label" htmlFor="notificationsCheck">
-            Receive email notifications about events
+            Receive email notifications
           </label>
         </div>
-
         <button type="submit" className="btn btn-primary w-100">
           Signup
         </button>
-
         <div className="links-container mt-3 text-center">
           <p>
             Already part of the app? <Link to="/login">Login</Link>

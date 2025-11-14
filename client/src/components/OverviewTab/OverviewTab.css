@@ -2,6 +2,12 @@
   padding: 1rem 0;
 }
 
+.overview-loading-message {
+  padding: 1rem;
+  text-align: center;
+  color: #555;
+}
+
 .overview-section {
   margin-top: 1.5rem;
 }
@@ -40,4 +46,31 @@
   color: #495057;
   border-radius: 4px;
   margin-bottom: 1rem;
+}
+
+.dark-mode .overview-loading-message {
+  color: #ccc;
+}
+
+.dark-mode .overview-header {
+  color: white;
+  border-bottom: 1px solid #444;
+}
+
+.dark-mode .overview-footer {
+  border-top: 1px solid #333;
+}
+
+.dark-mode .overview-footer a {
+  color: #9370db;
+}
+
+.dark-mode .overview-footer a:hover {
+  text-decoration: underline;
+}
+
+.dark-mode .no-events-message {
+  background-color: #333;
+  border-left: 5px solid #9370db;
+  color: #ccc;
 }

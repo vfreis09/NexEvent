@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
@@ -9,6 +10,8 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { loadUser, isLoggedIn } = useUser();
+
+  useTheme();
 
   useEffect(() => {
     if (isLoggedIn) {
