@@ -19,7 +19,7 @@
   margin-bottom: 1rem;
 }
 
-.card h5.mt-3.mb-3.border-top.pt-3 {
+.card h4.mt-3.mb-3.border-top.pt-3 {
   color: var(--color-text-secondary);
   margin-top: 1rem !important;
   padding-top: 1rem !important;
@@ -41,4 +41,13 @@
 
 .change-password-form {
   margin-bottom: 4rem;
+}
+
+.profile-avatar-img {
+  border: 3px solid var(--bs-primary, #0d6efd) !important;
+  transition: border-color 0.3s ease;
+}
+
+.profile-avatar-img:hover {
+  border-color: var(--bs-primary-darker, #0a58ca) !important;
 }

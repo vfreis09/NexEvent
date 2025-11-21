@@ -10,6 +10,26 @@ import { useTheme } from "../../context/ThemeContext";
 import { EventData } from "../../types/EventData";
 import Toast from "react-bootstrap/Toast";
 import ToastContainer from "react-bootstrap/ToastContainer";
+import "./EventDetails.css";
+
+const fetchProfilePicture = async (
+  username: string
+): Promise<string | null> => {
+  try {
+    const response = await fetch(`http://localhost:3000/api/user/${username}`);
+    if (!response.ok) {
+      console.error(
+        `Failed to fetch profile for @${username}: ${response.status}`
+      );
+      return null;
+    }
+    const userData = await response.json();
+    return userData.profile_picture_base64 || null;
+  } catch (error) {
+    console.error("Error fetching profile picture:", error);
+    return null;
+  }
+};
 
 function EventDetails() {
   const [event, setEvent] = useState<EventData | null>(null);
@@ -18,31 +38,22 @@ function EventDetails() {
   const eventId = parseInt(id ?? "");
 
   const { isLoaded } = useMapContext();
-
   useTheme();
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastHeader, setToastHeader] = useState("");
   const [toastBg, setToastBg] = useState("success");
-  const [toastTextColor, setToastTextColor] = useState("white");
 
-  const showNotification = (
-    message: string,
-    header: string,
-    bg: string,
-    textColor: string = "white"
-  ) => {
+  const showNotification = (message: string, header: string, bg: string) => {
     setToastMessage(message);
     setToastHeader(header);
     setToastBg(bg);
-    setToastTextColor(textColor);
     setShowToast(true);
   };
 
   if (isNaN(eventId)) {
-    console.error("Invalid eventId:", eventId);
-    return <p className="event-detail-error">Invalid post ID</p>;
+    return <p className="event-detail-error">Invalid event ID</p>;
   }
 
   const handleCancel = async (eventId: number) => {
@@ -54,35 +65,43 @@ function EventDetails() {
           credentials: "include",
         }
       );
-      if (!response.ok) {
-        throw new Error("Failed to cancel event");
-      }
-
+      if (!response.ok) throw new Error("Failed to cancel");
       const updatedEvent = await response.json();
       setEvent(updatedEvent);
       showNotification("Event cancelled successfully", "Success", "success");
     } catch (error) {
-      console.error("Failed to cancel event", error);
       showNotification("Failed to cancel event", "Error", "danger");
     }
   };
 
   useEffect(() => {
-    const fetchEvent = async (eventId: number) => {
+    const fetchEventData = async () => {
       try {
-        const response = await fetch(
+        const eventRes = await fetch(
           `http://localhost:3000/api/events/${eventId}`
         );
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        setEvent(data);
-      } catch (error) {
-        console.error("Error fetching event details:", error);
+        if (!eventRes.ok) throw new Error("Event not found");
+        const fetchedEvent = await eventRes.json();
+
+        const pictureBase64 = await fetchProfilePicture(
+          fetchedEvent.author_username
+        );
+
+        const fullEvent: EventData = {
+          ...fetchedEvent,
+          author: {
+            id: fetchedEvent.author_id,
+            username: fetchedEvent.author_username,
+            profile_picture_base64: pictureBase64,
+          },
+        };
+
+        setEvent(fullEvent);
+      } catch (err) {
+        console.error("Error loading event:", err);
       }
     };
-    fetchEvent(eventId);
+    fetchEventData();
   }, [eventId]);
 
   const location = {
@@ -93,9 +112,9 @@ function EventDetails() {
   return (
     <>
       <ToastContainer
-        className="p-3"
         position="top-end"
-        style={{ position: "fixed", zIndex: 1050 }}
+        className="p-3"
+        style={{ zIndex: 1050 }}
       >
         <Toast
           show={showToast}
@@ -107,14 +126,19 @@ function EventDetails() {
           <Toast.Header>
             <strong className="me-auto">{toastHeader}</strong>
           </Toast.Header>
-          <Toast.Body className={`text-${toastTextColor}`}>
-            {toastMessage}
-          </Toast.Body>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
       {event ? (
         <>
-          <Event event={event} onCancel={() => handleCancel(eventId)} />
+          {event.author && (
+            <Event
+              event={event}
+              onCancel={() => handleCancel(eventId)}
+              hostPicture={event.author.profile_picture_base64}
+              hostUsername={event.author_username}
+            />
+          )}
           {isVerified &&
             user?.role !== "banned" &&
             user?.id === event.author_id && (
@@ -138,7 +162,7 @@ function EventDetails() {
           <Map location={location} isLoaded={isLoaded} />
         </>
       ) : (
-        <p className="event-detail-error">No post found</p>
+        <p className="event-detail-error">Loading event...</p>
       )}
     </>
   );

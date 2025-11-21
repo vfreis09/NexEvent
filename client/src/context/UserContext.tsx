@@ -14,6 +14,7 @@ interface UserContextProps {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   loadUser: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   hasFetchedUser: boolean;
 }
 
@@ -63,7 +64,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
         isVerified: user?.is_verified ?? false,
         setUser,
         setIsLoggedIn,
-        loadUser,
+        loadUser: loadUser,
+        refreshUser: loadUser,
         hasFetchedUser,
       }}
     >

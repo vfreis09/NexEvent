@@ -49,11 +49,33 @@
   background: #c9302c;
 }
 
+.event-host-details {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.host-avatar-frame-small {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 10px;
+  border: 2px solid #e0e0e0;
+}
+
+.host-avatar-image-small {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .event-author {
   font-size: 1rem;
   color: #6f42c1;
   font-weight: 600;
-  margin-bottom: 1rem;
 }
 
 .dark-mode .event-detail-error {
@@ -86,4 +108,8 @@
 
 .dark-mode .event-author {
   color: #9370db;
+}
+
+.dark-mode .host-avatar-frame-small {
+  border: 2px solid #555;
 }

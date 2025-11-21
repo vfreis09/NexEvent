@@ -12,6 +12,13 @@ router.post("/logout", authenticateUser, userController.logout);
 
 router.get("/user", authenticateUser, userController.getUser);
 
+router.post(
+  "/user/profile/upload",
+  authenticateUser,
+  checkBannedUser,
+  userController.uploadProfilePicture
+);
+
 router.put(
   "/user/change-password",
   authenticateUser,

@@ -1,3 +1,9 @@
+export interface AuthorData {
+  id: number;
+  username: string;
+  profile_picture_base64: string | null;
+}
+
 export interface EventData {
   id: number;
   title: string;
@@ -14,4 +20,5 @@ export interface EventData {
   status: string;
   created_at: string;
   author_username: string;
+  author?: AuthorData;
 }

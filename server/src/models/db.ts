@@ -16,6 +16,7 @@ const initDb = async () => {
       theme_preference VARCHAR(5) DEFAULT 'light' CHECK (theme_preference IN ('light', 'dark')),
       reset_token_hash TEXT,
       reset_token_expires TIMESTAMP,
+      profile_picture_base64 TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT role_check CHECK (role IN ('user', 'admin', 'banned'))
 );
@@ -67,9 +68,9 @@ const initDb = async () => {
 
   try {
     await pool.query(createTableQuery);
-    console.log("Users table created successfully or already exists.");
+    console.log("Database tables created successfully or already exist.");
   } catch (err) {
-    console.error("Error creating users table:", err);
+    console.error("Error creating database tables:", err);
   }
 };
 

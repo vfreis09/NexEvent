@@ -6,7 +6,10 @@ import zxcvbn from "zxcvbn";
 import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
+import ProfilePictureUploader from "../ProfilePictureUploader/ProfilePictureUploader";
 import "./EditUser.css";
+
+const DEFAULT_AVATAR_URL = "/images/default-avatar.png";
 
 const EditUser: React.FC = () => {
   const { user, setUser } = useUser();
@@ -244,6 +247,8 @@ const EditUser: React.FC = () => {
     );
   }
 
+  const profilePictureUrl = user.profile_picture_base64 || DEFAULT_AVATAR_URL;
+
   return (
     <>
       {showToast && toastInfo && (
@@ -267,7 +272,7 @@ const EditUser: React.FC = () => {
             : "Your email is not verified. Please verify it to access all features."}
         </div>
         {!isVerified && (
-          <div className="mb-3">
+          <div className="mb-4">
             <button
               onClick={handleSendVerificationEmail}
               className="btn btn-warning btn-sm"
@@ -277,8 +282,31 @@ const EditUser: React.FC = () => {
             {verifyMessage && <p className="mt-2">{verifyMessage}</p>}
           </div>
         )}
+        <div className="card p-4 shadow-sm mb-4 profile-card-section">
+          <h4 className="mb-4">Profile Picture</h4>
+          <div className="profile-picture-display mb-4 text-center">
+            <img
+              src={profilePictureUrl}
+              alt={`${user.username}'s profile`}
+              className="img-fluid rounded-circle profile-avatar-img"
+              style={{
+                width: "150px",
+                height: "150px",
+                objectFit: "cover",
+                border: "3px solid var(--bs-primary)",
+              }}
+              onError={(e) => {
+                console.warn(
+                  "User profile picture failed to load. Using default."
+                );
+                e.currentTarget.src = DEFAULT_AVATAR_URL;
+              }}
+            />
+          </div>
+          <ProfilePictureUploader showNotification={showNotification} />
+        </div>
         <form onSubmit={handleUserUpdate} className="card p-4 shadow-sm mb-4">
-          <h4 className="mb-3">Edit Profile</h4>
+          <h4 className="mb-3">Account Details</h4>
           <div className="mb-3">
             <label className="form-label">Email</label>
             <input
@@ -316,7 +344,13 @@ const EditUser: React.FC = () => {
               onChange={(e) => setContact(e.target.value)}
             />
           </div>
-          <h5 className="mt-3 mb-3 border-top pt-3">Application Settings</h5>
+
+          <button type="submit" className="btn btn-primary w-100 mt-3">
+            Update Account Details
+          </button>
+        </form>
+        <div className="card p-4 shadow-sm mb-4 settings-card-section">
+          <h4 className="mb-3">Application Settings</h4>
           {user?.role !== "banned" && (
             <div className="form-check form-switch mb-3 dark-mode-toggle-group">
               <input
@@ -345,10 +379,7 @@ const EditUser: React.FC = () => {
               </label>
             </div>
           )}
-          <button type="submit" className="btn btn-primary w-100">
-            Update User
-          </button>
-        </form>
+        </div>
         <form
           onSubmit={handleChangePassword}
           className="card p-4 shadow-sm change-password-form"

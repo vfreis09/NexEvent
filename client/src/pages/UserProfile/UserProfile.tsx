@@ -12,7 +12,6 @@ const UserProfilePage = () => {
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
-
   useTheme();
 
   useEffect(() => {
@@ -24,12 +23,15 @@ const UserProfilePage = () => {
         if (res.status === 404) {
           setNotFound(true);
           setProfileUser(null);
-        } else {
-          const data = await res.json();
-          setProfileUser(data.user);
+          return;
         }
+
+        if (!res.ok) throw new Error("Network error");
+
+        const data = await res.json();
+        setProfileUser(data);
       } catch (err) {
-        console.error("Failed to fetch profile user", err);
+        console.error("Failed to fetch profile:", err);
         setNotFound(true);
         setProfileUser(null);
       } finally {
@@ -37,20 +39,19 @@ const UserProfilePage = () => {
       }
     };
 
-    if (username) {
-      fetchUser();
-    }
+    if (username) fetchUser();
   }, [username]);
 
   if (loading)
     return <p className="profile-loading-message">Loading profile...</p>;
-  if (notFound) return <p className="profile-error-message">User not found</p>;
+  if (notFound || !profileUser)
+    return <p className="profile-error-message">User not found</p>;
 
   return (
     <div className="user-profile-container">
       <UserProfileCard
-        profileUser={profileUser!}
-        isOwner={user?.username === profileUser?.username}
+        profileUser={profileUser}
+        isOwner={user?.username === profileUser.username}
       />
       <nav className="tab-nav">
         <NavLink to="." end>

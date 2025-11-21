@@ -1,58 +1,82 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
-import { EventType } from "../../types/EventType";
+import { EventData } from "../../types/EventData";
 import { useTheme } from "../../context/ThemeContext";
 import "./Event.css";
 
 interface EventProps {
-  event: EventType;
+  event: EventData;
   onCancel: (id: number) => void;
+  hostPicture: string | null | undefined;
+  hostUsername: string;
 }
 
-const Event: React.FC<EventProps> = ({ event, onCancel }) => {
-  const { isVerified, user } = useUser();
+const defaultAvatar = "/images/default-avatar.png";
 
+const Event: React.FC<EventProps> = ({
+  event,
+  onCancel,
+  hostPicture,
+  hostUsername,
+}) => {
+  const { isVerified, user } = useUser();
   useTheme();
 
   const isOwner = user && event.author_id === user.id;
 
+  const imageSrc = hostPicture || defaultAvatar;
+
   return (
     <div className="event-container">
       <h2>{event.title}</h2>
-      <p className="event-author">
-        <Link
-          to={`/user/${event.author_username}`}
-          title={`View ${event.author_username}'s profile`}
-        >
-          {event.author_username}
-        </Link>
-      </p>
-      <p>{event.description}</p>
+      <div className="event-host-details">
+        <div className="host-avatar-frame-small">
+          <img
+            src={imageSrc}
+            alt={`${hostUsername}'s profile picture`}
+            className="host-avatar-image-small"
+            onError={(e) => {
+              console.warn(
+                "Profile picture failed to load → using default avatar"
+              );
+              e.currentTarget.src = defaultAvatar;
+            }}
+          />
+        </div>
+        <p className="event-author">
+          <Link to={`/user/${hostUsername}`} className="host-username-link">
+            {hostUsername}
+          </Link>
+        </p>
+      </div>
+      <p className="event-description">{event.description}</p>
       <p>
-        <strong>Event Date:</strong>{" "}
+        <strong>Date & Time:</strong>{" "}
         {new Date(event.event_datetime).toLocaleString()}
       </p>
       <p>
-        <strong>Address:</strong> {event.address}
+        <strong>Location:</strong> {event.address}
       </p>
       <p>
-        <strong>Number of Attendees:</strong> {event.number_of_attendees}
+        <strong>Attendees:</strong> {event.number_of_attendees}
+        {event.max_attendees !== null && ` / ${event.max_attendees}`}
       </p>
       <p>
-        <strong>Created At:</strong>{" "}
-        {new Date(event.created_at).toLocaleString()}
+        <strong>Status:</strong>{" "}
+        <span className={`status-${event.status.toLowerCase()}`}>
+          {event.status}
+        </span>
       </p>
-      <p>
-        <strong>Event Status:</strong> {event.status}
-      </p>
-      {isVerified && user?.role !== "banned" && isOwner && (
-        <>
-          <Link to={`/edit/${event.id}`}>Edit</Link>
+      {isVerified && isOwner && user?.role !== "banned" && (
+        <div className="event-owner-actions">
+          <Link to={`/edit/${event.id}`} className="edit-event-link">
+            Edit
+          </Link>
           {event.status !== "canceled" && (
             <button onClick={() => onCancel(event.id)}>Cancel Event</button>
           )}
-        </>
+        </div>
       )}
     </div>
   );

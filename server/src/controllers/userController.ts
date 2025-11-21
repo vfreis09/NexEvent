@@ -19,6 +19,49 @@ if (!jwtSecret) {
   );
 }
 
+const uploadProfilePicture = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const { base64Image } = req.body;
+
+  if (!userId) {
+    return res.status(401).json({ message: "Authentication required." });
+  }
+
+  if (!base64Image || typeof base64Image !== "string") {
+    return res
+      .status(400)
+      .json({ message: "Base64 image data is missing or invalid." });
+  }
+
+  if (!base64Image.startsWith("data:image/")) {
+    return res.status(400).json({ message: "Invalid image format." });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE users 
+         SET profile_picture_base64 = $1 
+         WHERE id = $2
+         RETURNING profile_picture_base64`,
+      [base64Image, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({
+      message: "Profile picture uploaded successfully.",
+      profilePicture: result.rows[0].profile_picture_base64,
+    });
+  } catch (error) {
+    console.error("Profile picture upload database error:", error);
+    res.status(500).json({
+      message: "Failed to update profile picture due to a server error.",
+    });
+  }
+};
+
 const signup = async (req: Request, res: Response) => {
   const { email, username, password, wantsNotifications } = req.body;
 
@@ -114,7 +157,7 @@ const getUser = async (req: Request, res: Response) => {
     const userId = decoded.id;
 
     const { rows } = await pool.query(
-      `SELECT id, username, email, bio, role, contact, visibility, is_verified, wants_notifications, theme_preference, created_at
+      `SELECT id, username, email, bio, role, contact, visibility, is_verified, wants_notifications, theme_preference, created_at, profile_picture_base64
        FROM users 
        WHERE id = $1`,
       [userId]
@@ -208,6 +251,7 @@ const updateUser = async (req: Request, res: Response) => {
       wants_notifications: updatedUser.wants_notifications,
       is_verified: updatedUser.is_verified,
       theme_preference: updatedUser.theme_preference,
+      profile_picture_base64: updatedUser.profile_picture_base64,
     });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -337,19 +381,20 @@ const getPublicUserByUsername = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      `SELECT 
-        username,
-        email,
-        COALESCE(created_at, CURRENT_TIMESTAMP) AS created_at,
-        (SELECT COUNT(*) FROM events WHERE author_id = users.id) AS total_created_events,
-        (
-          SELECT COUNT(*) 
-          FROM rsvps 
-          WHERE rsvps.user_id = users.id 
-            AND LOWER(rsvps.status) = 'accepted'
-        ) AS total_accepted_rsvps
-      FROM users
-      WHERE username = $1`,
+      `SELECT
+          username,
+          email,
+          profile_picture_base64,
+          COALESCE(created_at, CURRENT_TIMESTAMP) AS created_at,
+          (SELECT COUNT(*) FROM events WHERE author_id = users.id) AS total_created_events,
+          (
+            SELECT COUNT(*)
+            FROM rsvps
+            WHERE rsvps.user_id = users.id
+              AND LOWER(rsvps.status) = 'accepted'
+          ) AS total_accepted_rsvps
+        FROM users
+        WHERE username = $1`,
       [username]
     );
 
@@ -358,7 +403,7 @@ const getPublicUserByUsername = async (req: Request, res: Response) => {
     }
 
     const user = result.rows[0];
-    res.json({ user });
+    res.json(user);
   } catch (error) {
     console.error("Error fetching user by username:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -483,6 +528,7 @@ const userController = {
   getPublicUserByUsername,
   sendResetLink,
   resetForgottenPassword,
+  uploadProfilePicture,
 };
 
 export default userController;
