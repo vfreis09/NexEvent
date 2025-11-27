@@ -6,6 +6,7 @@ import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
 import { useTheme } from "../../context/ThemeContext";
 import AppToast from "../ToastComponent/ToastComponent";
+import GoogleAuthButton from "../GoogleAuthButton/GoogleAuthButton";
 import "./SignupForm.css";
 
 const SignupForm: React.FC = () => {
@@ -13,10 +14,10 @@ const SignupForm: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [wantsNotifications, setWantsNotifications] = useState(false);
-  const [passwordScore, setPasswordScore] = useState(0);
-  const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
-    []
-  );
+
+  const [passwordScoreDisplay, setPasswordScoreDisplay] = useState(0);
+  const [passwordFeedbackListDisplay, setPasswordFeedbackListDisplay] =
+    useState<string[]>([]);
 
   useTheme();
 
@@ -30,8 +31,8 @@ const SignupForm: React.FC = () => {
 
   useEffect(() => {
     const result = zxcvbn(password);
-    setPasswordScore(result.score);
-    setPasswordFeedbackList(getPasswordFeedback(password));
+    setPasswordScoreDisplay(result.score);
+    setPasswordFeedbackListDisplay(getPasswordFeedback(password));
   }, [password]);
 
   const getStrengthLabel = (score: number) => {
@@ -71,7 +72,9 @@ const SignupForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (passwordScore < 2) {
+    const currentPasswordScore = zxcvbn(password).score;
+
+    if (currentPasswordScore < 2) {
       showNotification("Please choose a stronger password.", "Error", "danger");
       return;
     }
@@ -158,14 +161,14 @@ const SignupForm: React.FC = () => {
             <div className="password-feedback mt-2 mb-3">
               <div
                 className={`password-strength ${getStrengthColor(
-                  passwordScore
+                  passwordScoreDisplay
                 )} mb-1`}
               >
-                Strength: {getStrengthLabel(passwordScore)}
+                Strength: {getStrengthLabel(passwordScoreDisplay)}
               </div>
-              {passwordFeedbackList.length > 0 && (
+              {passwordFeedbackListDisplay.length > 0 && (
                 <ul className="password-feedback-list mb-0">
-                  {passwordFeedbackList.map((item, idx) => (
+                  {passwordFeedbackListDisplay.map((item, idx) => (
                     <li key={idx}>{item}</li>
                   ))}
                 </ul>
@@ -188,6 +191,7 @@ const SignupForm: React.FC = () => {
         <button type="submit" className="btn btn-primary w-100">
           Signup
         </button>
+        <GoogleAuthButton type="button" />
         <div className="links-container mt-3 text-center">
           <p>
             Already part of the app? <Link to="/login">Login</Link>

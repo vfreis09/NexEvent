@@ -6,6 +6,9 @@ import path from "path";
 import * as crypto from "crypto";
 import emailServices from "../utils/emailService";
 import { isStrongPassword } from "../utils/password";
+import oauthConfig from "../config/oauthConfig";
+
+const STATE_COOKIE_NAME = "google_oauth_state";
 
 const pool = require("../config/dbConfig");
 
@@ -514,6 +517,112 @@ const resetForgottenPassword = async (req: Request, res: Response) => {
   }
 };
 
+const googleOAuthCallback = async (req: Request, res: Response) => {
+  const { code, state } = req.query;
+  const storedState = req.cookies[STATE_COOKIE_NAME];
+
+  if (!code) {
+    return res
+      .status(400)
+      .redirect("http://localhost:5173/login?error=missing_code");
+  }
+
+  if (!storedState || state !== storedState) {
+    console.error("CSRF attack detected: State mismatch.");
+    res.clearCookie(STATE_COOKIE_NAME);
+
+    return res.redirect("http://localhost:5173/login?error=csrf");
+  }
+  res.clearCookie(STATE_COOKIE_NAME);
+
+  try {
+    const params = new URLSearchParams();
+    params.append("code", code as string);
+    params.append("client_id", oauthConfig.CLIENT_ID);
+    params.append("client_secret", oauthConfig.CLIENT_SECRET);
+    params.append("redirect_uri", oauthConfig.REDIRECT_URI);
+    params.append("grant_type", "authorization_code");
+
+    const tokenResponse = await fetch(oauthConfig.TOKEN_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error(
+        `Token exchange failed with status: ${tokenResponse.status}`
+      );
+    }
+    const tokenData = await tokenResponse.json();
+    const { access_token } = tokenData;
+
+    const userInfoResponse = await fetch(oauthConfig.USER_INFO_ENDPOINT, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    const userInfo = await userInfoResponse.json();
+    const { email, name, picture, sub } = userInfo;
+    const googleId = sub;
+    let userId;
+
+    let userResult = await pool.query(
+      "SELECT id, username FROM users WHERE oauth_id = $1 AND oauth_provider = 'google'",
+      [googleId]
+    );
+
+    if (userResult.rows.length === 0) {
+      userResult = await pool.query(
+        "SELECT id, username FROM users WHERE email = $1",
+        [email]
+      );
+    }
+
+    if (userResult.rows.length > 0) {
+      userId = userResult.rows[0].id;
+
+      await pool.query(
+        `UPDATE users 
+         SET profile_picture_base64 = $1, 
+             is_verified = TRUE,
+             oauth_provider = $2, 
+             oauth_id = $3
+         WHERE id = $4`,
+        [picture, "google", googleId, userId]
+      );
+    } else {
+      const salt = await bcrypt.genSalt(10);
+      const randomPassword = crypto.randomBytes(16).toString("hex");
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      let username = name;
+
+      const newUserResult = await pool.query(
+        `INSERT INTO users (email, password, username, is_verified, profile_picture_base64, oauth_provider, oauth_id) 
+         VALUES ($1, $2, $3, TRUE, $4, $5, $6) RETURNING id`,
+        [email, hashedPassword, username, picture, "google", googleId]
+      );
+      userId = newUserResult.rows[0].id;
+    }
+
+    const token = jwt.sign({ id: userId, email }, jwtSecret, {
+      expiresIn: "1h",
+    });
+
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 3600000,
+      })
+      .redirect("http://localhost:5173/");
+  } catch (error) {
+    console.error("Google OAuth failed:", (error as any).message || error);
+    res.redirect("http://localhost:5173/login?error=oauth_failed");
+  }
+};
+
 const userController = {
   signup,
   login,
@@ -529,6 +638,7 @@ const userController = {
   sendResetLink,
   resetForgottenPassword,
   uploadProfilePicture,
+  googleOAuthCallback,
 };
 
 export default userController;

@@ -7,6 +7,8 @@ const initDb = async () => {
       email VARCHAR(255) UNIQUE NOT NULL,
       password VARCHAR(255) NOT NULL,
       username VARCHAR(255) UNIQUE NOT NULL,
+      oauth_provider VARCHAR(50), 
+      oauth_id VARCHAR(255) UNIQUE, 
       bio TEXT,
       role VARCHAR(20) DEFAULT 'user',
       contact TEXT,
@@ -30,7 +32,7 @@ const initDb = async () => {
       max_attendees INT DEFAULT NULL,
       location POINT,
       address TEXT,
-      author_id INTEGER REFERENCES users(id),
+      author_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       status VARCHAR(10) DEFAULT 'active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired', 'canceled'))

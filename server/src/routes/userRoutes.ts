@@ -12,6 +12,8 @@ router.post("/logout", authenticateUser, userController.logout);
 
 router.get("/user", authenticateUser, userController.getUser);
 
+router.get("/user/google/callback", userController.googleOAuthCallback);
+
 router.post(
   "/user/profile/upload",
   authenticateUser,

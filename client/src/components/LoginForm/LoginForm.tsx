@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
+import GoogleAuthButton from "../GoogleAuthButton/GoogleAuthButton";
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
@@ -65,6 +66,7 @@ const LoginForm: React.FC = () => {
         />
       </div>
       <button type="submit">Login</button>
+      <GoogleAuthButton type="button" />
       <div className="links-container">
         <Link to="/forgot-password">Forgot your password?</Link>
         <p>
