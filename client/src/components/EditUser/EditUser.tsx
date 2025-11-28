@@ -179,6 +179,25 @@ const EditUser: React.FC = () => {
       return;
     }
 
+    const isOAuthUser = !!user?.oauth_provider;
+
+    const requestBody: { oldPassword?: string; newPassword: string } = {
+      newPassword,
+    };
+
+    if (!isOAuthUser) {
+      if (!oldPassword) {
+        showNotification(
+          "Current password is required to change it.",
+          "Error",
+          "danger"
+        );
+        return;
+      }
+
+      requestBody.oldPassword = oldPassword;
+    }
+
     try {
       const response = await fetch(
         "http://localhost:3000/api/user/change-password",
@@ -186,11 +205,14 @@ const EditUser: React.FC = () => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ oldPassword, newPassword }),
+          body: JSON.stringify(requestBody),
         }
       );
 
-      if (!response.ok) throw new Error("Failed to change password");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to change password");
+      }
 
       showNotification("Password updated successfully!", "Success", "success");
       setOldPassword("");
@@ -198,7 +220,9 @@ const EditUser: React.FC = () => {
       setConfirmPassword("");
     } catch (error) {
       console.error("Error changing password:", error);
-      showNotification("Failed to change password.", "Error", "danger");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to change password.";
+      showNotification(errorMessage, "Error", "danger");
     }
   };
 
@@ -248,6 +272,7 @@ const EditUser: React.FC = () => {
   }
 
   const profilePictureUrl = user.profile_picture_base64 || DEFAULT_AVATAR_URL;
+  const isOAuthUser = !!user?.oauth_provider;
 
   return (
     <>
@@ -385,16 +410,17 @@ const EditUser: React.FC = () => {
           className="card p-4 shadow-sm change-password-form"
         >
           <h4 className="mb-3">Change Password</h4>
-          <div className="mb-3">
-            <label className="form-label">Old Password</label>
-            <input
-              type="password"
-              className="form-control"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              required
-            />
-          </div>
+          {!isOAuthUser && (
+            <div className="mb-3">
+              <label className="form-label">Old Password</label>
+              <input
+                type="password"
+                className="form-control"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+              />
+            </div>
+          )}
           <div className="mb-3">
             <label className="form-label">New Password</label>
             <input

@@ -108,25 +108,35 @@ const signup = async (req: Request, res: Response) => {
 
 const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  const genericErrorMessage = "Invalid email or password.";
+  const genericStatusCode = 401;
+
   try {
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(genericStatusCode)
+        .json({ message: genericErrorMessage });
     }
 
     const user = result.rows[0];
 
     if (!user.password) {
-      return res.status(500).json({ message: "Password field is missing" });
+      console.error(`User ID ${user.id} has no password field.`);
+      return res
+        .status(genericStatusCode)
+        .json({ message: genericErrorMessage });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res
+        .status(genericStatusCode)
+        .json({ message: genericErrorMessage });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
@@ -136,21 +146,20 @@ const login = async (req: Request, res: Response) => {
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 3600000,
       })
       .status(200)
       .json({ user: { id: user.id, email: user.email } });
   } catch (error) {
-    console.log(error);
+    console.error("Login attempt error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const getUser = async (req: Request, res: Response) => {
   const token = req.cookies?.token;
-
   if (!token) {
     return res.json({ isLoggedIn: false, user: null });
   }
@@ -160,8 +169,20 @@ const getUser = async (req: Request, res: Response) => {
     const userId = decoded.id;
 
     const { rows } = await pool.query(
-      `SELECT id, username, email, bio, role, contact, visibility, is_verified, wants_notifications, theme_preference, created_at, profile_picture_base64
-       FROM users 
+      `SELECT 
+         id, 
+         username, 
+         email, 
+         bio, 
+         role, 
+         contact, 
+         is_verified, 
+         wants_notifications, 
+         theme_preference, 
+         created_at, 
+         profile_picture_base64,
+         oauth_provider
+       FROM users
        WHERE id = $1`,
       [userId]
     );
@@ -188,48 +209,47 @@ const changePassword = async (req: Request, res: Response) => {
   const { oldPassword, newPassword } = req.body;
   const userId = req.user?.id;
 
-  if (!oldPassword || !newPassword) {
-    return res
-      .status(400)
-      .json({ message: "Both current and new password are required" });
+  if (!newPassword || typeof newPassword !== "string") {
+    return res.status(400).json({ message: "New password is required" });
   }
-
   if (!isStrongPassword(newPassword)) {
-    return res.status(400).json({
-      message:
-        "Password is not strong enough. Must be 8+ chars, include uppercase, lowercase, number, and special character.",
-    });
+    return res.status(400).json({ message: "Password too weak" });
   }
 
   try {
-    const result = await pool.query(
-      "SELECT password FROM users WHERE id = $1",
+    const { rows } = await pool.query(
+      "SELECT password, oauth_provider FROM users WHERE id = $1",
       [userId]
     );
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "User not found" });
+    const dbUser = rows[0];
+    const isOAuthUser = !!dbUser.oauth_provider;
+
+    if (!isOAuthUser) {
+      if (!oldPassword) {
+        return res
+          .status(400)
+          .json({ message: "Current password is required" });
+      }
+      const match = await bcrypt.compare(oldPassword, dbUser.password || "");
+      if (!match) {
+        return res.status(400).json({ message: "Current password incorrect" });
+      }
     }
 
-    const storedHash = result.rows[0].password;
+    const hash = await bcrypt.hash(newPassword, 12);
 
-    const isMatch = await bcrypt.compare(oldPassword, storedHash);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect" });
-    }
+    await pool.query(
+      `UPDATE users 
+       SET password = $1, oauth_provider = NULL, oauth_id = NULL 
+       WHERE id = $2`,
+      [hash, userId]
+    );
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
-      hashedPassword,
-      userId,
-    ]);
-
-    res.status(200).json({ message: "Password updated successfully" });
+    return res.json({ message: "Password set successfully" });
   } catch (error) {
     console.error("Error changing password:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

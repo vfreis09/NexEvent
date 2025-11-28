@@ -12,7 +12,6 @@ const initDb = async () => {
       bio TEXT,
       role VARCHAR(20) DEFAULT 'user',
       contact TEXT,
-      visibility VARCHAR(7) DEFAULT 'public',
       is_verified BOOLEAN DEFAULT FALSE,
       wants_notifications BOOLEAN DEFAULT false,
       theme_preference VARCHAR(5) DEFAULT 'light' CHECK (theme_preference IN ('light', 'dark')),
