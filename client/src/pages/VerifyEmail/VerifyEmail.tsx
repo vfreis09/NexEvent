@@ -6,8 +6,13 @@ import "./VerifyEmail.css";
 function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const [message, setMessage] = useState("Verifying...");
+  const [showFallback, setShowFallback] = useState(false);
   const navigate = useNavigate();
   const { isLoggedIn, loadUser } = useUser();
+
+  const handleNavigate = () => {
+    navigate(isLoggedIn ? "/" : "/login");
+  };
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -29,13 +34,17 @@ function VerifyEmail() {
 
         const data = await response.json();
         if (response.ok) {
-          setMessage("Email verified successfully! Redirecting...");
+          setMessage(
+            "Email verified successfully! Redirecting to Home Page..."
+          );
 
           await loadUser();
 
+          setShowFallback(true);
+
           setTimeout(() => {
-            navigate(isLoggedIn ? "/" : "/login");
-          }, 2000);
+            handleNavigate();
+          }, 3000);
         } else {
           setMessage(data.message || "Verification failed.");
         }
@@ -48,6 +57,8 @@ function VerifyEmail() {
     verifyEmail();
   }, [searchParams, navigate, loadUser, isLoggedIn]);
 
+  const showSpinner = message.includes("Verifying");
+
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
       <div className="card text-center shadow p-4 verify-card">
@@ -56,8 +67,13 @@ function VerifyEmail() {
         <div
           className="spinner-border text-primary mt-3"
           role="status"
-          hidden={!message.includes("Verifying")}
+          hidden={!showSpinner}
         ></div>
+        {showFallback && (
+          <button className="btn btn-primary mt-4" onClick={handleNavigate}>
+            Go to Home Page
+          </button>
+        )}
       </div>
     </div>
   );
