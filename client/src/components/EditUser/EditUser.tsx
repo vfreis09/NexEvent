@@ -7,12 +7,18 @@ import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
 import ProfilePictureUploader from "../ProfilePictureUploader/ProfilePictureUploader";
+import { Badge, Form, Spinner } from "react-bootstrap";
 import "./EditUser.css";
 
 const DEFAULT_AVATAR_URL = "/images/default-avatar.png";
 
+interface Tag {
+  id: number;
+  name: string;
+}
+
 const EditUser: React.FC = () => {
-  const { user, setUser } = useUser();
+  const { user, setUser, loadUser } = useUser();
   const { theme, toggleTheme } = useTheme();
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
@@ -20,18 +26,22 @@ const EditUser: React.FC = () => {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [contact, setContact] = useState("");
-  const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
-  const [wantsNotifications, setWantsNotifications] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [passwordScore, setPasswordScore] = useState(0);
   const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
     []
   );
+
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [digestFrequency, setDigestFrequency] = useState("daily");
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
+  const [savingPrefs, setSavingPrefs] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -39,10 +49,50 @@ const EditUser: React.FC = () => {
       setUsername(user.username || "");
       setBio(user.bio || "");
       setContact(user.contact || "");
-      setWantsNotifications(user.wants_notifications ?? false);
       setIsVerified(user.is_verified ?? false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchPrefs = async () => {
+      try {
+        const [tagsRes, settingsRes] = await Promise.all([
+          fetch("http://localhost:3000/api/tags"),
+          fetch("http://localhost:3000/api/user/settings/all", {
+            credentials: "include",
+          }),
+        ]);
+
+        if (!tagsRes.ok || !settingsRes.ok) throw new Error("Fetch failed");
+
+        const tagsData = await tagsRes.json();
+        const settingsData = await settingsRes.json();
+
+        if (Array.isArray(tagsData)) {
+          setAvailableTags(tagsData);
+        } else if (tagsData && Array.isArray(tagsData.tags)) {
+          setAvailableTags(tagsData.tags);
+        }
+
+        setDigestFrequency(settingsData.digest_frequency || "daily");
+        if (
+          settingsData.selected_tags &&
+          Array.isArray(settingsData.selected_tags)
+        ) {
+          setSelectedTagIds(
+            settingsData.selected_tags.map((t: any) =>
+              typeof t === "object" ? t.id : t
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load preferences", error);
+      } finally {
+        setLoadingPrefs(false);
+      }
+    };
+    fetchPrefs();
+  }, []);
 
   useEffect(() => {
     if (newPassword) {
@@ -67,137 +117,80 @@ const EditUser: React.FC = () => {
           body: JSON.stringify({ email, username, bio, contact }),
         }
       );
-
-      if (!response.ok) throw new Error("Failed to update user");
-
+      if (!response.ok) throw new Error("Update failed");
       const updatedUser = await response.json();
-      const fixedUser = {
-        ...updatedUser,
-        is_verified: updatedUser.is_verified ?? user?.is_verified,
-        theme_preference:
-          updatedUser.theme_preference ?? user?.theme_preference,
-      };
-
-      setUser(fixedUser);
-      setIsVerified(fixedUser.is_verified ?? false);
-      showNotification("User updated successfully!", "Success", "success");
+      setUser({ ...user, ...updatedUser });
+      showNotification("Profile updated!", "Success", "success");
     } catch (error) {
-      console.error("Failed to update user", error);
-      showNotification("Failed to update user.", "Error", "danger");
+      showNotification("Update failed.", "Error", "danger");
     }
   };
 
-  const handleNotificationToggle = async () => {
+  const toggleTag = (id: number) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(id) ? prev.filter((tid) => tid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSavePreferences = async () => {
+    setSavingPrefs(true);
     try {
       const response = await fetch(
-        "http://localhost:3000/api/user/settings/notifications",
+        "http://localhost:3000/api/user/settings/update",
         {
-          method: "PUT",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ wants_notifications: !wantsNotifications }),
+          body: JSON.stringify({
+            digest_frequency: digestFrequency,
+            tagIds: selectedTagIds,
+          }),
         }
       );
-
-      if (!response.ok)
-        throw new Error("Failed to update notification settings");
-
-      setWantsNotifications(!wantsNotifications);
-      showNotification("Notification settings updated.", "Success", "success");
+      if (!response.ok) throw new Error();
+      showNotification("Interests updated!", "Success", "success");
+      await loadUser();
     } catch (error) {
-      console.error("Error updating notification preference:", error);
-      showNotification(
-        "Failed to update notification settings.",
-        "Error",
-        "danger"
-      );
+      showNotification("Failed to save.", "Error", "danger");
+    } finally {
+      setSavingPrefs(false);
     }
   };
 
   const handleThemeToggle = async () => {
     const newTheme = theme === "light" ? "dark" : "light";
-
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/user/settings/theme",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ theme_preference: newTheme }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to update theme settings");
-
+      await fetch("http://localhost:3000/api/user/settings/theme", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ theme_preference: newTheme }),
+      });
       toggleTheme();
-
-      showNotification(`Switched to ${newTheme} mode.`, "Success", "success");
     } catch (error) {
-      console.error("Error updating theme preference:", error);
-      showNotification("Failed to update theme preference.", "Error", "danger");
+      showNotification("Theme update failed.", "Error", "danger");
     }
   };
 
   const handleSendVerificationEmail = async () => {
     setVerifyMessage(null);
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/send-verification-email",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to send verification email");
-
-      setVerifyMessage("Verification email sent successfully!");
-      showNotification(
-        "Verification email sent successfully!",
-        "Success",
-        "success"
-      );
+      await fetch("http://localhost:3000/api/send-verification-email", {
+        method: "POST",
+        credentials: "include",
+      });
+      setVerifyMessage("Email sent!");
     } catch (error) {
-      console.error("Error sending verification email:", error);
-      setVerifyMessage("Failed to send verification email.");
-      showNotification("Failed to send verification email.", "Error", "danger");
+      setVerifyMessage("Failed to send.");
     }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (newPassword !== confirmPassword) {
-      showNotification("New passwords do not match.", "Error", "danger");
+      showNotification("Passwords do not match.", "Error", "danger");
       return;
     }
-
-    if (passwordScore < 2) {
-      showNotification("Please choose a stronger password.", "Error", "danger");
-      return;
-    }
-
-    const isOAuthUser = !!user?.oauth_provider;
-
-    const requestBody: { oldPassword?: string; newPassword: string } = {
-      newPassword,
-    };
-
-    if (!isOAuthUser) {
-      if (!oldPassword) {
-        showNotification(
-          "Current password is required to change it.",
-          "Error",
-          "danger"
-        );
-        return;
-      }
-
-      requestBody.oldPassword = oldPassword;
-    }
-
     try {
       const response = await fetch(
         "http://localhost:3000/api/user/change-password",
@@ -205,74 +198,39 @@ const EditUser: React.FC = () => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({ oldPassword, newPassword }),
         }
       );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to change password");
-      }
-
-      showNotification("Password updated successfully!", "Success", "success");
+      if (!response.ok) throw new Error();
+      showNotification("Password changed!", "Success", "success");
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
-      console.error("Error changing password:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to change password.";
-      showNotification(errorMessage, "Error", "danger");
-    }
-  };
-
-  const getStrengthLabel = (score: number) => {
-    switch (score) {
-      case 0:
-        return "Very Weak";
-      case 1:
-        return "Weak";
-      case 2:
-        return "Fair";
-      case 3:
-        return "Good";
-      case 4:
-        return "Strong";
-      default:
-        return "";
+      showNotification("Password change failed.", "Error", "danger");
     }
   };
 
   const getStrengthColor = (score: number) => {
-    switch (score) {
-      case 0:
-        return "text-danger";
-      case 1:
-        return "text-warning";
-      case 2:
-        return "text-warning";
-      case 3:
-        return "text-success";
-      case 4:
-        return "text-success";
-      default:
-        return "text-muted";
-    }
+    const colors = [
+      "text-danger",
+      "text-warning",
+      "text-warning",
+      "text-success",
+      "text-success",
+    ];
+    return colors[score] || "text-muted";
   };
 
-  if (!user) {
+  if (!user)
     return (
       <div className="text-center mt-5">
-        <h2>You have to login to access this content</h2>
+        <h2>Please login</h2>
         <Link to="/login" className="btn btn-primary mt-3">
           Login
         </Link>
       </div>
     );
-  }
-
-  const profilePictureUrl = user.profile_picture_base64 || DEFAULT_AVATAR_URL;
-  const isOAuthUser = !!user?.oauth_provider;
 
   return (
     <>
@@ -286,135 +244,167 @@ const EditUser: React.FC = () => {
           onClose={hideToast}
         />
       )}
-      <div className="container edit-user-container">
+
+      <div className="container edit-user-container pb-5">
         <div
           className={`alert ${
             isVerified ? "alert-success" : "alert-danger"
-          } verification-status`}
+          } mt-4 d-flex justify-content-between align-items-center`}
         >
-          {isVerified
-            ? "Your email is verified."
-            : "Your email is not verified. Please verify it to access all features."}
-        </div>
-        {!isVerified && (
-          <div className="mb-4">
+          <span>{isVerified ? "Email Verified" : "Email Not Verified"}</span>
+          {!isVerified && (
             <button
               onClick={handleSendVerificationEmail}
-              className="btn btn-warning btn-sm"
+              className="btn btn-dark btn-sm"
             >
-              Send Verification Email
+              Resend Link
             </button>
-            {verifyMessage && <p className="mt-2">{verifyMessage}</p>}
-          </div>
+          )}
+        </div>
+        {verifyMessage && (
+          <p className="text-center small mt-1">{verifyMessage}</p>
         )}
-        <div className="card p-4 shadow-sm mb-4 profile-card-section">
+        <div className="card p-4 shadow-sm mb-4">
           <h4 className="mb-4">Profile Picture</h4>
-          <div className="profile-picture-display mb-4 text-center">
+          <div className="text-center mb-4">
             <img
-              src={profilePictureUrl}
-              alt={`${user.username}'s profile`}
-              className="img-fluid rounded-circle profile-avatar-img"
-              style={{
-                width: "150px",
-                height: "150px",
-                objectFit: "cover",
-                border: "3px solid var(--bs-primary)",
-              }}
-              onError={(e) => {
-                console.warn(
-                  "User profile picture failed to load. Using default."
-                );
-                e.currentTarget.src = DEFAULT_AVATAR_URL;
-              }}
+              src={user.profile_picture_base64 || DEFAULT_AVATAR_URL}
+              className="rounded-circle border"
+              style={{ width: "120px", height: "120px", objectFit: "cover" }}
+              alt="Profile"
             />
           </div>
           <ProfilePictureUploader showNotification={showNotification} />
         </div>
-        <form onSubmit={handleUserUpdate} className="card p-4 shadow-sm mb-4">
-          <h4 className="mb-3">Account Details</h4>
-          <div className="mb-3">
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              className="form-control"
-              value={email}
-              required
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Username</label>
-            <input
-              type="text"
-              className="form-control"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Bio</label>
-            <input
-              type="text"
-              className="form-control"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Contact</label>
-            <input
-              type="text"
-              className="form-control"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary w-100 mt-3">
-            Update Account Details
-          </button>
-        </form>
-        <div className="card p-4 shadow-sm mb-4 settings-card-section">
-          <h4 className="mb-3">Application Settings</h4>
-          {user?.role !== "banned" && (
-            <div className="form-check form-switch mb-3 dark-mode-toggle-group">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                id="darkModeSwitch"
-                checked={theme === "dark"}
-                onChange={handleThemeToggle}
-              />
-              <label className="form-check-label" htmlFor="darkModeSwitch">
-                Enable Dark Mode
-              </label>
+        <div className="card p-4 shadow-sm mb-4">
+          <h4 className="mb-3">Interests & Ranking</h4>
+          {loadingPrefs ? (
+            <div className="text-center p-3">
+              <Spinner animation="border" size="sm" />
             </div>
-          )}
-          {user?.role !== "banned" && (
-            <div className="form-check form-switch mb-4 notification-toggle-group">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                id="notificationSwitch"
-                checked={wantsNotifications}
-                onChange={handleNotificationToggle}
-              />
-              <label className="form-check-label" htmlFor="notificationSwitch">
-                Receive event notification emails
-              </label>
-            </div>
+          ) : (
+            <>
+              <div className="mb-4">
+                <label className="form-label fw-bold">
+                  Email Digest Frequency
+                </label>
+                <Form.Select
+                  className="w-50"
+                  value={digestFrequency}
+                  onChange={(e) => setDigestFrequency(e.target.value)}
+                >
+                  <option value="daily">Daily Recap</option>
+                  <option value="weekly">Weekly Roundup</option>
+                  <option value="never">Unsubscribe</option>
+                </Form.Select>
+              </div>
+              <div className="mb-4">
+                <label className="form-label fw-bold d-block">
+                  Interest Tags
+                </label>
+                <div className="d-flex flex-wrap gap-2">
+                  {availableTags.length > 0 ? (
+                    availableTags.map((tag) => (
+                      <Badge
+                        key={tag.id}
+                        pill
+                        bg={
+                          selectedTagIds.includes(tag.id) ? "primary" : "light"
+                        }
+                        text={
+                          selectedTagIds.includes(tag.id) ? "white" : "dark"
+                        }
+                        className="tag-pill border"
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-muted small">No tags found.</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleSavePreferences}
+                disabled={savingPrefs}
+                className="btn btn-primary w-100 py-2"
+              >
+                {savingPrefs ? "Saving..." : "Save Preferences"}
+              </button>
+            </>
           )}
         </div>
-        <form
-          onSubmit={handleChangePassword}
-          className="card p-4 shadow-sm change-password-form"
-        >
-          <h4 className="mb-3">Change Password</h4>
-          {!isOAuthUser && (
+        <form onSubmit={handleUserUpdate} className="card p-4 shadow-sm mb-4">
+          <h4 className="mb-3">Account Details</h4>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label">Username</label>
+              <input
+                type="text"
+                className="form-control"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Contact / Phone</label>
+              <input
+                type="text"
+                className="form-control"
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+              />
+            </div>
+            <div className="col-12">
+              <label className="form-label">Bio</label>
+              <textarea
+                className="form-control"
+                rows={2}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
+            </div>
+          </div>
+          <button type="submit" className="btn btn-outline-primary w-100 mt-4">
+            Update Profile Info
+          </button>
+        </form>
+
+        <div className="card p-4 shadow-sm mb-4">
+          <h4 className="mb-3">Appearance</h4>
+          <div className="form-check form-switch">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="themeSwitch"
+              checked={theme === "dark"}
+              onChange={handleThemeToggle}
+            />
+            <label className="form-check-label" htmlFor="themeSwitch">
+              Dark Mode
+            </label>
+          </div>
+        </div>
+        <form onSubmit={handleChangePassword} className="card p-4 shadow-sm">
+          <h4 className="mb-3">Security</h4>
+          {!user.oauth_provider && (
             <div className="mb-3">
-              <label className="form-label">Old Password</label>
+              <label className="form-label">Current Password</label>
               <input
                 type="password"
+                title="old-password"
+                name="old-password"
                 className="form-control"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
@@ -425,47 +415,42 @@ const EditUser: React.FC = () => {
             <label className="form-label">New Password</label>
             <input
               type="password"
+              title="new-password"
+              name="new-password"
               className="form-control"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
             {newPassword && (
-              <div className="password-feedback mt-3 mb-3">
+              <div className="mt-2">
                 <div
-                  className={`fw-semibold ${getStrengthColor(
-                    passwordScore
-                  )} mb-1`}
+                  className={`small fw-bold ${getStrengthColor(passwordScore)}`}
                 >
-                  Strength: {getStrengthLabel(passwordScore)}
+                  Strength: {passwordScore}/4
                 </div>
-                {passwordFeedbackList.length > 0 && (
-                  <ul className="text-danger small ps-3 mb-0">
-                    {passwordFeedbackList.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                )}
+                {passwordFeedbackList.map((f, i) => (
+                  <div key={i} className="small text-danger">
+                    {f}
+                  </div>
+                ))}
               </div>
             )}
           </div>
           <div className="mb-3">
-            <label className="form-label">Confirm New Password</label>
+            <label className="form-label">Confirm Password</label>
             <input
               type="password"
+              title="confirm-password"
+              name="confirm-password"
               className="form-control"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-            {confirmPassword && newPassword !== confirmPassword && (
-              <div className="text-danger small mt-1">
-                Passwords do not match.
-              </div>
-            )}
           </div>
           <button type="submit" className="btn btn-secondary w-100">
-            Change Password
+            Update Password
           </button>
         </form>
       </div>

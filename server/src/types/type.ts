@@ -2,6 +2,6 @@ import { Request } from "express";
 
 declare module "express-serve-static-core" {
   interface Request {
-    user?: { id: string; email: string; isVerified?: boolean; role?: string };
+    user?: { id: number; email: string; isVerified?: boolean; role?: string };
   }
 }

@@ -9,10 +9,9 @@ const router = Router();
 router.post("/signup", userController.signup);
 router.post("/login", userController.login);
 router.post("/logout", authenticateUser, userController.logout);
+router.get("/user/google/callback", userController.googleOAuthCallback);
 
 router.get("/user", authenticateUser, userController.getUser);
-
-router.get("/user/google/callback", userController.googleOAuthCallback);
 
 router.post(
   "/user/profile/upload",
@@ -20,6 +19,16 @@ router.post(
   checkBannedUser,
   userController.uploadProfilePicture
 );
+
+router.put(
+  "/user/:id",
+  authenticateUser,
+  checkBannedUser,
+  userController.updateUser
+);
+
+router.get("/user/:username", userController.getPublicUserByUsername);
+router.get("/user/:username/events", eventController.getEventsByAuthor);
 
 router.put(
   "/user/change-password",
@@ -33,10 +42,36 @@ router.post(
   checkBannedUser,
   userController.sendResetLink
 );
+
 router.post(
   "/user/reset-password",
   checkBannedUser,
   userController.resetForgottenPassword
+);
+
+router.post(
+  "/send-verification-email",
+  authenticateUser,
+  checkBannedUser,
+  userController.requestVerificationEmail
+);
+
+router.get("/verify-email", checkBannedUser, userController.verifyEmail);
+
+router.get("/tags", userController.getAllTags);
+
+router.get(
+  "/user/settings/all",
+  authenticateUser,
+  checkBannedUser,
+  userController.getUserSettings
+);
+
+router.patch(
+  "/user/settings/update",
+  authenticateUser,
+  checkBannedUser,
+  userController.updateUserSettings
 );
 
 router.put(
@@ -51,25 +86,6 @@ router.put(
   authenticateUser,
   checkBannedUser,
   userController.updateThemePreference
-);
-
-router.post(
-  "/send-verification-email",
-  authenticateUser,
-  checkBannedUser,
-  userController.requestVerificationEmail
-);
-
-router.get("/verify-email", checkBannedUser, userController.verifyEmail);
-
-router.get("/user/:username/events", eventController.getEventsByAuthor);
-router.get("/user/:username", userController.getPublicUserByUsername);
-
-router.put(
-  "/user/:id",
-  checkBannedUser,
-  authenticateUser,
-  userController.updateUser
 );
 
 export default router;

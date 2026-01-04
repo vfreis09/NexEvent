@@ -46,7 +46,9 @@ function HomePage() {
       const url = `http://localhost:3000/api/events/?page=${page}&limit=${limit}&type=${type}`;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          credentials: "include",
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

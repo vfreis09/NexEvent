@@ -52,8 +52,7 @@ const Header: React.FC = () => {
       if (!res.ok) throw new Error("Failed to fetch notifications");
 
       const data: Notification[] = await res.json();
-      const limitedNotifications = data.slice(0, 5);
-      setNotifications(limitedNotifications);
+      setNotifications(data);
     } catch (error) {
       showNotification(
         "We couldn't load your recent notifications.",
@@ -84,6 +83,29 @@ const Header: React.FC = () => {
     } catch (error) {
       console.error("Error marking notification read:", error);
       return false;
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:3000/api/notifications/read-all",
+        {
+          method: "PUT",
+          credentials: "include",
+        }
+      );
+      if (!res.ok) throw new Error("Failed to clear notifications");
+
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      showNotification(
+        "All notifications marked as read.",
+        "Success",
+        "success"
+      );
+    } catch (error) {
+      console.error("Error marking all read:", error);
+      showNotification("Could not clear notifications.", "Error", "danger");
     }
   };
 
@@ -395,9 +417,20 @@ const Header: React.FC = () => {
                   onClick={toggleNotifications}
                 >
                   <FaBell />
+                  {notifications.some((n) => !n.is_read) && (
+                    <span className="notification-badge-dot"></span>
+                  )}
                 </button>
                 {showNotifications && (
                   <div className="notification-dropdown">
+                    <div className="notification-header-actions">
+                      <h6 className="m-0">Notifications</h6>
+                      {notifications.length > 0 && (
+                        <button onClick={markAllRead} className="mark-all-btn">
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
                     {loadingNotifications ? (
                       <div className="notification-item">Loading...</div>
                     ) : notifications.length > 0 ? (
@@ -430,34 +463,35 @@ const Header: React.FC = () => {
                               note.is_read ? "read" : "unread"
                             }`}
                           >
-                            <p>{note.message}</p>
-                            <button
-                              onClick={() =>
-                                respondToInvite(
-                                  note.invite_id!,
-                                  note.id,
-                                  note.event_id,
-                                  "accepted"
-                                )
-                              }
-                              className="nav-button"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={() =>
-                                respondToInvite(
-                                  note.invite_id!,
-                                  note.id,
-                                  note.event_id,
-                                  "declined"
-                                )
-                              }
-                              className="nav-button"
-                              style={{ marginLeft: "8px" }}
-                            >
-                              Reject
-                            </button>
+                            <p className="mb-2">{note.message}</p>
+                            <div className="d-flex gap-2">
+                              <button
+                                onClick={() =>
+                                  respondToInvite(
+                                    note.invite_id!,
+                                    note.id,
+                                    note.event_id,
+                                    "accepted"
+                                  )
+                                }
+                                className="nav-button invite-accept-btn"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() =>
+                                  respondToInvite(
+                                    note.invite_id!,
+                                    note.id,
+                                    note.event_id,
+                                    "declined"
+                                  )
+                                }
+                                className="nav-button invite-reject-btn"
+                              >
+                                Reject
+                              </button>
+                            </div>
                           </div>
                         );
                       })

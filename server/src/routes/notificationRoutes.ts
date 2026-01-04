@@ -14,6 +14,13 @@ router.get(
   notificationController.getNotifications
 );
 
+router.put(
+  "/notifications/read-all",
+  authenticateUser,
+  checkBannedUser,
+  notificationController.markAllAsRead
+);
+
 router.patch(
   "/notifications/:id/read",
   authenticateUser,

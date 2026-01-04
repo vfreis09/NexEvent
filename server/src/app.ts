@@ -10,6 +10,7 @@ import notificationRoutes from "./routes/notificationRoutes";
 import inviteRoutes from "./routes/inviteRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import searchRoutes from "./routes/searchRoutes";
+import { startScheduler } from "./jobs/scheduler";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use(cookieParser());
 initDb()
   .then(() => {
     console.log("Database initialized");
+    startScheduler();
     app.listen(3000);
   })
   .catch((error) => {

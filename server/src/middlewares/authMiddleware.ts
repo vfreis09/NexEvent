@@ -4,6 +4,13 @@ import { Request, Response, NextFunction } from "express";
 import path from "path";
 const pool = require("../config/dbConfig");
 
+interface UserPayload {
+  id: number;
+  email: string;
+  isVerified?: boolean;
+  role?: string;
+}
+
 interface JwtPayload {
   id: string;
   email: string;
@@ -36,7 +43,7 @@ const authenticateUser = async (
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
 
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
-      decoded.id,
+      Number(decoded.id),
     ]);
 
     if (result.rows.length === 0) {
@@ -46,11 +53,11 @@ const authenticateUser = async (
     const user = result.rows[0];
 
     req.user = {
-      id: user.id,
+      id: Number(user.id),
       email: user.email,
       isVerified: user.is_verified,
       role: user.role,
-    } as JwtPayload;
+    } as UserPayload;
 
     next();
   } catch (err) {

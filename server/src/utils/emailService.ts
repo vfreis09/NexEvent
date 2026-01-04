@@ -2,7 +2,6 @@ import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
-import { send } from "process";
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
@@ -61,34 +60,21 @@ const sendVerificationEmail = async (email: string, userId: string) => {
   }
 };
 
-const sendEventCreationEmail = async (
-  email: string,
-  eventName: string,
-  eventId: string
-) => {
-  const eventLink = `http://localhost:5173/event/${eventId}`;
-  const subject = `New Event Created: ${eventName}`;
-  const message = `
-    <h3>New Event Created</h3>
-    <p>The event "<strong>${eventName}</strong>" has been created.</p>
-    <p>Click below to view the event:</p>
-    <a href="${eventLink}">${eventLink}</a>
-  `;
-  await sendEmail(email, subject, message);
-};
-
 const sendEventUpdateEmail = async (
   email: string,
   eventName: string,
-  eventId: string
+  eventId: number | string
 ) => {
-  const eventLink = `http://localhost:5173/event/${eventId}`;
+  const eventIdString =
+    typeof eventId === "number" ? eventId.toString() : eventId;
+  const eventLink = `http://localhost:5173/event/${eventIdString}`;
   const subject = `Event Updated: ${eventName}`;
   const message = `
-    <h3>Event Updated</h3>
-    <p>The event "<strong>${eventName}</strong>" has been updated.</p>
-    <p>Click below to see the changes:</p>
+    <h3>Event Updated!</h3>
+    <p>The event "<strong>${eventName}</strong>" you RSVP'd to has been updated.</p>
+    <p>Please click below to see the changes:</p>
     <a href="${eventLink}">${eventLink}</a>
+    <p>We recommend checking the new event time or location if applicable.</p>
   `;
   await sendEmail(email, subject, message);
 };
@@ -128,7 +114,6 @@ const sendInviteEmail = async (
 const emailServices = {
   sendEmail,
   sendVerificationEmail,
-  sendEventCreationEmail,
   sendEventUpdateEmail,
   sendEventCancelationEmail,
   sendInviteEmail,

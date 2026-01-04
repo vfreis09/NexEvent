@@ -14,6 +14,7 @@ const initDb = async () => {
       contact TEXT,
       is_verified BOOLEAN DEFAULT FALSE,
       wants_notifications BOOLEAN DEFAULT false,
+      digest_frequency VARCHAR(10) DEFAULT 'weekly' CHECK (digest_frequency IN ('daily', 'weekly', 'never')),
       theme_preference VARCHAR(5) DEFAULT 'light' CHECK (theme_preference IN ('light', 'dark')),
       reset_token_hash TEXT,
       reset_token_expires TIMESTAMP,
@@ -35,6 +36,35 @@ const initDb = async () => {
       status VARCHAR(10) DEFAULT 'active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired', 'canceled'))
+    );
+
+    CREATE TABLE IF NOT EXISTS tags (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(50) UNIQUE NOT NULL,
+        description TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS event_tags (
+        event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+        tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (event_id, tag_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS user_preferences (
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, tag_id)
+    );
+    
+    CREATE TABLE IF NOT EXISTS email_queue (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(10) DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'error')),
+        CONSTRAINT unique_queue_item UNIQUE (user_id, event_id, status)
     );
 
     CREATE TABLE IF NOT EXISTS invites (

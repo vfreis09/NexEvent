@@ -17,8 +17,7 @@ const getNotifications = async (req: Request, res: Response) => {
           OR (notifications.invite_id IS NOT NULL AND notifications.is_read = false)
         )
       ORDER BY notifications.is_read ASC, notifications.created_at DESC
-      LIMIT 5;
-      `,
+      LIMIT 20;`,
       [userId]
     );
 
@@ -54,7 +53,27 @@ const markNotificationAsRead = async (req: Request, res: Response) => {
   }
 };
 
+const markAllAsRead = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) return res.status(401).send("Unauthorized");
+
+  try {
+    await pool.query(
+      `UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false`,
+      [userId]
+    );
+    return res
+      .status(200)
+      .json({ message: "All notifications marked as read" });
+  } catch (err) {
+    console.error("Error marking all as read:", err);
+    return res.status(500).json({ message: "Failed to update notifications" });
+  }
+};
+
 export default {
   getNotifications,
   markNotificationAsRead,
+  markAllAsRead,
 };

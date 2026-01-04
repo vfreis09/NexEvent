@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 const pool = require("../config/dbConfig");
 import { updateEventStatus } from "../utils/eventService";
 import emailServices from "../utils/emailService";
+import { insertEventIntoQueue } from "../utils/queueManager";
 
 const createEvent = async (req: Request, res: Response) => {
   if (!req.cookies?.token) {
@@ -65,31 +66,12 @@ const createEvent = async (req: Request, res: Response) => {
 
     res.status(201).json(event);
 
-    /** comment out so i dont have problems with mailtrap
-     * (async () => {
-      try {
-        const users = await pool.query(
-          "SELECT email FROM users WHERE is_verified = true"
-        );
-
-        for (const user of users.rows as { email: string }[]) {
-          await emailServices
-            .sendEventCreationEmail(user.email, event.title, event.id)
-            .catch((e) => {
-              console.error(
-                `Failed to send creation email to ${user.email}:`,
-                e.message
-              );
-            });
-        }
-        console.log("All event creation emails processed.");
-      } catch (backgroundError) {
-        console.error(
-          "Critical background email process failure:",
-          backgroundError
-        );
-      } 
-    }())**/
+    insertEventIntoQueue(event.id, authorId).catch((error) => {
+      console.error(
+        "Background queue insertion failed for createEvent:",
+        error
+      );
+    });
   } catch (error) {
     console.error("Error creating event (DB failure):", error);
     if (!res.headersSent) {
@@ -317,6 +299,10 @@ const updateEvent = async (req: Request, res: Response) => {
           );
         }
       }
+
+      insertEventIntoQueue(id, authorId).catch((error) => {
+        console.error("Background queue insertion failed after update:", error);
+      });
     } else {
       return res
         .status(404)

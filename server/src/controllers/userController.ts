@@ -327,7 +327,7 @@ const requestVerificationEmail = async (req: Request, res: Response) => {
   }
 
   try {
-    await emailServices.sendVerificationEmail(user.email, user.id);
+    await emailServices.sendVerificationEmail(user.email, user.id.toString());
     return res
       .status(200)
       .json({ message: "Verification email sent successfully" });
@@ -643,6 +643,79 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
   }
 };
 
+const getAllTags = async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name FROM tags ORDER BY name ASC"
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching tags:", err);
+    res.status(500).json({ message: "Error fetching tags" });
+  }
+};
+
+const getUserSettings = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+
+  try {
+    const userResult = await pool.query(
+      "SELECT digest_frequency FROM users WHERE id = $1",
+      [userId]
+    );
+
+    const tagsResult = await pool.query(
+      `SELECT t.id, t.name FROM tags t 
+       JOIN user_preferences up ON t.id = up.tag_id 
+       WHERE up.user_id = $1`,
+      [userId]
+    );
+
+    res.status(200).json({
+      digest_frequency: userResult.rows[0]?.digest_frequency || "daily",
+      selected_tags: tagsResult.rows,
+    });
+  } catch (err) {
+    console.error("Error fetching user settings:", err);
+    res.status(500).json({ message: "Error fetching settings" });
+  }
+};
+
+const updateUserSettings = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const { digest_frequency, tagIds } = req.body;
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    await client.query("UPDATE users SET digest_frequency = $1 WHERE id = $2", [
+      digest_frequency,
+      userId,
+    ]);
+
+    await client.query("DELETE FROM user_preferences WHERE user_id = $1", [
+      userId,
+    ]);
+
+    if (tagIds && tagIds.length > 0) {
+      const values = tagIds.map((id: number) => `(${userId}, ${id})`).join(",");
+      await client.query(
+        `INSERT INTO user_preferences (user_id, tag_id) VALUES ${values}`
+      );
+    }
+
+    await client.query("COMMIT");
+    res.status(200).json({ message: "Preferences updated successfully." });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Transaction error updating settings:", err);
+    res.status(500).json({ message: "Failed to update preferences." });
+  } finally {
+    client.release();
+  }
+};
+
 const userController = {
   signup,
   login,
@@ -659,6 +732,9 @@ const userController = {
   resetForgottenPassword,
   uploadProfilePicture,
   googleOAuthCallback,
+  getAllTags,
+  getUserSettings,
+  updateUserSettings,
 };
 
 export default userController;

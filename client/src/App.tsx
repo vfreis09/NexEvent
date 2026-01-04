@@ -63,9 +63,9 @@ const App: React.FC = () => {
                   </MapProvider>
                 }
               />
+              <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
-          <Route path="/settings" element={<Settings />} />
           <Route
             path="/event/:id"
             element={
