@@ -1,67 +1,44 @@
-.event-container {
+.event-container a,
+.invitations-container a,
+.rsvp-container a {
+  text-decoration: none !important;
+}
+
+.event-container,
+.invitations-container,
+.rsvp-container {
+  box-sizing: border-box;
   max-width: 800px;
-  margin: 2rem auto;
-  padding: 1.5rem;
+  width: 92%;
+  margin: 1.5rem auto;
+  padding: 2rem;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: #333;
 }
 
 .event-container h2 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   color: #333;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
+  line-height: 1.2;
 }
-
-.event-container p {
-  font-size: 1.1rem;
-  color: #555;
-  line-height: 1.6;
-  margin-bottom: 0.75rem;
-}
-
-.event-container a {
-  display: inline-block;
-  text-decoration: none;
-  font-weight: bold;
-  margin-right: 1rem;
-  transition: color 0.2s;
-  color: #5a2d82;
-}
-
-.event-container a:hover {
-  text-decoration: none;
-}
-
-.event-container button {
-  background: #d9534f;
-  color: #fff;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-left: 6px;
-}
-
-.event-container button:hover {
-  background: #c9302c;
-}
-
 .event-host-details {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
 }
 
 .host-avatar-frame-small {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  margin-right: 10px;
+  margin-right: 12px;
   border: 2px solid #e0e0e0;
 }
 
@@ -73,43 +50,177 @@
 }
 
 .event-author {
-  font-size: 1rem;
-  color: #6f42c1;
+  margin-bottom: 0 !important;
+}
+
+.host-username-link {
+  font-size: 1.1rem;
+  color: #5a2d82 !important;
   font-weight: 600;
 }
 
-.dark-mode .event-detail-error {
-  text-align: center;
-  color: #f0f0f0;
-  padding-top: 2rem;
+.event-description {
+  font-size: 1.1rem;
+  color: #444;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
 }
 
-.dark-mode .event-container {
+.event-info-row {
+  display: flex;
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+}
+
+.event-info-row strong {
+  min-width: 120px;
+  color: #333;
+}
+
+.event-owner-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.edit-event-link,
+.event-container button.cancel-event-btn {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-event-link {
+  background: #f0f0f0;
+  color: #333 !important;
+}
+
+.event-container button.cancel-event-btn {
+  background: transparent;
+  color: #d9534f;
+  border: 1px solid #d9534f;
+}
+
+.event-container button.cancel-event-btn:hover {
+  background: #fff5f5;
+}
+
+.invitations-container h3,
+.rsvp-container p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.invitation-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.invitations-container input {
+  flex: 1;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.rsvp-actions {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .event-container,
+  .invitations-container,
+  .rsvp-container {
+    padding: 1.5rem;
+    max-width: none;
+  }
+
+  .event-container h2 {
+    font-size: 1.8rem;
+  }
+
+  .event-info-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .event-owner-actions,
+  .invitation-input-group,
+  .rsvp-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .edit-event-link,
+  .event-container button.cancel-event-btn {
+    width: 100%;
+  }
+}
+
+.dark-mode .event-container,
+.dark-mode .invitations-container,
+.dark-mode .rsvp-container {
   background: #252525;
   border: 1px solid #444;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-.dark-mode .event-container h2 {
+.dark-mode .event-container h2,
+.dark-mode .invitations-container h3 {
   color: white;
 }
 
-.dark-mode .event-container p {
+.dark-mode .event-container p,
+.dark-mode .event-info-row,
+.dark-mode .invitations-container {
   color: #ccc;
 }
 
-.dark-mode .event-container p strong {
+.dark-mode .event-info-row strong {
   color: #9370db;
 }
 
-.dark-mode .event-container a {
-  color: #add8e6;
+.dark-mode .event-description {
+  color: #eee;
 }
 
-.dark-mode .event-author {
-  color: #9370db;
+.dark-mode .event-host-details,
+.dark-mode .event-owner-actions {
+  border-color: #444;
 }
 
-.dark-mode .host-avatar-frame-small {
-  border: 2px solid #555;
+.dark-mode .edit-event-link {
+  background: #333;
+  color: #f0f0f0 !important;
+}
+
+.dark-mode .event-container button.cancel-event-btn {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+  background: transparent;
+}
+
+.dark-mode .event-container button.cancel-event-btn:hover {
+  background: #ff6b6b !important;
+  color: #fff !important;
+}
+
+.dark-mode .invitations-container input {
+  background: #1a1a1a;
+  border-color: #444;
+  color: white;
 }

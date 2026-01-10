@@ -17,7 +17,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   }
 
   const pageNumbers = [];
-  const maxPagesToShow = 5;
+  const maxPagesToShow = 3;
 
   let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
   let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
@@ -33,11 +33,12 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   return (
     <div className="pagination-container">
       <button
-        className="pagination-button"
+        className="pagination-button nav-btn"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        aria-label="Previous Page"
       >
-        &laquo; Previous
+        &laquo;
       </button>
       {startPage > 1 && (
         <>
@@ -72,11 +73,12 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         </>
       )}
       <button
-        className="pagination-button"
+        className="pagination-button nav-btn"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        aria-label="Next Page"
       >
-        Next &raquo;
+        &raquo;
       </button>
     </div>
   );

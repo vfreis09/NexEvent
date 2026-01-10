@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
 import zxcvbn from "zxcvbn";
@@ -27,7 +26,6 @@ const EditUser: React.FC = () => {
   const [bio, setBio] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-  const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -42,6 +40,8 @@ const EditUser: React.FC = () => {
   const [digestFrequency, setDigestFrequency] = useState("daily");
   const [loadingPrefs, setLoadingPrefs] = useState(true);
   const [savingPrefs, setSavingPrefs] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -62,23 +62,13 @@ const EditUser: React.FC = () => {
             credentials: "include",
           }),
         ]);
-
-        if (!tagsRes.ok || !settingsRes.ok) throw new Error("Fetch failed");
-
         const tagsData = await tagsRes.json();
         const settingsData = await settingsRes.json();
-
-        if (Array.isArray(tagsData)) {
-          setAvailableTags(tagsData);
-        } else if (tagsData && Array.isArray(tagsData.tags)) {
-          setAvailableTags(tagsData.tags);
-        }
-
+        setAvailableTags(
+          Array.isArray(tagsData) ? tagsData : tagsData.tags || []
+        );
         setDigestFrequency(settingsData.digest_frequency || "daily");
-        if (
-          settingsData.selected_tags &&
-          Array.isArray(settingsData.selected_tags)
-        ) {
+        if (settingsData.selected_tags) {
           setSelectedTagIds(
             settingsData.selected_tags.map((t: any) =>
               typeof t === "object" ? t.id : t
@@ -117,7 +107,7 @@ const EditUser: React.FC = () => {
           body: JSON.stringify({ email, username, bio, contact }),
         }
       );
-      if (!response.ok) throw new Error("Update failed");
+      if (!response.ok) throw new Error();
       const updatedUser = await response.json();
       setUser({ ...user, ...updatedUser });
       showNotification("Profile updated!", "Success", "success");
@@ -126,62 +116,24 @@ const EditUser: React.FC = () => {
     }
   };
 
-  const toggleTag = (id: number) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(id) ? prev.filter((tid) => tid !== id) : [...prev, id]
-    );
-  };
-
   const handleSavePreferences = async () => {
     setSavingPrefs(true);
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/user/settings/update",
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            digest_frequency: digestFrequency,
-            tagIds: selectedTagIds,
-          }),
-        }
-      );
-      if (!response.ok) throw new Error();
+      await fetch("http://localhost:3000/api/user/settings/update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          digest_frequency: digestFrequency,
+          tagIds: selectedTagIds,
+        }),
+      });
       showNotification("Interests updated!", "Success", "success");
       await loadUser();
     } catch (error) {
       showNotification("Failed to save.", "Error", "danger");
     } finally {
       setSavingPrefs(false);
-    }
-  };
-
-  const handleThemeToggle = async () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    try {
-      await fetch("http://localhost:3000/api/user/settings/theme", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ theme_preference: newTheme }),
-      });
-      toggleTheme();
-    } catch (error) {
-      showNotification("Theme update failed.", "Error", "danger");
-    }
-  };
-
-  const handleSendVerificationEmail = async () => {
-    setVerifyMessage(null);
-    try {
-      await fetch("http://localhost:3000/api/send-verification-email", {
-        method: "POST",
-        credentials: "include",
-      });
-      setVerifyMessage("Email sent!");
-    } catch (error) {
-      setVerifyMessage("Failed to send.");
     }
   };
 
@@ -211,26 +163,7 @@ const EditUser: React.FC = () => {
     }
   };
 
-  const getStrengthColor = (score: number) => {
-    const colors = [
-      "text-danger",
-      "text-warning",
-      "text-warning",
-      "text-success",
-      "text-success",
-    ];
-    return colors[score] || "text-muted";
-  };
-
-  if (!user)
-    return (
-      <div className="text-center mt-5">
-        <h2>Please login</h2>
-        <Link to="/login" className="btn btn-primary mt-3">
-          Login
-        </Link>
-      </div>
-    );
+  if (!user) return null;
 
   return (
     <>
@@ -240,54 +173,54 @@ const EditUser: React.FC = () => {
           message={toastInfo.message}
           header={toastInfo.header}
           bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
           onClose={hideToast}
         />
       )}
 
-      <div className="container edit-user-container pb-5">
+      <div
+        className={`container edit-user-container pb-5 ${
+          theme === "dark" ? "dark-mode" : ""
+        }`}
+      >
         <div
           className={`alert ${
-            isVerified ? "alert-success" : "alert-danger"
+            isVerified ? "alert-success-soft" : "alert-danger-soft"
           } mt-4 d-flex justify-content-between align-items-center`}
         >
           <span>{isVerified ? "Email Verified" : "Email Not Verified"}</span>
-          {!isVerified && (
-            <button
-              onClick={handleSendVerificationEmail}
-              className="btn btn-dark btn-sm"
-            >
-              Resend Link
-            </button>
-          )}
         </div>
-        {verifyMessage && (
-          <p className="text-center small mt-1">{verifyMessage}</p>
-        )}
-        <div className="card p-4 shadow-sm mb-4">
+        <div className="card p-4 shadow-sm mb-4 text-center">
           <h4 className="mb-4">Profile Picture</h4>
-          <div className="text-center mb-4">
-            <img
-              src={user.profile_picture_base64 || DEFAULT_AVATAR_URL}
-              className="rounded-circle border"
-              style={{ width: "120px", height: "120px", objectFit: "cover" }}
-              alt="Profile"
+          <div className="avatar-edit-wrapper">
+            <div
+              className="avatar-edit-container"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <img
+                src={user.profile_picture_base64 || DEFAULT_AVATAR_URL}
+                className="rounded-circle avatar-main-img"
+                alt="Profile"
+              />
+              <div className="avatar-overlay">
+                <span>Change Photo</span>
+              </div>
+            </div>
+            <ProfilePictureUploader
+              inputRef={fileInputRef}
+              showNotification={showNotification}
             />
           </div>
-          <ProfilePictureUploader showNotification={showNotification} />
         </div>
         <div className="card p-4 shadow-sm mb-4">
-          <h4 className="mb-3">Interests & Ranking</h4>
+          <h4 className="mb-3">Interests</h4>
           {loadingPrefs ? (
-            <div className="text-center p-3">
-              <Spinner animation="border" size="sm" />
-            </div>
+            <Spinner animation="border" size="sm" />
           ) : (
             <>
-              <div className="mb-4">
-                <label className="form-label fw-bold">
+              <Form.Group className="mb-4">
+                <Form.Label className="fw-bold">
                   Email Digest Frequency
-                </label>
+                </Form.Label>
                 <Form.Select
                   className="w-50"
                   value={digestFrequency}
@@ -297,40 +230,37 @@ const EditUser: React.FC = () => {
                   <option value="weekly">Weekly Roundup</option>
                   <option value="never">Unsubscribe</option>
                 </Form.Select>
-              </div>
+              </Form.Group>
               <div className="mb-4">
-                <label className="form-label fw-bold d-block">
+                <Form.Label className="fw-bold d-block">
                   Interest Tags
-                </label>
+                </Form.Label>
                 <div className="d-flex flex-wrap gap-2">
-                  {availableTags.length > 0 ? (
-                    availableTags.map((tag) => (
-                      <Badge
-                        key={tag.id}
-                        pill
-                        bg={
-                          selectedTagIds.includes(tag.id) ? "primary" : "light"
-                        }
-                        text={
-                          selectedTagIds.includes(tag.id) ? "white" : "dark"
-                        }
-                        className="tag-pill border"
-                        onClick={() => toggleTag(tag.id)}
-                      >
-                        {tag.name}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-muted small">No tags found.</p>
-                  )}
+                  {availableTags.map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      pill
+                      bg={selectedTagIds.includes(tag.id) ? "primary" : "light"}
+                      className="tag-pill"
+                      onClick={() =>
+                        setSelectedTagIds((prev) =>
+                          prev.includes(tag.id)
+                            ? prev.filter((id) => id !== tag.id)
+                            : [...prev, tag.id]
+                        )
+                      }
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
                 </div>
               </div>
               <button
                 onClick={handleSavePreferences}
                 disabled={savingPrefs}
-                className="btn btn-primary w-100 py-2"
+                className="btn btn-primary w-100"
               >
-                {savingPrefs ? "Saving..." : "Save Preferences"}
+                {savingPrefs ? <Spinner size="sm" /> : "Save Preferences"}
               </button>
             </>
           )}
@@ -357,15 +287,6 @@ const EditUser: React.FC = () => {
                 required
               />
             </div>
-            <div className="col-md-6">
-              <label className="form-label">Contact / Phone</label>
-              <input
-                type="text"
-                className="form-control"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-              />
-            </div>
             <div className="col-12">
               <label className="form-label">Bio</label>
               <textarea
@@ -376,11 +297,10 @@ const EditUser: React.FC = () => {
               />
             </div>
           </div>
-          <button type="submit" className="btn btn-outline-primary w-100 mt-4">
+          <button type="submit" className="btn btn-primary w-100 mt-4">
             Update Profile Info
           </button>
         </form>
-
         <div className="card p-4 shadow-sm mb-4">
           <h4 className="mb-3">Appearance</h4>
           <div className="form-check form-switch">
@@ -389,7 +309,7 @@ const EditUser: React.FC = () => {
               className="form-check-input"
               id="themeSwitch"
               checked={theme === "dark"}
-              onChange={handleThemeToggle}
+              onChange={toggleTheme}
             />
             <label className="form-check-label" htmlFor="themeSwitch">
               Dark Mode
@@ -398,25 +318,10 @@ const EditUser: React.FC = () => {
         </div>
         <form onSubmit={handleChangePassword} className="card p-4 shadow-sm">
           <h4 className="mb-3">Security</h4>
-          {!user.oauth_provider && (
-            <div className="mb-3">
-              <label className="form-label">Current Password</label>
-              <input
-                type="password"
-                title="old-password"
-                name="old-password"
-                className="form-control"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-              />
-            </div>
-          )}
           <div className="mb-3">
             <label className="form-label">New Password</label>
             <input
               type="password"
-              title="new-password"
-              name="new-password"
               className="form-control"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -424,30 +329,21 @@ const EditUser: React.FC = () => {
             />
             {newPassword && (
               <div className="mt-2">
-                <div
-                  className={`small fw-bold ${getStrengthColor(passwordScore)}`}
-                >
-                  Strength: {passwordScore}/4
+                <div className="progress" style={{ height: "5px" }}>
+                  <div
+                    className={`progress-bar bg-${
+                      passwordScore < 3 ? "danger" : "success"
+                    }`}
+                    style={{ width: `${(passwordScore + 1) * 20}%` }}
+                  ></div>
                 </div>
-                {passwordFeedbackList.map((f, i) => (
-                  <div key={i} className="small text-danger">
-                    {f}
-                  </div>
-                ))}
+                <ul className="small text-muted mt-2">
+                  {passwordFeedbackList.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
               </div>
             )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Confirm Password</label>
-            <input
-              type="password"
-              title="confirm-password"
-              name="confirm-password"
-              className="form-control"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
           </div>
           <button type="submit" className="btn btn-secondary w-100">
             Update Password

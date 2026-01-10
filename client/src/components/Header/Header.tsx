@@ -54,11 +54,7 @@ const Header: React.FC = () => {
       const data: Notification[] = await res.json();
       setNotifications(data);
     } catch (error) {
-      showNotification(
-        "We couldn't load your recent notifications.",
-        "Error",
-        "danger"
-      );
+      console.error("Error fetching notifications:", error);
     } finally {
       setLoadingNotifications(false);
     }
@@ -134,22 +130,18 @@ const Header: React.FC = () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({ status: "Accepted" }),
+            body: JSON.stringify({ status: "accepted" }),
           }
         );
         if (!rsvpRes.ok) throw new Error("Failed to create RSVP");
 
         showNotification(
-          "Invite accepted! You are now RSVP'd to the event.",
+          "Invite accepted! You are now RSVP'd.",
           "Success",
           "success"
         );
       } else {
-        showNotification(
-          "Invite declined. You will not receive further reminders.",
-          "Success",
-          "success"
-        );
+        showNotification("Invite declined.", "Success", "success");
       }
 
       const markRes = await markNotificationRead(notificationId);
@@ -158,7 +150,7 @@ const Header: React.FC = () => {
       }
     } catch (error) {
       showNotification(
-        "Something went wrong while processing your invitation response.",
+        "Something went wrong while processing your response.",
         "Error",
         "danger"
       );
@@ -197,8 +189,13 @@ const Header: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let debounceTimer: NodeJS.Timeout;
+    if (isLoggedIn && user) {
+      fetchNotifications();
+    }
+  }, [isLoggedIn, user]);
 
+  useEffect(() => {
+    let debounceTimer: NodeJS.Timeout;
     if (searchQuery.length > 1) {
       debounceTimer = setTimeout(() => {
         fetchSuggestions(searchQuery);
@@ -206,7 +203,6 @@ const Header: React.FC = () => {
     } else {
       setSuggestions({ events: [], users: [] });
     }
-
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, fetchSuggestions]);
 
@@ -216,22 +212,17 @@ const Header: React.FC = () => {
     }
 
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
       if (
         notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
+        !notificationRef.current.contains(target)
       ) {
         setShowNotifications(false);
       }
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
         setShowUserMenu(false);
       }
-      if (
-        searchBarRef.current &&
-        !searchBarRef.current.contains(event.target as Node)
-      ) {
+      if (searchBarRef.current && !searchBarRef.current.contains(target)) {
         setSuggestions({ events: [], users: [] });
       }
     };
@@ -247,23 +238,13 @@ const Header: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
+      if (!response.ok) throw new Error("Logout failed");
       setUser(null);
       setIsLoggedIn(false);
       navigate("/");
-      showNotification(
-        "You've been successfully logged out.",
-        "Success",
-        "success"
-      );
+      showNotification("Successfully logged out.", "Success", "success");
     } catch (error) {
-      showNotification(
-        "There was an issue logging you out. Please try refreshing.",
-        "Error",
-        "danger"
-      );
+      showNotification("Error logging out.", "Error", "danger");
     }
   };
 
@@ -280,11 +261,8 @@ const Header: React.FC = () => {
     id: number,
     username?: string
   ) => {
-    if (type === "event") {
-      navigate(`/event/${id}`);
-    } else if (type === "user" && username) {
-      navigate(`/user/${username}`);
-    }
+    if (type === "event") navigate(`/event/${id}`);
+    else if (type === "user" && username) navigate(`/user/${username}`);
     setSuggestions({ events: [], users: [] });
     setSearchQuery("");
   };
@@ -341,56 +319,32 @@ const Header: React.FC = () => {
               {(hasSuggestions ||
                 (loadingSearch && searchQuery.length > 1)) && (
                 <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll shadow rounded p-2">
-                  {loadingSearch && searchQuery.length > 1 && (
+                  {loadingSearch && (
                     <div className="p-1 text-center text-muted">Loading...</div>
                   )}
-                  {suggestions.events.length > 0 && (
-                    <>
-                      <h6 className="mt-1 mb-1 text-primary search-category-title">
-                        Events
-                      </h6>
-                      <ul className="list-unstyled mb-1">
-                        {suggestions.events.map((item) => (
-                          <li
-                            key={`event-${item.id}`}
-                            onClick={() =>
-                              handleSuggestionClick("event", item.id)
-                            }
-                            className="p-1 rounded suggestion-item"
-                          >
-                            <strong>{item.title}</strong>
-                            <small className="text-muted ms-2 suggestion-date">
-                              ({formatEventDate(item.event_datetime!)})
-                            </small>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                  {suggestions.users.length > 0 && (
-                    <>
-                      <h6 className="mt-1 mb-1 text-success search-category-title">
-                        Users
-                      </h6>
-                      <ul className="list-unstyled mb-1">
-                        {suggestions.users.map((item) => (
-                          <li
-                            key={`user-${item.id}`}
-                            onClick={() =>
-                              handleSuggestionClick(
-                                "user",
-                                item.id,
-                                item.username
-                              )
-                            }
-                            className="p-1 rounded suggestion-item"
-                          >
-                            {item.username}
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+                  {suggestions.events.map((item) => (
+                    <div
+                      key={`event-${item.id}`}
+                      onClick={() => handleSuggestionClick("event", item.id)}
+                      className="p-1 rounded suggestion-item"
+                    >
+                      <strong>{item.title}</strong>
+                      <small className="text-muted ms-2">
+                        ({formatEventDate(item.event_datetime!)})
+                      </small>
+                    </div>
+                  ))}
+                  {suggestions.users.map((item) => (
+                    <div
+                      key={`user-${item.id}`}
+                      onClick={() =>
+                        handleSuggestionClick("user", item.id, item.username)
+                      }
+                      className="p-1 rounded suggestion-item"
+                    >
+                      {item.username}
+                    </div>
+                  ))}
                 </div>
               )}
             </form>
@@ -400,11 +354,6 @@ const Header: React.FC = () => {
               <button
                 className="nav-button theme-toggle-button"
                 onClick={toggleTheme}
-                aria-label={
-                  theme === "light"
-                    ? "Switch to Dark Mode"
-                    : "Switch to Light Mode"
-                }
               >
                 {theme === "light" ? <FaMoon /> : <FiSun />}
               </button>
@@ -427,7 +376,7 @@ const Header: React.FC = () => {
                       <h6 className="m-0">Notifications</h6>
                       {notifications.length > 0 && (
                         <button onClick={markAllRead} className="mark-all-btn">
-                          Mark all as read
+                          Mark all read
                         </button>
                       )}
                     </div>
@@ -438,24 +387,6 @@ const Header: React.FC = () => {
                         const isInvite =
                           note.invite_id !== undefined &&
                           note.invite_status?.toLowerCase() === "pending";
-                        if (!isInvite) {
-                          return (
-                            <button
-                              key={note.id}
-                              className={`notification-item ${
-                                note.is_read ? "read" : "unread"
-                              }`}
-                              onClick={async () => {
-                                await markNotificationRead(note.id);
-                                setShowNotifications(false);
-                                navigate(`/event/${note.event_id}`);
-                              }}
-                            >
-                              {note.message}
-                            </button>
-                          );
-                        }
-
                         return (
                           <div
                             key={note.id}
@@ -463,35 +394,46 @@ const Header: React.FC = () => {
                               note.is_read ? "read" : "unread"
                             }`}
                           >
-                            <p className="mb-2">{note.message}</p>
-                            <div className="d-flex gap-2">
-                              <button
-                                onClick={() =>
-                                  respondToInvite(
-                                    note.invite_id!,
-                                    note.id,
-                                    note.event_id,
-                                    "accepted"
-                                  )
-                                }
-                                className="nav-button invite-accept-btn"
-                              >
-                                Accept
-                              </button>
-                              <button
-                                onClick={() =>
-                                  respondToInvite(
-                                    note.invite_id!,
-                                    note.id,
-                                    note.event_id,
-                                    "declined"
-                                  )
-                                }
-                                className="nav-button invite-reject-btn"
-                              >
-                                Reject
-                              </button>
-                            </div>
+                            <p
+                              className="mb-2"
+                              onClick={async () => {
+                                await markNotificationRead(note.id);
+                                setShowNotifications(false);
+                                navigate(`/event/${note.event_id}`);
+                              }}
+                            >
+                              {note.message}
+                            </p>
+                            {isInvite && (
+                              <div className="d-flex gap-2">
+                                <button
+                                  onClick={() =>
+                                    respondToInvite(
+                                      note.invite_id!,
+                                      note.id,
+                                      note.event_id,
+                                      "accepted"
+                                    )
+                                  }
+                                  className="nav-button invite-accept-btn"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    respondToInvite(
+                                      note.invite_id!,
+                                      note.id,
+                                      note.event_id,
+                                      "declined"
+                                    )
+                                  }
+                                  className="nav-button invite-reject-btn"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })

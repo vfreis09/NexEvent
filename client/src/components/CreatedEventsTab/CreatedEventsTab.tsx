@@ -5,7 +5,7 @@ import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
-import { PaginatedResponse } from "../../types/PaginationTypes";
+import "./CreatedEventsTab.css";
 
 const EventsPerPage = 10;
 
@@ -33,19 +33,26 @@ const CreatedEventsTab = () => {
       const url = `http://localhost:3000/api/user/${profileUser.username}/events?page=${page}&limit=${EventsPerPage}&type=${type}`;
 
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+          credentials: "include",
+        });
+
         if (!res.ok) throw new Error("Failed to fetch events.");
 
-        const data: PaginatedResponse = await res.json();
+        const data = await res.json();
+
+        const eventsList = Array.isArray(data) ? data : data.events || [];
+        const totalPages = data.pagination?.totalPages || 1;
+        const currentPage = data.pagination?.currentPage || page;
 
         if (isUpcoming) {
-          setUpcomingEvents(data.events);
-          setUpcPage(data.pagination.currentPage);
-          setUpcTotalPages(data.pagination.totalPages);
+          setUpcomingEvents(eventsList);
+          setUpcPage(currentPage);
+          setUpcTotalPages(totalPages);
         } else {
-          setPastEvents(data.events);
-          setPastPage(data.pagination.currentPage);
-          setPastTotalPages(data.pagination.totalPages);
+          setPastEvents(eventsList);
+          setPastPage(currentPage);
+          setPastTotalPages(totalPages);
         }
       } catch (err) {
         console.error(`Failed to load ${type} events`, err);
@@ -96,13 +103,11 @@ const CreatedEventsTab = () => {
     setPastEvents(updateList);
   };
 
-  if (loadingUpcoming && loadingPast) return <p>Loading created events...</p>;
-
   return (
     <div className="created-events-tab-view">
       <h3>Upcoming Created Events</h3>
       {loadingUpcoming ? (
-        <p>Loading upcoming events...</p>
+        <p className="loading-text">Loading upcoming events...</p>
       ) : upcomingEvents.length > 0 ? (
         <>
           <EventList
@@ -124,7 +129,7 @@ const CreatedEventsTab = () => {
 
       <h3 className="past-events-header">Past & Canceled History</h3>
       {loadingPast ? (
-        <p>Loading history...</p>
+        <p className="loading-text">Loading history...</p>
       ) : pastEvents.length > 0 ? (
         <>
           <EventList

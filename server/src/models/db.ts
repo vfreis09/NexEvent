@@ -91,7 +91,7 @@ const initDb = async () => {
       id SERIAL PRIMARY KEY,
       user_id INT REFERENCES users(id) ON DELETE CASCADE,
       event_id INT REFERENCES events(id) ON DELETE CASCADE,
-      status VARCHAR(10) CHECK (status IN ('Accepted', 'Declined')),
+      status VARCHAR(10) CHECK (status IN ('accepted', 'declined')),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT unique_user_event UNIQUE (user_id, event_id)
     );

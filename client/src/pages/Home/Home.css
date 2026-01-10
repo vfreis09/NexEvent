@@ -1,26 +1,33 @@
 .home-page {
-  padding: 20px;
+  padding: 20px 15px;
   max-width: 800px;
   margin: 0 auto;
   color: #333;
+  padding-bottom: 80px;
 }
 
 .home-page h2 {
   text-align: center;
+  margin-top: 40px;
+  margin-bottom: 30px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 2rem;
 }
 
 .past-events-header {
-  margin-top: 50px;
+  margin-top: 80px !important;
   color: #6c757d;
   border-bottom: 1px solid #e9ecef;
-  padding-bottom: 5px;
+  padding-bottom: 15px;
 }
 
 .no-events-message {
   text-align: center;
   color: #888;
-  margin-top: 20px;
+  margin: 40px 0;
   font-style: italic;
+  font-size: 1.1rem;
 }
 
 .bottom-toast {
@@ -39,16 +46,45 @@
   text-align: center;
 }
 
+.home-page-nav a,
+.navbar a,
+header a {
+  text-decoration: none !important;
+}
+
+.home-page-nav a:hover,
+.navbar a:hover,
+header a:hover {
+  text-decoration: none !important;
+  opacity: 0.8;
+}
+
+@media (max-width: 576px) {
+  .home-page {
+    padding: 15px 10px;
+  }
+
+  .home-page h2 {
+    font-size: 1.6rem;
+    margin-top: 30px;
+    margin-bottom: 20px;
+  }
+
+  .past-events-header {
+    margin-top: 60px !important;
+  }
+}
+
 .dark-mode .home-page {
   color: #f0f0f0;
 }
 
 .dark-mode .home-page h2 {
-  color: white;
+  color: #ffffff;
 }
 
 .dark-mode .past-events-header {
-  color: #aaa;
+  color: #bbbbbb;
   border-bottom: 1px solid #444;
 }
 

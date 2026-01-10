@@ -1,41 +1,20 @@
-.overview-tab-view {
+.rsvps-tab-view {
   padding: 0.5rem 0;
 }
 
-.overview-loading-message {
-  padding: 2rem;
-  text-align: center;
-  color: #666;
-}
-
-.overview-section {
-  margin-bottom: 2.5rem;
-}
-
-.overview-header {
+.rsvps-tab-view h3 {
   font-size: 1.35rem;
   font-weight: 700;
   color: #333;
-  margin: 1.5rem auto 1.25rem;
+  margin: 2rem auto 1.25rem;
   padding-bottom: 0.75rem;
   text-align: center;
   border-bottom: 1px solid #ddd;
   width: 90%;
 }
 
-.overview-footer {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  text-align: center;
-  font-size: 0.95rem;
-  border-top: 1px solid #eee;
-}
-
-.overview-footer a {
-  margin: 0 0.75rem;
-  color: #007bff;
+.rsvps-tab-view a {
   text-decoration: none !important;
-  font-weight: 600;
 }
 
 .no-events-message {
@@ -45,11 +24,11 @@
   color: #495057;
   border-radius: 4px;
   width: 90%;
-  margin: 0 auto 1rem;
+  margin: 0 auto 2rem;
   font-style: italic;
 }
 
-.dark-mode .overview-header {
+.dark-mode .rsvps-tab-view h3 {
   color: #ffffff;
   border-bottom: 1px solid #444;
 }

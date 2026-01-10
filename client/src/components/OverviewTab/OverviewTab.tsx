@@ -24,17 +24,23 @@ const OverviewTab = () => {
       setLoading(true);
       try {
         const createdRes = await fetch(
-          `http://localhost:3000/api/user/${profileUser.username}/events?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`
+          `http://localhost:3000/api/user/${profileUser.username}/events?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
+          { credentials: "include" }
         );
         const rsvpRes = await fetch(
-          `http://localhost:3000/api/rsvps/user/${profileUser.username}?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`
+          `http://localhost:3000/api/rsvps/user/${profileUser.username}?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
+          { credentials: "include" }
         );
 
-        const createdData: EventData[] = await createdRes.json();
-        const rsvpData: EventData[] = await rsvpRes.json();
+        const createdData = await createdRes.json();
+        const rsvpData = await rsvpRes.json();
 
-        setCreatedEvents(createdData || []);
-        setRsvpedEvents(rsvpData || []);
+        setCreatedEvents(
+          Array.isArray(createdData) ? createdData : createdData.events || []
+        );
+        setRsvpedEvents(
+          Array.isArray(rsvpData) ? rsvpData : rsvpData.events || []
+        );
       } catch (err) {
         console.error("Error loading overview data", err);
         showNotification("Failed to load overview data.", "Error", "danger");

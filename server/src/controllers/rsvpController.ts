@@ -137,15 +137,10 @@ const getSingleRsvp = async (req: Request, res: Response) => {
 
 const getEventsRsvpedByUser = async (req: Request, res: Response) => {
   const { username } = req.params;
-
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const filterType = req.query.type as string;
   const offset = (page - 1) * limit;
-
-  if (limit <= 0 || page <= 0) {
-    return res.status(400).json({ message: "Invalid page or limit value." });
-  }
 
   try {
     const userResult = await pool.query(
@@ -158,34 +153,34 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
     }
 
     const userId = userResult.rows[0].id;
-    const now = new Date().toISOString();
+    const now = new Date();
 
-    let whereClause = `r.user_id = $1 AND r.status = 'Accepted'`;
-    let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
+    let whereClause = `r.user_id = $1`;
+    let queryParams: any[] = [userId];
+    let orderByClause = `ORDER BY e.event_datetime DESC`;
 
     if (filterType === "upcoming") {
-      whereClause += ` AND e.event_datetime >= '${now}' AND e.status != 'canceled'`;
-      orderByClause = `ORDER BY e.event_datetime ASC, e.created_at DESC`;
+      whereClause += ` AND r.status = 'accepted' AND e.event_datetime >= $2 AND e.status != 'canceled'`;
+      queryParams.push(now);
+      orderByClause = `ORDER BY e.event_datetime ASC`;
     } else if (filterType === "past") {
-      whereClause += ` AND (e.event_datetime < '${now}' OR e.status = 'canceled')`;
-      orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
+      whereClause += ` AND (e.event_datetime < $2 OR e.status = 'canceled' OR r.status = 'declined')`;
+      queryParams.push(now);
+      orderByClause = `ORDER BY e.event_datetime DESC`;
     }
 
-    const isPaginatedView = limit > 3;
-    let totalEvents = 0;
-    let totalPages = 1;
-
-    if (isPaginatedView) {
-      const countResult = await pool.query(
-        `SELECT COUNT(e.id)
-           FROM rsvps r
-           JOIN events e ON r.event_id = e.id
-           WHERE ${whereClause}`,
-        [userId]
-      );
-      totalEvents = parseInt(countResult.rows[0].count, 10);
-      totalPages = Math.ceil(totalEvents / limit);
-    }
+    const countResult = await pool.query(
+      `SELECT COUNT(e.id)
+       FROM rsvps r
+       JOIN events e ON r.event_id = e.id
+       WHERE ${whereClause}`,
+      queryParams
+    );
+    const totalEvents = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalEvents / limit);
+    const limitIdx = queryParams.length + 1;
+    const offsetIdx = queryParams.length + 2;
+    queryParams.push(limit, offset);
 
     const eventsResult = await pool.query(
       `SELECT e.*, u.username AS author_username
@@ -194,17 +189,13 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
        JOIN users u ON e.author_id = u.id
        WHERE ${whereClause}
        ${orderByClause}
-       LIMIT $2 OFFSET $3`,
-      [userId, limit, offset]
+       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      queryParams
     );
 
     await Promise.all(
       eventsResult.rows.map((event: any) => updateEventStatus(event.id))
     );
-
-    if (!isPaginatedView) {
-      return res.json(eventsResult.rows);
-    }
 
     res.json({
       events: eventsResult.rows,

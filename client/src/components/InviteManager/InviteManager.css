@@ -1,12 +1,18 @@
 .invite-manager {
-  margin: 32px auto 0;
+  margin: 32px auto;
   padding: 20px;
-  max-width: 500px;
-  width: 100%;
+  max-width: 800px;
+  width: 92%;
   background-color: #ffffff;
   border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.invite-manager a,
+.invite-manager a:hover {
+  text-decoration: none !important;
 }
 
 .invite-header {
@@ -85,6 +91,12 @@
   font-size: 0.95rem;
 }
 
+@media (max-width: 768px) {
+  .invite-form {
+    flex-direction: column;
+  }
+}
+
 .dark-mode .invite-manager {
   background-color: #252525;
   border: 1px solid #444;
@@ -116,6 +128,7 @@
 
 .dark-mode .invite-form button:hover:not(:disabled) {
   background-color: #a780e5;
+  box-shadow: 0 0 10px rgba(147, 112, 219, 0.3);
 }
 
 .dark-mode .invite-message {

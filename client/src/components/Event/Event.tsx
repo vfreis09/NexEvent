@@ -34,14 +34,8 @@ const Event: React.FC<EventProps> = ({
         <div className="host-avatar-frame-small">
           <img
             src={imageSrc}
-            alt={`${hostUsername}'s profile picture`}
+            alt={`${hostUsername}'s profile`}
             className="host-avatar-image-small"
-            onError={(e) => {
-              console.warn(
-                "Profile picture failed to load → using default avatar"
-              );
-              e.currentTarget.src = defaultAvatar;
-            }}
           />
         </div>
         <p className="event-author">
@@ -51,30 +45,39 @@ const Event: React.FC<EventProps> = ({
         </p>
       </div>
       <p className="event-description">{event.description}</p>
-      <p>
-        <strong>Date & Time:</strong>{" "}
-        {new Date(event.event_datetime).toLocaleString()}
-      </p>
-      <p>
-        <strong>Location:</strong> {event.address}
-      </p>
-      <p>
-        <strong>Attendees:</strong> {event.number_of_attendees}
-        {event.max_attendees !== null && ` / ${event.max_attendees}`}
-      </p>
-      <p>
-        <strong>Status:</strong>{" "}
+      <div className="event-info-row">
+        <strong>Date & Time:</strong>
+        <span>{new Date(event.event_datetime).toLocaleString()}</span>
+      </div>
+      <div className="event-info-row">
+        <strong>Location:</strong>
+        <span>{event.address}</span>
+      </div>
+      <div className="event-info-row">
+        <strong>Attendees:</strong>
+        <span>
+          {event.number_of_attendees}
+          {event.max_attendees !== null && ` / ${event.max_attendees}`}
+        </span>
+      </div>
+      <div className="event-info-row">
+        <strong>Status:</strong>
         <span className={`status-${event.status.toLowerCase()}`}>
           {event.status}
         </span>
-      </p>
+      </div>
       {isVerified && isOwner && user?.role !== "banned" && (
         <div className="event-owner-actions">
           <Link to={`/edit/${event.id}`} className="edit-event-link">
-            Edit
+            Edit Details
           </Link>
           {event.status !== "canceled" && (
-            <button onClick={() => onCancel(event.id)}>Cancel Event</button>
+            <button
+              className="cancel-event-btn"
+              onClick={() => onCancel(event.id)}
+            >
+              Cancel Event
+            </button>
           )}
         </div>
       )}

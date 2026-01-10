@@ -1,6 +1,7 @@
 import React from "react";
 import Toast from "react-bootstrap/Toast";
 import ToastContainer from "react-bootstrap/ToastContainer";
+import "./ToastComponent.css";
 
 interface ToastProps {
   show: boolean;
@@ -16,16 +17,19 @@ const AppToast: React.FC<ToastProps> = ({
   message,
   header,
   bg,
-  textColor,
+  textColor = "white",
   onClose,
 }) => {
   return (
-    <ToastContainer
-      className="p-3"
-      position="bottom-end"
-      style={{ position: "fixed", zIndex: 1050 }}
-    >
-      <Toast show={show} onClose={onClose} bg={bg} delay={3000} autohide>
+    <ToastContainer className="app-toast-container">
+      <Toast
+        show={show}
+        onClose={onClose}
+        bg={bg}
+        delay={3000}
+        autohide
+        className="custom-toast"
+      >
         <Toast.Header>
           <strong className="me-auto">{header}</strong>
         </Toast.Header>

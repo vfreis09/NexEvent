@@ -17,11 +17,19 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.3s ease, transform 0.2s ease;
   cursor: pointer;
+  color: #333;
 }
 
 .event-card:hover {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   transform: translateY(-4px);
+}
+
+.event-title-link,
+.author-link,
+.event-title-link:hover,
+.author-link:hover {
+  text-decoration: none !important;
 }
 
 .past-event-card {
@@ -35,46 +43,24 @@
   transition: none !important;
 }
 
-.past-event-card:hover {
-  box-shadow: none !important;
-  transform: none !important;
-}
-
-.past-event-card .event-title-link {
-  color: #888 !important;
-  text-decoration: none !important;
-  cursor: pointer !important;
-  pointer-events: auto !important;
-}
-
+.past-event-card .event-title-link,
 .past-event-card .author-link {
   color: #888 !important;
-  text-decoration: none !important;
   cursor: pointer !important;
   pointer-events: auto !important;
-}
-
-.past-event-card .event-card-header,
-.past-event-card .event-card-header span {
-  color: #888 !important;
-  text-decoration: none !important;
-  cursor: default !important;
-}
-
-.past-event-card .event-card-date {
-  color: #6c757d !important;
 }
 
 .event-card-header {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #5a2d82;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #555;
   margin-bottom: 6px;
 }
 
-.event-card-header span {
-  font-weight: 500;
-  color: #888;
+.event-card-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 .event-card-details {
@@ -105,11 +91,9 @@
 }
 
 .event-card-footer {
-  margin-top: 16px;
-  text-align: right;
+  margin-top: 15px;
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #555;
+  color: #444;
 }
 
 .event-card-actions {
@@ -126,8 +110,8 @@
   font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  text-decoration: none;
+  transition: all 0.3s ease;
+  text-decoration: none !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -138,59 +122,13 @@
   color: white;
 }
 
-.event-card-actions a:hover {
-  background-color: #7e42b8;
-  text-decoration: none;
-  color: white;
-}
-
-.event-card-actions button.delete-btn {
-  background-color: #d9534f;
-  color: white;
-}
-
-.event-card-actions button.delete-btn:hover {
-  background-color: #c9302c;
-}
-
-.event-card-actions button.cancel-btn {
-  background-color: #f0ad4e;
-  color: white;
-}
-
-.event-card-actions button.cancel-btn:hover {
-  background-color: #ec971f;
-}
-
-@media (max-width: 480px) {
-  .event-card-actions {
-    flex-direction: column;
-  }
-
-  .event-card-actions button,
-  .event-card-actions a {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
 .event-title-link {
-  text-decoration: none;
   color: #5a2d82;
-}
-
-.event-title-link:hover {
-  text-decoration: none;
 }
 
 .author-link {
   color: #6a0dad;
   font-weight: 500;
-  text-decoration: none;
-}
-
-.author-link:hover {
-  text-decoration: none;
 }
 
 .pagination-container {
@@ -199,92 +137,64 @@
   align-items: center;
   margin-top: 30px;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .pagination-button {
-  padding: 8px 12px;
+  text-decoration: none !important;
+  min-width: 40px;
+  height: 40px;
+  padding: 8px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 8px;
   background-color: #fff;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  font-weight: 600;
+  transition: all 0.2s ease;
   color: #5a2d82;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: #f0f0f0;
-  border-color: #7e42b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .pagination-button.active-page {
   background-color: #5a2d82;
-  color: white;
+  color: white !important;
   border-color: #5a2d82;
   pointer-events: none;
-}
-
-.pagination-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.pagination-ellipsis {
-  padding: 8px 0;
-  color: #888;
-  user-select: none;
 }
 
 .dark-mode .event-card {
   background: #252525;
   border: 1px solid #444;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: #f0f0f0;
 }
 
-.dark-mode .event-card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-}
-
-.dark-mode .past-event-card {
-  background-color: #1e1e1e;
-  border: 1px dashed #555;
-  opacity: 0.8;
-}
-
-.dark-mode .event-card-header {
-  color: #e0e0e0;
-}
-
-.dark-mode .event-card-header span {
-  color: #aaa;
-}
-
+.dark-mode .event-card-header,
+.dark-mode .event-card-footer,
 .dark-mode .event-card-details {
   color: #ccc;
+}
+
+.dark-mode .event-card-header h3 {
+  color: #ffffff;
 }
 
 .dark-mode .event-card-date {
   color: #7abaff;
 }
 
-.dark-mode .event-card-description {
-  color: #999;
-}
-
-.dark-mode .event-card-footer {
-  color: #ccc;
-}
-
 .dark-mode .event-title-link {
   color: #9370db;
 }
 
-.dark-mode .event-title-link:hover {
-  color: #b19cd9;
-}
-
 .dark-mode .author-link {
   color: #add8e6;
+}
+
+.dark-mode .event-card-description {
+  color: #aaa;
 }
 
 .dark-mode .pagination-button {
@@ -293,28 +203,18 @@
   border: 1px solid #555;
 }
 
-.dark-mode .pagination-button:hover:not(:disabled) {
-  background-color: #444;
-  border-color: #9370db;
-}
-
 .dark-mode .pagination-button.active-page {
   background-color: #9370db;
-  color: white;
+  color: white !important;
   border-color: #9370db;
 }
 
-.dark-mode .pagination-ellipsis {
-  color: #888;
-}
-
-.dark-mode .past-event-card .event-title-link,
-.dark-mode .past-event-card .author-link,
-.dark-mode .past-event-card .event-card-header,
-.dark-mode .past-event-card .event-card-header span {
-  color: #888 !important;
-}
-
-.dark-mode .past-event-card .event-card-date {
-  color: #777 !important;
+@media (max-width: 480px) {
+  .event-card-actions {
+    flex-direction: column;
+  }
+  .event-card-actions button,
+  .event-card-actions a {
+    width: 100%;
+  }
 }

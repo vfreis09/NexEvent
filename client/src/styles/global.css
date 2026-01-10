@@ -96,3 +96,9 @@ h6 {
   color: var(--color-alert-danger-text) !important;
   border-color: var(--color-alert-danger-bg) !important;
 }
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}

@@ -36,31 +36,43 @@ function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
   }
 
   return (
-    <div className="forgot-password-container d-flex justify-content-center align-items-center">
-      <form
-        onSubmit={handleSubmit}
-        className="card forgot-password-card shadow-sm d-flex flex-column"
-      >
-        <div>
-          <h3 className="mb-4 text-center">Forgot Password</h3>
-          <input
-            type="email"
-            className="form-control mb-3"
-            placeholder="Your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-          />
-          {message && <p className="text-success mt-3">{message}</p>}
-          {error && <p className="text-danger mt-3">{error}</p>}
-        </div>
+    <div className="forgot-password-container">
+      <form onSubmit={handleSubmit} className="forgot-password-card shadow-sm">
+        <h3 className="text-center">Forgot Password</h3>
+        <p className="forgot-instructions">
+          Enter the email address associated with your account and we'll send
+          you a link to reset your password.
+        </p>
+
+        <input
+          type="email"
+          className="form-control mb-3"
+          placeholder="Email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+        />
+        {message && (
+          <div className="alert alert-success py-2 small">{message}</div>
+        )}
+        {error && <div className="alert alert-danger py-2 small">{error}</div>}
+
         <button
           type="submit"
-          className="btn btn-primary w-100 mt-auto"
+          className="btn btn-primary w-100"
           disabled={loading}
         >
-          {loading ? "Sending..." : "Change Password"}
+          {loading ? "Sending link..." : "Send Reset Link"}
         </button>
+        <div className="text-center mt-4">
+          <a
+            href="/login"
+            className="text-decoration-none small"
+            style={{ color: "inherit", opacity: 0.7 }}
+          >
+            Back to Login
+          </a>
+        </div>
       </form>
     </div>
   );

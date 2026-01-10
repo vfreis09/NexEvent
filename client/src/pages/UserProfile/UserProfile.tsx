@@ -19,7 +19,9 @@ const UserProfilePage = () => {
       setLoading(true);
       setNotFound(false);
       try {
-        const res = await fetch(`http://localhost:3000/api/user/${username}`);
+        const res = await fetch(`http://localhost:3000/api/user/${username}`, {
+          credentials: "include",
+        });
         if (res.status === 404) {
           setNotFound(true);
           setProfileUser(null);
