@@ -1,0 +1,144 @@
+.search-container {
+  color: #333;
+  margin-bottom: 50px;
+}
+
+.search-loading {
+  color: #555;
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 50px;
+}
+
+.search-results-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.search-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-list-group {
+  flex-grow: 1;
+  margin-bottom: 0 !important;
+}
+
+.search-pagination-wrapper {
+  margin-top: auto;
+  padding-top: 25px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.search-event-link {
+  color: #007bff !important;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.search-user-link {
+  color: #28a745 !important;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.search-list-item {
+  background-color: #fff;
+  border-color: #ddd;
+}
+
+.search-subheader {
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #444;
+}
+
+.search-pagination-wrapper .pagination-container {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.search-pagination-wrapper .pagination-button {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+  font-size: 0.9rem;
+  border-radius: 6px;
+}
+
+.search-pagination-wrapper .pagination-button.nav-btn {
+  font-size: 1.2rem;
+  background-color: #f0f0f0;
+}
+
+@media (max-width: 991px) {
+  .search-results-row {
+    flex-direction: column;
+  }
+
+  .search-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 40px;
+  }
+}
+
+.dark-mode .search-container {
+  color: #f0f0f0;
+}
+
+.dark-mode .search-container h2 {
+  color: white;
+}
+
+.dark-mode .search-separator {
+  border-top: 1px solid #444;
+}
+
+.dark-mode .search-found-text {
+  color: #aaa !important;
+}
+
+.dark-mode .search-subheader {
+  color: #ccc;
+}
+
+.dark-mode .search-list-item {
+  background-color: #252525 !important;
+  border-color: #444 !important;
+  color: #eee;
+}
+
+.dark-mode .search-event-link {
+  color: #9370db !important;
+}
+
+.dark-mode .search-user-link {
+  color: #5bc0de !important;
+}
+
+.dark-mode .search-small-text {
+  color: #888 !important;
+}
+
+.dark-mode .search-pagination-wrapper .pagination-button {
+  background-color: #333;
+  color: #9370db;
+  border: 1px solid #444;
+}
+
+.dark-mode .search-pagination-wrapper .pagination-button.nav-btn {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+.dark-mode .search-pagination-wrapper .pagination-button.active-page {
+  background-color: #9370db !important;
+  border-color: #9370db !important;
+  color: white !important;
+}

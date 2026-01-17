@@ -1,0 +1,59 @@
+services:
+  pgsql:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-secret}"
+      POSTGRES_DB: "${DB_DATABASE}"
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build: ./server
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: pgsql
+      DB_PORT: 5432
+      DB_USER: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD:-secret}"
+      DB_NAME: "${DB_DATABASE}"
+      JWT_SECRET: "${JWT_SECRET}"
+      SENDGRID_API_KEY: "${SENDGRID_API_KEY}"
+      MAILTRAP_HOST: "${MAILTRAP_HOST}"
+      MAILTRAP_PORT: "${MAILTRAP_PORT}"
+      MAILTRAP_USER: "${MAILTRAP_USER}"
+      MAILTRAP_PASS: "${MAILTRAP_PASS}"
+    volumes:
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      pgsql:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_PUBLIC_API_KEY: "${VITE_PUBLIC_API_KEY}"
+    env_file:
+      - ./client/.env
+    environment:
+      VITE_PUBLIC_API_KEY: "${VITE_PUBLIC_API_KEY}"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:

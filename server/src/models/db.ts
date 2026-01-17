@@ -1,0 +1,108 @@
+const pool = require("../config/dbConfig");
+
+const initDb = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS users(
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      username VARCHAR(255) UNIQUE NOT NULL,
+      oauth_provider VARCHAR(50), 
+      oauth_id VARCHAR(255) UNIQUE, 
+      bio TEXT,
+      role VARCHAR(20) DEFAULT 'user',
+      contact TEXT,
+      is_verified BOOLEAN DEFAULT FALSE,
+      wants_notifications BOOLEAN DEFAULT false,
+      digest_frequency VARCHAR(10) DEFAULT 'weekly' CHECK (digest_frequency IN ('daily', 'weekly', 'never')),
+      theme_preference VARCHAR(5) DEFAULT 'light' CHECK (theme_preference IN ('light', 'dark')),
+      reset_token_hash TEXT,
+      reset_token_expires TIMESTAMP,
+      profile_picture_base64 TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT role_check CHECK (role IN ('user', 'admin', 'banned'))
+);
+
+    CREATE TABLE IF NOT EXISTS events(
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      event_datetime TIMESTAMP NOT NULL,
+      number_of_attendees INT DEFAULT 0,
+      max_attendees INT DEFAULT NULL,
+      location POINT,
+      address TEXT,
+      author_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(10) DEFAULT 'active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired', 'canceled'))
+    );
+
+    CREATE TABLE IF NOT EXISTS tags (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(50) UNIQUE NOT NULL,
+        description TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS event_tags (
+        event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+        tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (event_id, tag_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS user_preferences (
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, tag_id)
+    );
+    
+    CREATE TABLE IF NOT EXISTS email_queue (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(10) DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'error')),
+        CONSTRAINT unique_queue_item UNIQUE (user_id, event_id, status)
+    );
+
+    CREATE TABLE IF NOT EXISTS invites (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      invited_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      invited_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(10) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT unique_event_invite UNIQUE (event_id, invited_user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+      invite_id INTEGER REFERENCES invites(id) ON DELETE CASCADE,
+      message TEXT,
+      is_read BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS rsvps (
+      id SERIAL PRIMARY KEY,
+      user_id INT REFERENCES users(id) ON DELETE CASCADE,
+      event_id INT REFERENCES events(id) ON DELETE CASCADE,
+      status VARCHAR(10) CHECK (status IN ('accepted', 'declined')),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT unique_user_event UNIQUE (user_id, event_id)
+    );
+  `;
+
+  try {
+    await pool.query(createTableQuery);
+    console.log("Database tables created successfully or already exist.");
+  } catch (err) {
+    console.error("Error creating database tables:", err);
+  }
+};
+
+export default initDb;

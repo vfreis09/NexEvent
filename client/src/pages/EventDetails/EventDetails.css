@@ -1,0 +1,40 @@
+.host-details-container {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 20px;
+  background-color: #f9f9f9;
+}
+
+.host-avatar-frame {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 10px;
+  flex-shrink: 0;
+  background-color: transparent;
+}
+
+.host-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dark-mode .host-details-container {
+  background-color: #252525;
+  border-color: #444;
+}
+
+.dark-mode .host-details-container h6,
+.dark-mode .host-details-container p {
+  color: #f0f0f0;
+}
+
+.dark-mode .host-details-container strong {
+  color: white;
+}

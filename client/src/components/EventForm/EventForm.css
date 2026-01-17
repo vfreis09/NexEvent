@@ -1,0 +1,12 @@
+.map-container {
+  height: 600px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.disabled-search {
+  opacity: 0.6;
+  background-color: #e9ecef;
+  cursor: not-allowed;
+  pointer-events: none;
+}
