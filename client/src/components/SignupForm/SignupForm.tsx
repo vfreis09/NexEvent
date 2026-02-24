@@ -9,6 +9,9 @@ import AppToast from "../ToastComponent/ToastComponent";
 import GoogleAuthButton from "../GoogleAuthButton/GoogleAuthButton";
 import "./SignupForm.css";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const SignupForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -80,7 +83,7 @@ const SignupForm: React.FC = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/signup", {
+      const response = await fetch(`${BASE_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -97,7 +100,7 @@ const SignupForm: React.FC = () => {
       showNotification(
         "Account created! Please check your email to verify your account.",
         "Success",
-        "success"
+        "success",
       );
 
       setTimeout(() => {
@@ -161,7 +164,7 @@ const SignupForm: React.FC = () => {
             <div className="password-feedback mt-2 mb-3">
               <div
                 className={`password-strength ${getStrengthColor(
-                  passwordScoreDisplay
+                  passwordScoreDisplay,
                 )} mb-1`}
               >
                 Strength: {getStrengthLabel(passwordScoreDisplay)}

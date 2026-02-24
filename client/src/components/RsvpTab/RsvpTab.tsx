@@ -10,6 +10,9 @@ import "./RsvpTab.css";
 
 const EventsPerPage = 10;
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const RsvpTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
 
@@ -25,7 +28,7 @@ const RsvpTab = () => {
     async (page: number) => {
       setLoadingUpcoming(true);
 
-      const url = `http://localhost:3000/api/rsvps/user/${profileUser.username}?page=${page}&limit=${EventsPerPage}&type=upcoming`;
+      const url = `${BASE_URL}/rsvps/user/${profileUser.username}?page=${page}&limit=${EventsPerPage}&type=upcoming`;
 
       try {
         const res = await fetch(url, {
@@ -53,7 +56,7 @@ const RsvpTab = () => {
         setLoadingUpcoming(false);
       }
     },
-    [profileUser.username, showNotification]
+    [profileUser.username, showNotification],
   );
 
   useEffect(() => {
@@ -70,8 +73,8 @@ const RsvpTab = () => {
   const handleEventUpdate = (updatedEvent: EventData) => {
     setUpcomingRsvps((prevEvents) =>
       prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
+        event.id === updatedEvent.id ? updatedEvent : event,
+      ),
     );
   };
 

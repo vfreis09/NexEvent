@@ -20,6 +20,9 @@ interface UserContextProps {
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 export const UserProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -29,7 +32,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
 
   const loadUser = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/user", {
+      const res = await fetch(`${BASE_URL}/user`, {
         credentials: "include",
       });
 

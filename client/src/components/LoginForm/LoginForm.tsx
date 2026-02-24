@@ -5,6 +5,9 @@ import { useTheme } from "../../context/ThemeContext";
 import GoogleAuthButton from "../GoogleAuthButton/GoogleAuthButton";
 import "./LoginForm.css";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +30,7 @@ const LoginForm: React.FC = () => {
     setErrorMessage("");
 
     try {
-      const response = await fetch("http://localhost:3000/api/login", {
+      const response = await fetch(`${BASE_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

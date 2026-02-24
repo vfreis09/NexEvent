@@ -1,28 +1,28 @@
 import { useState } from "react";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 export const useEventActions = (
   showNotification: (
     message: string,
     header: string,
     bg: string,
-    textColor?: string
-  ) => void
+    textColor?: string,
+  ) => void,
 ) => {
   const [loading, setLoading] = useState(false);
 
   const cancelEvent = async (
     eventId: number,
-    onSuccess: (data: any) => void
+    onSuccess: (data: any) => void,
   ) => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/events/${eventId}/cancel`,
-        {
-          method: "PUT",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${BASE_URL}/events/${eventId}/cancel`, {
+        method: "PUT",
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to cancel event.");
 
       const data = await res.json();
@@ -33,14 +33,14 @@ export const useEventActions = (
         "Event successfully closed. The event status is now Canceled.",
         "Success",
         "success",
-        "white"
+        "white",
       );
     } catch (err) {
       showNotification(
         "We couldn't cancel the event. Please try again.",
         "Error",
         "danger",
-        "white"
+        "white",
       );
     } finally {
       setLoading(false);

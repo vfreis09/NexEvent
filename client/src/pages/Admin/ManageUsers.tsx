@@ -21,6 +21,12 @@ interface PaginatedUsersResponse {
   };
 }
 
+// Dynamic API URL Logic
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const API_URL = rawUrl
+  ? `https://${rawUrl}/api/admin`
+  : "http://localhost:3000/api/admin";
+
 const ManageUsers: React.FC = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +42,8 @@ const ManageUsers: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    const url = `http://localhost:3000/api/admin/users?page=${currentPage}&limit=${usersPerPage}`;
+    // Using the dynamic API_URL
+    const url = `${API_URL}/users?page=${currentPage}&limit=${usersPerPage}`;
 
     try {
       const res = await fetch(url, { credentials: "include" });
@@ -73,24 +80,25 @@ const ManageUsers: React.FC = () => {
   const handleRoleChange = async (
     id: number,
     username: string,
-    role: "user" | "admin" | "banned"
+    role: "user" | "admin" | "banned",
   ) => {
     try {
+      // Note: updateUserRole in adminApi.ts also uses the dynamic URL
       const updatedUser = await updateUserRole(id.toString(), role);
       setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, role: updatedUser.role } : u))
+        prev.map((u) => (u.id === id ? { ...u, role: updatedUser.role } : u)),
       );
       showNotification(
         `User '${username}' role changed to '${role}'.`,
         "Success",
-        "success"
+        "success",
       );
     } catch (err: any) {
       setError(err.message);
       showNotification(
         `Failed to change role for user '${username}'.`,
         "Error",
-        "danger"
+        "danger",
       );
     }
   };
@@ -154,7 +162,7 @@ const ManageUsers: React.FC = () => {
                           handleRoleChange(
                             u.id,
                             u.username,
-                            e.target.value as "user" | "admin" | "banned"
+                            e.target.value as "user" | "admin" | "banned",
                           )
                         }
                         size="sm"

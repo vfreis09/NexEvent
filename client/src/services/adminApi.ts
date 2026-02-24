@@ -1,11 +1,16 @@
-const API_URL = "http://localhost:3000/api/admin";
+// Minimum changes, no dotenv needed
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+
+// This fixes the "domain only" problem by adding protocol and path if missing
+const API_URL = rawUrl
+  ? `https://${rawUrl}/api/admin`
+  : "http://localhost:3000/api/admin";
 
 export async function getUsers() {
   const res = await fetch(`${API_URL}/users`, { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch users");
 
   const body = await res.json();
-
   return body.users;
 }
 

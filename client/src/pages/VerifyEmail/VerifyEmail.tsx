@@ -3,6 +3,9 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import "./VerifyEmail.css";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const [message, setMessage] = useState("Verifying...");
@@ -25,17 +28,17 @@ function VerifyEmail() {
     const verifyEmail = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/verify-email?token=${token}`,
+          `${BASE_URL}/verify-email?token=${token}`,
           {
             method: "GET",
             credentials: "include",
-          }
+          },
         );
 
         const data = await response.json();
         if (response.ok) {
           setMessage(
-            "Email verified successfully! Redirecting to Home Page..."
+            "Email verified successfully! Redirecting to Home Page...",
           );
 
           await loadUser();

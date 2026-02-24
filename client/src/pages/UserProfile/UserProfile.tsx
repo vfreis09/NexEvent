@@ -6,6 +6,9 @@ import { PublicUser } from "../../types/PublicUser";
 import { useTheme } from "../../context/ThemeContext";
 import "./UserProfilePage.css";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const UserProfilePage = () => {
   const { username } = useParams<{ username: string }>();
   const [profileUser, setProfileUser] = useState<PublicUser | null>(null);
@@ -19,7 +22,7 @@ const UserProfilePage = () => {
       setLoading(true);
       setNotFound(false);
       try {
-        const res = await fetch(`http://localhost:3000/api/user/${username}`, {
+        const res = await fetch(`${BASE_URL}/user/${username}`, {
           credentials: "include",
         });
         if (res.status === 404) {

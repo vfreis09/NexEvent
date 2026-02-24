@@ -7,9 +7,12 @@ interface Props {
     message: string,
     header: string,
     bg: string,
-    textColor?: string
+    textColor?: string,
   ) => void;
 }
+
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const ProfilePictureUploader: React.FC<Props> = ({
   inputRef,
@@ -19,7 +22,7 @@ const ProfilePictureUploader: React.FC<Props> = ({
   const { refreshUser } = useUser();
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
@@ -28,7 +31,7 @@ const ProfilePictureUploader: React.FC<Props> = ({
         showNotification(
           "Please select a valid image file.",
           "Validation Error",
-          "danger"
+          "danger",
         );
         return;
       }
@@ -36,7 +39,7 @@ const ProfilePictureUploader: React.FC<Props> = ({
         showNotification(
           "Image size must be less than 500KB.",
           "Validation Error",
-          "warning"
+          "warning",
         );
         return;
       }
@@ -51,7 +54,7 @@ const ProfilePictureUploader: React.FC<Props> = ({
 
     reader.onloadend = async () => {
       const base64String = reader.result as string;
-      const apiPath = "http://localhost:3000/api/user/profile/upload";
+      const apiPath = `${BASE_URL}/user/profile/upload`;
 
       try {
         const response = await fetch(apiPath, {
@@ -68,7 +71,7 @@ const ProfilePictureUploader: React.FC<Props> = ({
         showNotification(
           "Failed to upload picture.",
           "Upload Failed",
-          "danger"
+          "danger",
         );
       } finally {
         setLoading(false);

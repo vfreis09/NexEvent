@@ -39,6 +39,9 @@ const initialPaginationState: Pagination = {
   totalItems: 0,
 };
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const SearchResults: React.FC = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
@@ -61,7 +64,7 @@ const SearchResults: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/search?q=${query}&eventPage=${eventPage}&eventLimit=${resultsPerPage}&userPage=${userPage}&userLimit=${resultsPerPage}`
+        `${BASE_URL}/search?q=${query}&eventPage=${eventPage}&eventLimit=${resultsPerPage}&userPage=${userPage}&userLimit=${resultsPerPage}`,
       );
 
       if (response.ok) {

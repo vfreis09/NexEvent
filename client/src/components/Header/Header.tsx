@@ -11,6 +11,9 @@ import AppToast from "../ToastComponent/ToastComponent";
 import { SearchType } from "../../types/SearchType";
 import "./Header.css";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const Header: React.FC = () => {
   const {
     user,
@@ -45,7 +48,7 @@ const Header: React.FC = () => {
   const fetchNotifications = async () => {
     setLoadingNotifications(true);
     try {
-      const res = await fetch("http://localhost:3000/api/notifications", {
+      const res = await fetch(`${BASE_URL}/notifications`, {
         credentials: "include",
       });
 
@@ -63,16 +66,18 @@ const Header: React.FC = () => {
   const markNotificationRead = async (notificationId: number) => {
     try {
       const res = await fetch(
-        `http://localhost:3000/api/notifications/${notificationId}/read`,
+        `${BASE_URL}/notifications/${notificationId}/read`,
         {
           method: "PATCH",
           credentials: "include",
-        }
+        },
       );
       if (!res.ok) throw new Error("Failed to mark notification as read");
 
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, is_read: true } : n,
+        ),
       );
 
       return true;
@@ -84,20 +89,17 @@ const Header: React.FC = () => {
 
   const markAllRead = async () => {
     try {
-      const res = await fetch(
-        "http://localhost:3000/api/notifications/read-all",
-        {
-          method: "PUT",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${BASE_URL}/notifications/read-all`, {
+        method: "PUT",
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to clear notifications");
 
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       showNotification(
         "All notifications marked as read.",
         "Success",
-        "success"
+        "success",
       );
     } catch (error) {
       console.error("Error marking all read:", error);
@@ -109,36 +111,30 @@ const Header: React.FC = () => {
     inviteId: number,
     notificationId: number,
     eventId: number,
-    status: "accepted" | "declined" | "banned"
+    status: "accepted" | "declined" | "banned",
   ) => {
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/invites/${inviteId}/respond`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status }),
-        }
-      );
+      const res = await fetch(`${BASE_URL}/invites/${inviteId}/respond`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
       if (!res.ok) throw new Error("Failed to respond to invite");
 
       if (status === "accepted") {
-        const rsvpRes = await fetch(
-          `http://localhost:3000/api/events/${eventId}/rsvp`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ status: "accepted" }),
-          }
-        );
+        const rsvpRes = await fetch(`${BASE_URL}/events/${eventId}/rsvp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ status: "accepted" }),
+        });
         if (!rsvpRes.ok) throw new Error("Failed to create RSVP");
 
         showNotification(
           "Invite accepted! You are now RSVP'd.",
           "Success",
-          "success"
+          "success",
         );
       } else {
         showNotification("Invite declined.", "Success", "success");
@@ -152,7 +148,7 @@ const Header: React.FC = () => {
       showNotification(
         "Something went wrong while processing your response.",
         "Error",
-        "danger"
+        "danger",
       );
     }
   };
@@ -173,9 +169,7 @@ const Header: React.FC = () => {
 
     setLoadingSearch(true);
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/search?q=${query}`
-      );
+      const response = await fetch(`${BASE_URL}/search?q=${query}`);
       if (response.ok) {
         const data = await response.json();
         setSuggestions(data);
@@ -233,7 +227,7 @@ const Header: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/logout", {
+      const response = await fetch(`${BASE_URL}/logout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -259,7 +253,7 @@ const Header: React.FC = () => {
   const handleSuggestionClick = (
     type: "event" | "user",
     id: number,
-    username?: string
+    username?: string,
   ) => {
     if (type === "event") navigate(`/event/${id}`);
     else if (type === "user" && username) navigate(`/user/${username}`);
@@ -412,7 +406,7 @@ const Header: React.FC = () => {
                                       note.invite_id!,
                                       note.id,
                                       note.event_id,
-                                      "accepted"
+                                      "accepted",
                                     )
                                   }
                                   className="nav-button invite-accept-btn"
@@ -425,7 +419,7 @@ const Header: React.FC = () => {
                                       note.invite_id!,
                                       note.id,
                                       note.event_id,
-                                      "declined"
+                                      "declined",
                                     )
                                   }
                                   className="nav-button invite-reject-btn"

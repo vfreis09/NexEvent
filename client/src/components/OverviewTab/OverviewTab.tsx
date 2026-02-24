@@ -9,6 +9,9 @@ import "./OverviewTab.css";
 
 const MAX_EVENTS_TO_SHOW = 3;
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const OverviewTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
   const [createdEvents, setCreatedEvents] = useState<EventData[]>([]);
@@ -24,22 +27,22 @@ const OverviewTab = () => {
       setLoading(true);
       try {
         const createdRes = await fetch(
-          `http://localhost:3000/api/user/${profileUser.username}/events?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
-          { credentials: "include" }
+          `${BASE_URL}/user/${profileUser.username}/events?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
+          { credentials: "include" },
         );
         const rsvpRes = await fetch(
-          `http://localhost:3000/api/rsvps/user/${profileUser.username}?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
-          { credentials: "include" }
+          `${BASE_URL}/rsvps/user/${profileUser.username}?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
+          { credentials: "include" },
         );
 
         const createdData = await createdRes.json();
         const rsvpData = await rsvpRes.json();
 
         setCreatedEvents(
-          Array.isArray(createdData) ? createdData : createdData.events || []
+          Array.isArray(createdData) ? createdData : createdData.events || [],
         );
         setRsvpedEvents(
-          Array.isArray(rsvpData) ? rsvpData : rsvpData.events || []
+          Array.isArray(rsvpData) ? rsvpData : rsvpData.events || [],
         );
       } catch (err) {
         console.error("Error loading overview data", err);
@@ -59,16 +62,16 @@ const OverviewTab = () => {
   const handleCreatedEventUpdate = (updatedEvent: EventData) => {
     setCreatedEvents((prevEvents) =>
       prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
+        event.id === updatedEvent.id ? updatedEvent : event,
+      ),
     );
   };
 
   const handleRsvpedEventUpdate = (updatedEvent: EventData) => {
     setRsvpedEvents((prevEvents) =>
       prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
+        event.id === updatedEvent.id ? updatedEvent : event,
+      ),
     );
   };
 

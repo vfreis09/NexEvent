@@ -12,14 +12,19 @@ import Toast from "react-bootstrap/Toast";
 import ToastContainer from "react-bootstrap/ToastContainer";
 import "./EventDetails.css";
 
+// Dynamic API URL Logic (No dotenv needed!)
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const fetchProfilePicture = async (
-  username: string
+  username: string,
 ): Promise<string | null> => {
   try {
-    const response = await fetch(`http://localhost:3000/api/user/${username}`);
+    // Updated to use dynamic BASE_URL
+    const response = await fetch(`${BASE_URL}/user/${username}`);
     if (!response.ok) {
       console.error(
-        `Failed to fetch profile for @${username}: ${response.status}`
+        `Failed to fetch profile for @${username}: ${response.status}`,
       );
       return null;
     }
@@ -58,13 +63,11 @@ function EventDetails() {
 
   const handleCancel = async (eventId: number) => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/events/${eventId}/cancel`,
-        {
-          method: "PUT",
-          credentials: "include",
-        }
-      );
+      // Updated to use dynamic BASE_URL
+      const response = await fetch(`${BASE_URL}/events/${eventId}/cancel`, {
+        method: "PUT",
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to cancel");
       const updatedEvent = await response.json();
       setEvent(updatedEvent);
@@ -77,14 +80,13 @@ function EventDetails() {
   useEffect(() => {
     const fetchEventData = async () => {
       try {
-        const eventRes = await fetch(
-          `http://localhost:3000/api/events/${eventId}`
-        );
+        // Updated to use dynamic BASE_URL
+        const eventRes = await fetch(`${BASE_URL}/events/${eventId}`);
         if (!eventRes.ok) throw new Error("Event not found");
         const fetchedEvent = await eventRes.json();
 
         const pictureBase64 = await fetchProfilePicture(
-          fetchedEvent.author_username
+          fetchedEvent.author_username,
         );
 
         const fullEvent: EventData = {

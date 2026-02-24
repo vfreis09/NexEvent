@@ -7,6 +7,9 @@ import { useToast } from "../../hooks/useToast";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import "./CreatedEventsTab.css";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const EventsPerPage = 10;
 
 const CreatedEventsTab = () => {
@@ -30,7 +33,7 @@ const CreatedEventsTab = () => {
       if (isUpcoming) setLoadingUpcoming(true);
       else setLoadingPast(true);
 
-      const url = `http://localhost:3000/api/user/${profileUser.username}/events?page=${page}&limit=${EventsPerPage}&type=${type}`;
+      const url = `${BASE_URL}/${profileUser.username}/events?page=${page}&limit=${EventsPerPage}&type=${type}`;
 
       try {
         const res = await fetch(url, {
@@ -59,7 +62,7 @@ const CreatedEventsTab = () => {
         showNotification(
           `Failed to load ${type} created events.`,
           "Error",
-          "danger"
+          "danger",
         );
         if (isUpcoming) setUpcomingEvents([]);
         else setPastEvents([]);
@@ -68,7 +71,7 @@ const CreatedEventsTab = () => {
         else setLoadingPast(false);
       }
     },
-    [profileUser.username, showNotification]
+    [profileUser.username, showNotification],
   );
 
   useEffect(() => {
@@ -96,7 +99,7 @@ const CreatedEventsTab = () => {
   const handleEventUpdate = (updatedEvent: EventData) => {
     const updateList = (prevEvents: EventData[]): EventData[] =>
       prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
+        event.id === updatedEvent.id ? updatedEvent : event,
       );
 
     setUpcomingEvents(updateList);

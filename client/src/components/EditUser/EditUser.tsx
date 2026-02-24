@@ -9,12 +9,15 @@ import ProfilePictureUploader from "../ProfilePictureUploader/ProfilePictureUplo
 import { Badge, Form, Spinner } from "react-bootstrap";
 import "./EditUser.css";
 
-const DEFAULT_AVATAR_URL = "/images/default-avatar.png";
-
 interface Tag {
   id: number;
   name: string;
 }
+
+const DEFAULT_AVATAR_URL = "/images/default-avatar.png";
+
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const EditUser: React.FC = () => {
   const { user, setUser, loadUser } = useUser();
@@ -32,7 +35,7 @@ const EditUser: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordScore, setPasswordScore] = useState(0);
   const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
-    []
+    [],
   );
 
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -57,22 +60,22 @@ const EditUser: React.FC = () => {
     const fetchPrefs = async () => {
       try {
         const [tagsRes, settingsRes] = await Promise.all([
-          fetch("http://localhost:3000/api/tags"),
-          fetch("http://localhost:3000/api/user/settings/all", {
+          fetch(`${BASE_URL}/tags`),
+          fetch(`${BASE_URL}/user/settings/all`, {
             credentials: "include",
           }),
         ]);
         const tagsData = await tagsRes.json();
         const settingsData = await settingsRes.json();
         setAvailableTags(
-          Array.isArray(tagsData) ? tagsData : tagsData.tags || []
+          Array.isArray(tagsData) ? tagsData : tagsData.tags || [],
         );
         setDigestFrequency(settingsData.digest_frequency || "daily");
         if (settingsData.selected_tags) {
           setSelectedTagIds(
             settingsData.selected_tags.map((t: any) =>
-              typeof t === "object" ? t.id : t
-            )
+              typeof t === "object" ? t.id : t,
+            ),
           );
         }
       } catch (error) {
@@ -98,15 +101,12 @@ const EditUser: React.FC = () => {
   const handleUserUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/user/${user?.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email, username, bio, contact }),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/user/${user?.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, username, bio, contact }),
+      });
       if (!response.ok) throw new Error();
       const updatedUser = await response.json();
       setUser({ ...user, ...updatedUser });
@@ -119,7 +119,7 @@ const EditUser: React.FC = () => {
   const handleSavePreferences = async () => {
     setSavingPrefs(true);
     try {
-      await fetch("http://localhost:3000/api/user/settings/update", {
+      await fetch(`${BASE_URL}/user/settings/update`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -144,15 +144,12 @@ const EditUser: React.FC = () => {
       return;
     }
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/user/change-password",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ oldPassword, newPassword }),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/user/change-password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
       if (!response.ok) throw new Error();
       showNotification("Password changed!", "Success", "success");
       setOldPassword("");
@@ -246,7 +243,7 @@ const EditUser: React.FC = () => {
                         setSelectedTagIds((prev) =>
                           prev.includes(tag.id)
                             ? prev.filter((id) => id !== tag.id)
-                            : [...prev, tag.id]
+                            : [...prev, tag.id],
                         )
                       }
                     >

@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { SearchType } from "../../types/SearchType";
 import "./SearchBar.css"; // Import the new CSS file
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const SearchBar: React.FC = () => {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<{
@@ -22,9 +25,7 @@ const SearchBar: React.FC = () => {
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(
-          `http://localhost:3000/api/search?q=${query}`
-        );
+        const response = await fetch(`${BASE_URL}/search?q=${query}`);
         if (response.ok) {
           const data = await response.json();
           setSuggestions(data);
@@ -63,7 +64,7 @@ const SearchBar: React.FC = () => {
   const handleSuggestionClick = (
     type: "event" | "user",
     id: number,
-    username?: string
+    username?: string,
   ) => {
     if (type === "event") {
       navigate(`/event/${id}`);

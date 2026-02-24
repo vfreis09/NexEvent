@@ -10,6 +10,9 @@ type RSVPProps = {
   status: string;
 };
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
   const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -24,10 +27,10 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/rsvps/events/${eventId}/rsvp?userId=${userId}`,
+          `${BASE_URL}/rsvps/events/${eventId}/rsvp?userId=${userId}`,
           {
             credentials: "include",
-          }
+          },
         );
 
         if (response.ok) {
@@ -39,7 +42,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
           showNotification(
             "Could not load your current RSVP status.",
             "Error",
-            "danger"
+            "danger",
           );
           setRsvpStatus(null);
         }
@@ -47,7 +50,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
         showNotification(
           "Could not load your current RSVP status.",
           "Error",
-          "danger"
+          "danger",
         );
         setRsvpStatus(null);
       } finally {
@@ -69,20 +72,17 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
     try {
       const lowerStatus = newRsvpStatus.toLowerCase();
 
-      const response = await fetch(
-        `http://localhost:3000/api/rsvps/events/${eventId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            status: lowerStatus,
-          }),
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${BASE_URL}/rsvps/events/${eventId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          status: lowerStatus,
+        }),
+        credentials: "include",
+      });
 
       if (response.ok) {
         await response.json();
@@ -100,14 +100,14 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
         showNotification(
           errorData.message || "Failed to update your RSVP. Please try again.",
           "Error",
-          "danger"
+          "danger",
         );
       }
     } catch (err) {
       showNotification(
         "Failed to connect and update your RSVP.",
         "Error",
-        "danger"
+        "danger",
       );
     }
   };

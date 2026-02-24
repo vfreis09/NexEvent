@@ -11,6 +11,9 @@ interface InviteManagerProps {
   currentAttendees: number;
 }
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const InviteManager: React.FC<InviteManagerProps> = ({
   eventId,
   status,
@@ -32,13 +35,10 @@ const InviteManager: React.FC<InviteManagerProps> = ({
 
   const fetchInvites = async () => {
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/events/${eventId}/invites`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${BASE_URL}/events/${eventId}/invites`, {
+        method: "GET",
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch invites");
       const data = await res.json();
       setInvites(data);
@@ -54,17 +54,14 @@ const InviteManager: React.FC<InviteManagerProps> = ({
     setMessage(null);
 
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/events/${eventId}/invite`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ identifier }),
-        }
-      );
+      const res = await fetch(`${BASE_URL}/events/${eventId}/invite`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ identifier }),
+      });
 
       const data = await res.json();
 
@@ -89,8 +86,8 @@ const InviteManager: React.FC<InviteManagerProps> = ({
     status === "canceled"
       ? "canceled"
       : new Date(eventDateTime) < new Date()
-      ? "expired"
-      : "full";
+        ? "expired"
+        : "full";
 
   return (
     <div className="invite-manager">

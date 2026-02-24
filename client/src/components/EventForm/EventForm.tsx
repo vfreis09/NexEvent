@@ -14,6 +14,9 @@ interface EventFormProps {
 
 type LatLngLiteral = google.maps.LatLngLiteral;
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 const isTimeInPast = (dateTimeString: string): boolean => {
   if (!dateTimeString) return false;
 
@@ -62,9 +65,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
     if (isEditing && eventId && !isNaN(eventId)) {
       const fetchEvent = async () => {
         try {
-          const response = await fetch(
-            `http://localhost:3000/api/events/${eventId}`
-          );
+          const response = await fetch(`${BASE_URL}/events/${eventId}`);
           if (!response.ok) throw new Error("Failed to fetch event details");
 
           const data = await response.json();
@@ -77,7 +78,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             showNotification(
               "This event has passed. Date/Location editing is disabled.",
               "Notice",
-              "warning"
+              "warning",
             );
           }
 
@@ -115,15 +116,13 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       showNotification(
         "Please correct the form errors before submitting.",
         "Warning",
-        "warning"
+        "warning",
       );
       return;
     }
 
     try {
-      const url = `http://localhost:3000/api/events/${
-        isEditing ? `${eventId}` : ""
-      }`;
+      const url = `${BASE_URL}/events/${isEditing ? `${eventId}` : ""}`;
       const method = isEditing ? "PUT" : "POST";
 
       const latitude = location?.lat ?? null;
@@ -173,13 +172,13 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
     } catch (error: any) {
       console.error(
         isEditing ? "Event update failed" : "Event creation failed",
-        error
+        error,
       );
       showNotification(
         error.message ||
           (isEditing ? "Event update failed" : "Event creation failed"),
         "Error",
-        "danger"
+        "danger",
       );
     }
   };
@@ -189,7 +188,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       showNotification(
         "Cannot change location for a past event.",
         "Warning",
-        "warning"
+        "warning",
       );
       return;
     }

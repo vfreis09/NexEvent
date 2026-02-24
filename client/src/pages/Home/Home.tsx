@@ -8,6 +8,9 @@ import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
 import "./Home.css";
 
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
 function HomePage() {
   const [upcomingEvents, setUpcomingEvents] = useState<EventData[]>([]);
   const [pastEvents, setPastEvents] = useState<EventData[]>([]);
@@ -33,7 +36,7 @@ function HomePage() {
         "Success! Your event is live and ready for RSVPs.",
         "Success",
         "success",
-        "white"
+        "white",
       );
 
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -43,7 +46,7 @@ function HomePage() {
   const fetchEvents = useCallback(
     async (page: number, type: "upcoming" | "past") => {
       const limit = 10;
-      const url = `http://localhost:3000/api/events/?page=${page}&limit=${limit}&type=${type}`;
+      const url = `${BASE_URL}/events/?page=${page}&limit=${limit}&type=${type}`;
 
       try {
         const response = await fetch(url, {
@@ -73,13 +76,13 @@ function HomePage() {
           `Uh oh, we couldn't fetch ${type} events right now.`,
           "Error",
           "danger",
-          "white"
+          "white",
         );
         if (type === "upcoming") setUpcomingEvents([]);
         else setPastEvents([]);
       }
     },
-    [showNotification]
+    [showNotification],
   );
 
   useEffect(() => {
@@ -121,12 +124,12 @@ function HomePage() {
         ].sort(
           (a, b) =>
             new Date(a.event_datetime).getTime() -
-            new Date(b.event_datetime).getTime()
+            new Date(b.event_datetime).getTime(),
         );
       }
       if (!isUpcoming && !pastEvents.some((e) => e.id === updatedEvent.id)) {
         setUpcomingEvents((prev) =>
-          prev.filter((e) => e.id !== updatedEvent.id)
+          prev.filter((e) => e.id !== updatedEvent.id),
         );
         return [
           ...prevEvents.filter((e) => e.id !== updatedEvent.id),
@@ -134,12 +137,12 @@ function HomePage() {
         ].sort(
           (a, b) =>
             new Date(b.event_datetime).getTime() -
-            new Date(a.event_datetime).getTime()
+            new Date(a.event_datetime).getTime(),
         );
       }
 
       return prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
+        event.id === updatedEvent.id ? updatedEvent : event,
       );
     };
 

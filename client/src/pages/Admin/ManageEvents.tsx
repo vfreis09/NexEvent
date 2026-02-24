@@ -8,6 +8,12 @@ import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
 import "./ManageEvents.css";
 
+// 1. Minimum change: Setup the smart API_URL logic at the top
+const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
+const API_URL = rawUrl
+  ? `https://${rawUrl}/api/admin`
+  : "http://localhost:3000/api/admin";
+
 const ManageEvents: React.FC = () => {
   const [events, setEvents] = useState<EventType[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +31,8 @@ const ManageEvents: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    const url = `http://localhost:3000/api/admin/events?page=${currentPage}&limit=${eventsPerPage}`;
+    // 2. Updated to use the smart API_URL
+    const url = `${API_URL}/events?page=${currentPage}&limit=${eventsPerPage}`;
 
     try {
       const res = await fetch(url, {
@@ -46,6 +53,7 @@ const ManageEvents: React.FC = () => {
       setLoading(false);
     }
   }, [currentPage, eventsPerPage, showNotification]);
+
   useEffect(() => {
     fetchEvents();
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -59,19 +67,22 @@ const ManageEvents: React.FC = () => {
 
   const handleCancel = async (id: number, title: string) => {
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/admin/events/${id}/cancel`,
-        { method: "PUT", credentials: "include" }
-      );
+      // 3. Updated to use the smart API_URL
+      const res = await fetch(`${API_URL}/events/${id}/cancel`, {
+        method: "PUT",
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to cancel event");
       const data = await res.json();
       setEvents((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, status: data.event.status } : e))
+        prev.map((e) =>
+          e.id === id ? { ...e, status: data.event.status } : e,
+        ),
       );
       showNotification(
         `Event '${title}' was successfully canceled.`,
         "Success",
-        "success"
+        "success",
       );
     } catch (err: any) {
       setError(err.message);
@@ -81,7 +92,8 @@ const ManageEvents: React.FC = () => {
 
   const handleDelete = async (id: number, title: string) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/admin/events/${id}`, {
+      // 4. Updated to use the smart API_URL
+      const res = await fetch(`${API_URL}/events/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -99,7 +111,7 @@ const ManageEvents: React.FC = () => {
       showNotification(
         `Event '${title}' was successfully deleted.`,
         "Success",
-        "success"
+        "success",
       );
     } catch (err: any) {
       setError(err.message);
