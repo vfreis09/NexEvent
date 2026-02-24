@@ -9,6 +9,8 @@ export const pool = new Pool({
   ssl: {
     rejectUnauthorized: false,
   },
+  // Add this line to prevent errors with the Supabase pooler
+  max: 10,
 });
 
 // 2. Define the Table Creation Query
