@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 import { updateEventStatus } from "../utils/eventService";
 import emailServices from "../utils/emailService";
 import { insertEventIntoQueue } from "../utils/queueManager";
@@ -58,7 +58,7 @@ const createEvent = async (req: Request, res: Response) => {
         address,
         authorId,
         maxAttendees,
-      ]
+      ],
     );
     const event = result.rows[0];
 
@@ -69,7 +69,7 @@ const createEvent = async (req: Request, res: Response) => {
     insertEventIntoQueue(event.id, authorId).catch((error) => {
       console.error(
         "Background queue insertion failed for createEvent:",
-        error
+        error,
       );
     });
   } catch (error) {
@@ -104,7 +104,7 @@ const getEvents = async (req: Request, res: Response) => {
 
   try {
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM events WHERE ${whereClause}`
+      `SELECT COUNT(*) FROM events WHERE ${whereClause}`,
     );
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
@@ -116,11 +116,11 @@ const getEvents = async (req: Request, res: Response) => {
        WHERE ${whereClause}
        ${orderByClause}
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+      [limit, offset],
     );
 
     await Promise.all(
-      eventsResult.rows.map((event: any) => updateEventStatus(event.id))
+      eventsResult.rows.map((event: any) => updateEventStatus(event.id)),
     );
 
     res.json({
@@ -135,7 +135,7 @@ const getEvents = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(
       `Error fetching paginated events (Type: ${filterType}):`,
-      error
+      error,
     );
     res.status(500).json({ message: "Internal Server Error" });
   }
@@ -149,7 +149,7 @@ const getEventById = async (req: Request, res: Response) => {
        FROM events
        JOIN users ON events.author_id = users.id
        WHERE events.id = $1`,
-      [id]
+      [id],
     );
 
     if (result.rows.length > 0) {
@@ -176,7 +176,7 @@ const updateEvent = async (req: Request, res: Response) => {
       `SELECT event_datetime, author_id, location, address
        FROM events 
        WHERE id = $1`,
-      [id]
+      [id],
     );
 
     if (existingEventResult.rows.length === 0) {
@@ -237,7 +237,7 @@ const updateEvent = async (req: Request, res: Response) => {
         maxAttendees,
         id,
         authorId,
-      ]
+      ],
     );
 
     if (result.rows.length > 0) {
@@ -254,7 +254,7 @@ const updateEvent = async (req: Request, res: Response) => {
          AND r.status = 'Accepted'
          AND u.is_verified = true
          AND u.wants_notifications = true`,
-        [id]
+        [id],
       );
 
       for (const user of rsvpResult.rows) {
@@ -262,7 +262,7 @@ const updateEvent = async (req: Request, res: Response) => {
           await emailServices.sendEventUpdateEmail(
             user.email,
             updatedEvent.title,
-            updatedEvent.id
+            updatedEvent.id,
           );
 
           const existingNotification = await pool.query(
@@ -270,7 +270,7 @@ const updateEvent = async (req: Request, res: Response) => {
              WHERE user_id = $1 AND event_id = $2
              ORDER BY created_at DESC
              LIMIT 1`,
-            [user.user_id, updatedEvent.id]
+            [user.user_id, updatedEvent.id],
           );
 
           const message = `Event "${updatedEvent.title}" has been updated.`;
@@ -283,19 +283,19 @@ const updateEvent = async (req: Request, res: Response) => {
               `UPDATE notifications
                SET message = $1, created_at = CURRENT_TIMESTAMP
                WHERE id = $2`,
-              [message, existingNotification.rows[0].id]
+              [message, existingNotification.rows[0].id],
             );
           } else {
             await pool.query(
               `INSERT INTO notifications (user_id, event_id, message)
                VALUES ($1, $2, $3)`,
-              [user.user_id, updatedEvent.id, message]
+              [user.user_id, updatedEvent.id, message],
             );
           }
         } catch (notifError) {
           console.error(
             `Failed to handle notification for ${user.email}:`,
-            notifError
+            notifError,
           );
         }
       }
@@ -339,7 +339,7 @@ const cancelEvent = async (req: Request, res: Response) => {
 
     const updateResult = await pool.query(
       "UPDATE events SET status = $1 WHERE id = $2 RETURNING *",
-      ["canceled", id]
+      ["canceled", id],
     );
 
     const canceledEvent = updateResult.rows[0];
@@ -352,7 +352,7 @@ const cancelEvent = async (req: Request, res: Response) => {
        AND r.status = 'Accepted'
        AND u.is_verified = true
        AND u.wants_notifications = true`,
-      [id]
+      [id],
     );
 
     for (const user of rsvpResult.rows) {
@@ -362,18 +362,18 @@ const cancelEvent = async (req: Request, res: Response) => {
         await emailServices.sendEventCancelationEmail(
           user.email,
           canceledEvent.title,
-          canceledEvent.id
+          canceledEvent.id,
         );
 
         await pool.query(
           `INSERT INTO notifications (user_id, event_id, message)
            VALUES ($1, $2, $3)`,
-          [user.user_id, canceledEvent.id, message]
+          [user.user_id, canceledEvent.id, message],
         );
       } catch (notifError) {
         console.error(
           `Notification/email failed for ${user.email}:`,
-          notifError
+          notifError,
         );
       }
     }
@@ -400,7 +400,7 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
   try {
     const userResult = await pool.query(
       `SELECT id FROM users WHERE username = $1`,
-      [username]
+      [username],
     );
 
     if (userResult.rowCount === 0) {
@@ -428,8 +428,8 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
       const countResult = await pool.query(
         `SELECT COUNT(*) FROM events e WHERE ${whereClause.replace(
           "$1",
-          userId
-        )}`
+          userId,
+        )}`,
       );
       totalEvents = parseInt(countResult.rows[0].count, 10);
       totalPages = Math.ceil(totalEvents / queryLimit);
@@ -442,11 +442,11 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
        WHERE ${whereClause}
        ${orderByClause}
        LIMIT $2 OFFSET $3`,
-      [userId, queryLimit, offset]
+      [userId, queryLimit, offset],
     );
 
     await Promise.all(
-      eventsResult.rows.map((event: any) => updateEventStatus(event.id))
+      eventsResult.rows.map((event: any) => updateEventStatus(event.id)),
     );
 
     if (queryLimit <= 3) {
