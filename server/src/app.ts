@@ -21,9 +21,9 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["https://nexevent-app.vercel.app", "http://localhost:5173"],
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());
@@ -46,7 +46,7 @@ app.use(
   notificationRoutes,
   inviteRoutes,
   adminRoutes,
-  searchRoutes
+  searchRoutes,
 );
 
 app.get("/", (req, res) => {
