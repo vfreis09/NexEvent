@@ -27,10 +27,11 @@ app.use(
   }),
 );
 
-// Initialize database then start server
+// --- Fixed Initialization Logic ---
 initDb()
   .then(() => {
-    console.log("✅ Database initialized");
+    console.log("✅ Database verified and connected successfully.");
+
     startScheduler();
 
     // Railway dynamic port binding
@@ -40,11 +41,13 @@ initDb()
     });
   })
   .catch((error) => {
-    console.error("❌ Database initialization failed:", error);
+    // If this fails, we stop everything so you can see the real error in logs
+    console.error("❌ CRITICAL ERROR: Database failed to initialize:");
+    console.error(error);
     process.exit(1);
   });
 
-// API Routes
+// --- Routes ---
 app.use(
   "/api",
   userRoutes,
