@@ -28,14 +28,20 @@ app.use(
 
 app.use(cookieParser());
 
+// This stays exactly as you like it
 initDb()
   .then(() => {
-    console.log("Database initialized");
+    console.log("✅ Database initialized");
     startScheduler();
-    app.listen(3000);
+
+    // IMPORTANT: Railway provides the port. This fix prevents "Bad Gateway" errors.
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+    });
   })
   .catch((error) => {
-    console.error("Database initialization failed:", error);
+    console.error("❌ Database initialization failed:", error);
   });
 
 app.use(
@@ -50,5 +56,5 @@ app.use(
 );
 
 app.get("/", (req, res) => {
-  res.send("hello world!");
+  res.send("NexEvent API is Live!");
 });

@@ -1,10 +1,18 @@
 import { Pool } from "pg";
+import dotenv from "dotenv";
 
-const pool = new Pool({
+dotenv.config();
+
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },
 });
 
-export default pool;
+// This is the function your app.ts is looking for
+const initDb = async () => {
+  await pool.query("SELECT NOW()");
+};
+
+export default initDb;
