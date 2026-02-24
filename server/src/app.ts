@@ -18,6 +18,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 app.use(
   cors({
@@ -26,24 +27,24 @@ app.use(
   }),
 );
 
-app.use(cookieParser());
-
-// This stays exactly as you like it
+// Initialize database then start server
 initDb()
   .then(() => {
     console.log("✅ Database initialized");
     startScheduler();
 
-    // IMPORTANT: Railway provides the port. This fix prevents "Bad Gateway" errors.
+    // Railway dynamic port binding
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
+    app.listen(Number(PORT), "0.0.0.0", () => {
       console.log(`🚀 Server is running on port ${PORT}`);
     });
   })
   .catch((error) => {
     console.error("❌ Database initialization failed:", error);
+    process.exit(1);
   });
 
+// API Routes
 app.use(
   "/api",
   userRoutes,

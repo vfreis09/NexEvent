@@ -10,7 +10,6 @@ export const pool = new Pool({
   },
 });
 
-// This is the function your app.ts is looking for
 const initDb = async () => {
   await pool.query("SELECT NOW()");
 };
