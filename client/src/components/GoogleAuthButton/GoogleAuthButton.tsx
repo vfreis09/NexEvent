@@ -1,7 +1,7 @@
 import React from "react";
 import OAUTH_CONFIG from "../../config/oauthConfig";
 import { getAndStoreState } from "../../utils/authUtils";
-import googleLogo from "../../assets/googlelogo.png";
+import googleLogo from "../../assets/google-logo.png";
 import "./GoogleAuthButton.css";
 
 interface GoogleAuthButtonProps {
