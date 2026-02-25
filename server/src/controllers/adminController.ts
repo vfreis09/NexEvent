@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 
 const getUsers = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
@@ -20,7 +20,7 @@ const getUsers = async (req: Request, res: Response) => {
        FROM users 
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+      [limit, offset],
     );
 
     res.json({
@@ -49,7 +49,7 @@ const updateUserRole = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       "UPDATE users SET role = $1 WHERE id = $2 RETURNING id, email, username, role",
-      [role, id]
+      [role, id],
     );
 
     if (result.rows.length === 0) {
@@ -120,7 +120,7 @@ const getEvents = async (req: Request, res: Response) => {
        JOIN users u ON e.author_id = u.id
        ORDER BY e.created_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+      [limit, offset],
     );
 
     res.json({
@@ -152,7 +152,7 @@ const updateEvent = async (req: Request, res: Response) => {
            status = COALESCE($5, status)
        WHERE id = $6
        RETURNING id, title, description, event_datetime, location, status, author_id`,
-      [title, description, eventDateTime, location, status, id]
+      [title, description, eventDateTime, location, status, id],
     );
 
     if (result.rows.length === 0) {
@@ -162,7 +162,7 @@ const updateEvent = async (req: Request, res: Response) => {
     const updatedEvent = result.rows[0];
     const userResult = await pool.query(
       "SELECT username FROM users WHERE id = $1",
-      [updatedEvent.author_id]
+      [updatedEvent.author_id],
     );
 
     res.json({
@@ -184,7 +184,7 @@ const cancelEvent = async (req: Request, res: Response) => {
        SET status = 'canceled'
        WHERE id = $1
        RETURNING id, title, status, author_id`,
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) {
@@ -194,7 +194,7 @@ const cancelEvent = async (req: Request, res: Response) => {
     const canceledEvent = result.rows[0];
     const userResult = await pool.query(
       "SELECT username FROM users WHERE id = $1",
-      [canceledEvent.author_id]
+      [canceledEvent.author_id],
     );
 
     res.json({
@@ -218,7 +218,7 @@ const deleteEvent = async (req: Request, res: Response) => {
       `DELETE FROM events
        WHERE id = $1
        RETURNING id, title`,
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) {

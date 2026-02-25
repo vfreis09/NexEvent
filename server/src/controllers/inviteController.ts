@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 import emailServices from "../utils/emailService";
 
 const sendInvite = async (req: Request, res: Response) => {
@@ -16,10 +16,10 @@ const sendInvite = async (req: Request, res: Response) => {
 
     const eventCheck = await pool.query(
       "SELECT * FROM events WHERE id = $1 AND author_id = $2",
-      [eventId, invitedBy]
+      [eventId, invitedBy],
     );
 
-    if (eventCheck.rowCount === 0) {
+    if ((eventCheck.rowCount ?? 0) === 0) {
       return res.status(403).json({ message: "You are not the event owner." });
     }
 
@@ -27,10 +27,10 @@ const sendInvite = async (req: Request, res: Response) => {
 
     const userRes = await pool.query(
       "SELECT id, email FROM users WHERE LOWER(username) = $1 OR LOWER(email) = $1",
-      [normalizedIdentifier]
+      [normalizedIdentifier],
     );
 
-    if (userRes.rowCount === 0) {
+    if ((userRes.rowCount ?? 0) === 0) {
       return res.status(404).json({ message: "User not found." });
     }
 
@@ -42,22 +42,22 @@ const sendInvite = async (req: Request, res: Response) => {
 
     const duplicateCheck = await pool.query(
       "SELECT * FROM invites WHERE event_id = $1 AND invited_user_id = $2",
-      [eventId, invitedUser.id]
+      [eventId, invitedUser.id],
     );
 
-    if (duplicateCheck.rowCount > 0) {
+    if ((duplicateCheck.rowCount ?? 0) > 0) {
       return res.status(409).json({ message: "User already invited." });
     }
 
     const inviteInsert = await pool.query(
       "INSERT INTO invites (event_id, invited_user_id, invited_by) VALUES ($1, $2, $3) RETURNING id",
-      [eventId, invitedUser.id, invitedBy]
+      [eventId, invitedUser.id, invitedBy],
     );
     const inviteId = inviteInsert.rows[0].id;
 
     const inviterRes = await pool.query(
       "SELECT username FROM users WHERE id = $1",
-      [invitedBy]
+      [invitedBy],
     );
     const inviterUsername = inviterRes.rows[0]?.username || "someone";
 
@@ -65,13 +65,13 @@ const sendInvite = async (req: Request, res: Response) => {
 
     await pool.query(
       "INSERT INTO notifications (user_id, event_id, invite_id, message) VALUES ($1, $2, $3, $4)",
-      [invitedUser.id, eventId, inviteId, notificationMessage]
+      [invitedUser.id, eventId, inviteId, notificationMessage],
     );
 
     await emailServices.sendInviteEmail(
       invitedUser.email,
       event.title,
-      eventId
+      eventId,
     );
 
     return res.status(201).json({ message: "User invited successfully." });
@@ -88,10 +88,10 @@ const getInvitesForEvents = async (req: Request, res: Response) => {
   try {
     const eventRes = await pool.query(
       "SELECT * FROM events WHERE id = $1 AND author_id = $2",
-      [eventId, requesterId]
+      [eventId, requesterId],
     );
 
-    if (eventRes.rowCount === 0) {
+    if ((eventRes.rowCount ?? 0) === 0) {
       return res
         .status(403)
         .json({ message: "Unauthorized to view invites for this event." });
@@ -105,7 +105,7 @@ const getInvitesForEvents = async (req: Request, res: Response) => {
       WHERE invites.event_id = $1
       ORDER BY invites.created_at DESC
       `,
-      [eventId]
+      [eventId],
     );
 
     return res.status(200).json(invitesRes.rows);
@@ -133,10 +133,10 @@ const respondToInvite = async (req: Request, res: Response) => {
   try {
     const inviteRes = await pool.query(
       "SELECT * FROM invites WHERE id = $1 AND invited_user_id = $2",
-      [inviteId, userId]
+      [inviteId, userId],
     );
 
-    if (inviteRes.rowCount === 0) {
+    if ((inviteRes.rowCount ?? 0) === 0) {
       return res.status(404).json({ message: "Invite not found." });
     }
 
@@ -167,7 +167,7 @@ const respondToInvite = async (req: Request, res: Response) => {
 
     await pool.query(
       "INSERT INTO notifications (user_id, event_id, message) VALUES ($1, $2, $3)",
-      [event.author_id, invite.event_id, creatorMessage]
+      [event.author_id, invite.event_id, creatorMessage],
     );
 
     return res.status(200).json({ message: `Invite ${normalizedStatus}.` });

@@ -1,4 +1,4 @@
-import pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 import emailServices from "../utils/emailService";
 import { rankEventsForUser, EventDetail } from "../utils/eventRanking";
 import { PoolClient } from "pg";
@@ -13,20 +13,20 @@ interface UserBatchData {
 const buildDigestHtml = (
   newEvents: EventDetail[],
   reminders: EventDetail[],
-  interestedTags: string[]
+  interestedTags: string[],
 ): string => {
   const newEventsHtml =
     newEvents.length > 0
       ? `
         <h2 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">✨ Personalized for You</h2>
         <p style="color: #7f8c8d; font-size: 0.9em;">Based on your interests in: ${interestedTags.join(
-          ", "
+          ", ",
         )}</p>
         <table style="width: 100%; border-collapse: collapse;">
             ${newEvents
               .map((e) => {
                 const matches = e.tags.filter((tag) =>
-                  interestedTags.includes(tag)
+                  interestedTags.includes(tag),
                 );
                 return `
                 <tr style="border-bottom: 1px solid #eee;">
@@ -34,23 +34,23 @@ const buildDigestHtml = (
                         <strong style="font-size: 1.1em;"><a href="http://localhost:5173/event/${
                           e.id
                         }" style="color: #3498db; text-decoration: none;">${
-                  e.title
-                }</a></strong>
+                          e.title
+                        }</a></strong>
                         <br>
                         <small style="color: #e67e22;">📅 ${e.event_datetime.toLocaleDateString()} at ${e.event_datetime.toLocaleTimeString(
-                  [],
-                  { hour: "2-digit", minute: "2-digit" }
-                )}</small>
+                          [],
+                          { hour: "2-digit", minute: "2-digit" },
+                        )}</small>
                         ${
                           matches.length > 0
                             ? `<br><span style="background: #d4edda; color: #155724; font-size: 0.75em; padding: 2px 6px; border-radius: 4px;">Matched: ${matches.join(
-                                ", "
+                                ", ",
                               )}</span>`
                             : ""
                         }
                         <p style="margin-top: 8px; color: #34495e; font-size: 0.95em; line-height: 1.4;">${e.description.substring(
                           0,
-                          120
+                          120,
                         )}...</p>
                     </td>
                 </tr>`;
@@ -72,10 +72,10 @@ const buildDigestHtml = (
                     <strong><a href="http://localhost:5173/event/${
                       e.id
                     }" style="color: #2c3e50; text-decoration: none;">${
-                  e.title
-                }</a></strong>
+                      e.title
+                    }</a></strong>
                     <br><small style="color: #7f8c8d;">${e.event_datetime.toLocaleDateString()}</small>
-                </li>`
+                </li>`,
               )
               .join("")}
         </ul>`
@@ -97,7 +97,7 @@ const buildDigestHtml = (
 };
 
 export const processDigestQueue = async (
-  frequency: "daily" | "weekly"
+  frequency: "daily" | "weekly",
 ): Promise<void> => {
   let client: PoolClient | null = null;
   const now = new Date();
@@ -114,7 +114,7 @@ export const processDigestQueue = async (
 
     const { rows: usersToProcess } = await client.query<UserBatchData>(
       getUsersQuery,
-      [frequency]
+      [frequency],
     );
 
     console.log(`Processing ${usersToProcess.length} ${frequency} digests...`);
@@ -125,7 +125,7 @@ export const processDigestQueue = async (
       try {
         const { rows: userTags } = await client.query<{ name: string }>(
           `SELECT t.name FROM tags t JOIN user_preferences up ON t.id = up.tag_id WHERE up.user_id = $1`,
-          [user_id]
+          [user_id],
         );
         const interestedTags = userTags.map((t) => t.name);
 
@@ -140,12 +140,12 @@ export const processDigestQueue = async (
 
         const { rows: eventsWithDetails } = await client.query<EventDetail>(
           queuedEventsQuery,
-          [queued_event_ids]
+          [queued_event_ids],
         );
 
         const rankedEvents = rankEventsForUser(
           eventsWithDetails,
-          interestedTags
+          interestedTags,
         );
         const topPicks = rankedEvents.slice(0, 5);
 
@@ -155,7 +155,7 @@ export const processDigestQueue = async (
            WHERE r.user_id = $1 AND r.status = 'Accepted'
            AND e.event_datetime BETWEEN NOW() AND NOW() + interval '7 days'
            ORDER BY e.event_datetime ASC;`,
-          [user_id]
+          [user_id],
         );
 
         for (const reminder of reminders) {
@@ -172,7 +172,7 @@ export const processDigestQueue = async (
                  SELECT 1 FROM notifications 
                  WHERE user_id = $1 AND event_id = $2 AND is_read = false AND message = $3
                )`,
-              [user_id, reminder.id, urgentMsg]
+              [user_id, reminder.id, urgentMsg],
             );
           }
         }
@@ -180,19 +180,19 @@ export const processDigestQueue = async (
         const emailContent = buildDigestHtml(
           topPicks,
           reminders,
-          interestedTags
+          interestedTags,
         );
         await emailServices.sendEmail(
           email,
           `Your ${
             frequency.charAt(0).toUpperCase() + frequency.slice(1)
           } Event Digest - ${now.toLocaleDateString()}`,
-          emailContent
+          emailContent,
         );
 
         await client.query(
           `DELETE FROM email_queue WHERE user_id = $1 AND event_id = ANY($2::int[])`,
-          [user_id, queued_event_ids]
+          [user_id, queued_event_ids],
         );
       } catch (userError) {
         console.error(`Error processing user ${user_id}:`, userError);

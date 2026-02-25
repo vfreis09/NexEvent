@@ -1,7 +1,10 @@
+import { faker } from "@faker-js/faker";
+import { Pool, PoolClient } from "pg";
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
 
+// Environment variable loading logic
 const envPaths = [
   path.join(process.cwd(), ".env"),
   path.join(__dirname, ".env"),
@@ -16,25 +19,23 @@ for (const p of envPaths) {
   }
 }
 
-import { faker } from "@faker-js/faker";
-import { Pool, PoolClient, QueryResult } from "pg";
+dotenv.config();
 
+// Database connection using your Supabase/Railway string
 const pool = new Pool({
-  user: process.env.DB_USERNAME,
-  host: process.env.DB_HOST || "127.0.0.1",
-  database: process.env.DB_DATABASE,
-  password: process.env.DB_PASSWORD,
-  port: 5434,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  max: 10,
 });
 
 const NUM_USERS = 50;
 const NUM_EVENTS = 100;
-const EVENTS_PER_RSVP = 5;
 
 const seedDatabase = async () => {
   console.log(`--- Connection Check ---`);
-  console.log(`DB User: ${process.env.DB_USERNAME}`);
-  console.log(`DB Name: ${process.env.DB_DATABASE}`);
+  console.log(`Target DB: ${process.env.DATABASE_URL?.split("@")[1]}`);
   console.log(`-----------------------`);
 
   let client: PoolClient | undefined;
@@ -60,9 +61,13 @@ const seedDatabase = async () => {
       await client.query(`TRUNCATE ${table} RESTART IDENTITY CASCADE`);
     }
 
+    // Keeping your requested path exactly as is
     const tagsPath = path.join(__dirname, "src", "data", "tags.json");
-    if (!fs.existsSync(tagsPath)) throw new Error("tags.json not found!");
-    const { defaultTags } = JSON.parse(fs.readFileSync(tagsPath, "utf8"));
+    if (!fs.existsSync(tagsPath))
+      throw new Error(`tags.json not found at ${tagsPath}`);
+
+    const fileContent = JSON.parse(fs.readFileSync(tagsPath, "utf8"));
+    const defaultTags = fileContent.defaultTags;
 
     await client.query(
       `
@@ -70,11 +75,11 @@ const seedDatabase = async () => {
       SELECT name FROM UNNEST($1::text[]) AS name 
       ON CONFLICT (name) DO NOTHING;
     `,
-      [defaultTags]
+      [defaultTags],
     );
 
     const tagIds = (await client.query("SELECT id FROM tags")).rows.map(
-      (r) => r.id
+      (r) => r.id,
     );
     console.log(`--- Seeded ${tagIds.length} tags.`);
 
@@ -82,17 +87,21 @@ const seedDatabase = async () => {
     for (let i = 1; i <= NUM_USERS; i++) {
       const res = await client.query(
         `
-        INSERT INTO users (email, password, username, bio, role, is_verified, wants_notifications)
-        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+    INSERT INTO users (
+      email, password, username, bio, role, is_verified, 
+      wants_notifications, digest_frequency
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
         [
-          faker.internet.email() + i,
+          faker.internet.email().toLowerCase() + i,
           "$2a$10$abcdefghijklmnopqrstuvwxyza.123456",
-          faker.internet.username() + i,
+          faker.internet.username().toLowerCase() + i,
           faker.person.bio(),
           i === 1 ? "admin" : "user",
-          true,
-          faker.datatype.boolean(),
-        ]
+          true, // is_verified
+          true, // Setting to true so notifications actually trigger for them
+          faker.helpers.arrayElement(["daily", "weekly", "never"]), // Randomizing frequencies
+        ],
       );
       userIds.push(res.rows[0].id);
     }
@@ -103,7 +112,7 @@ const seedDatabase = async () => {
       for (const tId of picks) {
         await client.query(
           "INSERT INTO user_preferences (user_id, tag_id) VALUES ($1, $2)",
-          [uId, tId]
+          [uId, tId],
         );
       }
     }
@@ -127,8 +136,8 @@ const seedDatabase = async () => {
           `(${faker.location.longitude()}, ${faker.location.latitude()})`,
           faker.location.streetAddress(),
           authorId,
-          isPast ? "expired" : "active",
-        ]
+          isPast ? "expired" : "active", // Matches your DB check constraint
+        ],
       );
       const eventId = res.rows[0].id;
       eventIds.push(eventId);
@@ -140,7 +149,7 @@ const seedDatabase = async () => {
       for (const tId of eventPicks) {
         await client.query(
           "INSERT INTO event_tags (event_id, tag_id) VALUES ($1, $2)",
-          [eventId, tId]
+          [eventId, tId],
         );
       }
     }
@@ -152,11 +161,19 @@ const seedDatabase = async () => {
         max: 5,
       });
       for (const uId of attendees) {
+        // Find the author of this specific event to avoid self-RSVP
+        const eventAuthor = (
+          await client.query("SELECT author_id FROM events WHERE id = $1", [
+            eId,
+          ])
+        ).rows[0].author_id;
+        if (uId === eventAuthor) continue;
+
         await client.query(
           `
           INSERT INTO rsvps (user_id, event_id, status) 
-          VALUES ($1, $2, 'Accepted') ON CONFLICT DO NOTHING`,
-          [uId, eId]
+          VALUES ($1, $2, 'accepted') ON CONFLICT DO NOTHING`, // Lowercase to match your DB CHECK
+          [uId, eId],
         );
       }
     }

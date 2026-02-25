@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 
 const unifiedSearch = async (req: Request, res: Response) => {
   const { q } = req.query;
@@ -30,7 +30,7 @@ const unifiedSearch = async (req: Request, res: Response) => {
       pool.query(
         `SELECT COUNT(*) FROM events 
          WHERE (title ILIKE $1 OR description ILIKE $1) AND status != 'canceled'`,
-        [searchTerm]
+        [searchTerm],
       ),
       pool.query(
         `SELECT 
@@ -40,7 +40,7 @@ const unifiedSearch = async (req: Request, res: Response) => {
             (title ILIKE $1 OR description ILIKE $1) AND status != 'canceled'
          ORDER BY event_datetime DESC
          LIMIT $2 OFFSET $3`,
-        [searchTerm, eventLimit, eventOffset]
+        [searchTerm, eventLimit, eventOffset],
       ),
     ]);
 
@@ -51,7 +51,7 @@ const unifiedSearch = async (req: Request, res: Response) => {
       pool.query(
         `SELECT COUNT(*) FROM users 
          WHERE username ILIKE $1 AND is_verified = true`,
-        [searchTerm]
+        [searchTerm],
       ),
 
       pool.query(
@@ -62,7 +62,7 @@ const unifiedSearch = async (req: Request, res: Response) => {
             username ILIKE $1 AND is_verified = true
          ORDER BY username ASC
          LIMIT $2 OFFSET $3`,
-        [searchTerm, userLimit, userOffset]
+        [searchTerm, userLimit, userOffset],
       ),
     ]);
 

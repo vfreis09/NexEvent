@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 import { updateEventStatus } from "../utils/eventService";
 
 const createRsvp = async (req: Request, res: Response): Promise<void> => {
@@ -17,7 +17,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
   try {
     const eventResult = await pool.query(
       `SELECT id, title, max_attendees, number_of_attendees, author_id FROM events WHERE id = $1`,
-      [eventId]
+      [eventId],
     );
 
     if (eventResult.rows.length === 0) {
@@ -30,13 +30,13 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
     const updateAttendeesCount = async (): Promise<number> => {
       const result = await pool.query(
         `SELECT COUNT(*) FROM rsvps WHERE event_id = $1 AND status = 'Accepted'`,
-        [eventId]
+        [eventId],
       );
       const attendeesCount = parseInt(result.rows[0].count, 10);
 
       await pool.query(
         `UPDATE events SET number_of_attendees = $1 WHERE id = $2`,
-        [attendeesCount, eventId]
+        [attendeesCount, eventId],
       );
 
       return attendeesCount;
@@ -52,7 +52,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
 
     const existingRsvp = await pool.query(
       `SELECT status FROM rsvps WHERE user_id = $1 AND event_id = $2`,
-      [userId, eventId]
+      [userId, eventId],
     );
 
     const previousStatus = existingRsvp.rows[0]?.status;
@@ -62,7 +62,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
        VALUES ($1, $2, $3)
        ON CONFLICT (user_id, event_id)
        DO UPDATE SET status = EXCLUDED.status`,
-      [userId, eventId, status]
+      [userId, eventId, status],
     );
 
     await updateAttendeesCount();
@@ -73,7 +73,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
       await pool.query(
         `INSERT INTO notifications (user_id, message, event_id)
          VALUES ($1, $2, $3)`,
-        [event.author_id, message, eventId]
+        [event.author_id, message, eventId],
       );
     }
 
@@ -92,7 +92,7 @@ const getRsvps = async (req: Request, res: Response) => {
       `SELECT u.username, r.status FROM rsvps r
            JOIN users u ON r.user_id = u.id
            WHERE r.event_id = $1`,
-      [id]
+      [id],
     );
 
     res.status(200).json(rsvps.rows);
@@ -113,7 +113,7 @@ const getSingleRsvp = async (req: Request, res: Response) => {
   try {
     const rsvp = await pool.query(
       `SELECT status FROM rsvps WHERE event_id = $1 AND user_id = $2`,
-      [id, userId]
+      [id, userId],
     );
 
     const event = await pool.query(`SELECT id FROM events WHERE id = $1`, [id]);
@@ -145,7 +145,7 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
   try {
     const userResult = await pool.query(
       `SELECT id FROM users WHERE username = $1`,
-      [username]
+      [username],
     );
 
     if (userResult.rowCount === 0) {
@@ -174,7 +174,7 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
        FROM rsvps r
        JOIN events e ON r.event_id = e.id
        WHERE ${whereClause}`,
-      queryParams
+      queryParams,
     );
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
@@ -190,11 +190,11 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
        WHERE ${whereClause}
        ${orderByClause}
        LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
-      queryParams
+      queryParams,
     );
 
     await Promise.all(
-      eventsResult.rows.map((event: any) => updateEventStatus(event.id))
+      eventsResult.rows.map((event: any) => updateEventStatus(event.id)),
     );
 
     res.json({

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 
 const getNotifications = async (req: Request, res: Response) => {
   const userId = req.user?.id;
@@ -18,7 +18,7 @@ const getNotifications = async (req: Request, res: Response) => {
         )
       ORDER BY notifications.is_read ASC, notifications.created_at DESC
       LIMIT 20;`,
-      [userId]
+      [userId],
     );
 
     return res.status(200).json(result.rows);
@@ -39,7 +39,7 @@ const markNotificationAsRead = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2`,
-      [notificationId, userId]
+      [notificationId, userId],
     );
 
     if (result.rowCount === 0) {
@@ -61,7 +61,7 @@ const markAllAsRead = async (req: Request, res: Response) => {
   try {
     await pool.query(
       `UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false`,
-      [userId]
+      [userId],
     );
     return res
       .status(200)

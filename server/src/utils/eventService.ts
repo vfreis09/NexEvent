@@ -1,5 +1,5 @@
 import moment from "moment";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 
 export const updateEventStatus = async (eventId: number) => {
   try {
@@ -9,7 +9,7 @@ export const updateEventStatus = async (eventId: number) => {
               event_datetime 
        FROM events 
        WHERE id = $1`,
-      [eventId]
+      [eventId],
     );
 
     if (event.rows.length === 0) return;

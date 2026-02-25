@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { Request, Response, NextFunction } from "express";
 import path from "path";
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 
 interface UserPayload {
   id: number;
@@ -24,14 +24,14 @@ const jwtSecret = process.env.JWT_SECRET as string | undefined;
 
 if (!jwtSecret) {
   throw new Error(
-    "jwtSecret is not defined. Check your environment variables."
+    "jwtSecret is not defined. Check your environment variables.",
   );
 }
 
 const authenticateUser = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const token = req.cookies?.token;
 

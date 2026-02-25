@@ -7,10 +7,9 @@ import * as crypto from "crypto";
 import emailServices from "../utils/emailService";
 import { isStrongPassword } from "../utils/password";
 import oauthConfig from "../config/oauthConfig";
+import { pool } from "../config/dbConfig";
 
 const STATE_COOKIE_NAME = "google_oauth_state";
-
-const pool = require("../config/dbConfig");
 
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
@@ -18,7 +17,7 @@ const jwtSecret = process.env.JWT_SECRET as string | undefined;
 
 if (!jwtSecret) {
   throw new Error(
-    "JWT_SECRET is not defined. Check your environment variables."
+    "JWT_SECRET is not defined. Check your environment variables.",
   );
 }
 
@@ -46,10 +45,10 @@ const uploadProfilePicture = async (req: Request, res: Response) => {
          SET profile_picture_base64 = $1 
          WHERE id = $2
          RETURNING profile_picture_base64`,
-      [base64Image, userId]
+      [base64Image, userId],
     );
 
-    if (result.rowCount === 0) {
+    if ((result.rowCount ?? 0) === 0) {
       return res.status(404).json({ message: "User not found." });
     }
 
@@ -81,7 +80,7 @@ const signup = async (req: Request, res: Response) => {
 
     const result = await pool.query(
       `INSERT INTO users (email, password, username, wants_notifications) VALUES ($1, $2, $3, $4) RETURNING id, email, username`,
-      [email, hashedPassword, username, wantsNotifications]
+      [email, hashedPassword, username, wantsNotifications],
     );
 
     const user = result.rows[0];
@@ -184,7 +183,7 @@ const getUser = async (req: Request, res: Response) => {
          oauth_provider
        FROM users
        WHERE id = $1`,
-      [userId]
+      [userId],
     );
 
     if (rows.length > 0) {
@@ -219,7 +218,7 @@ const changePassword = async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query(
       "SELECT password, oauth_provider FROM users WHERE id = $1",
-      [userId]
+      [userId],
     );
 
     const dbUser = rows[0];
@@ -243,7 +242,7 @@ const changePassword = async (req: Request, res: Response) => {
       `UPDATE users 
        SET password = $1, oauth_provider = NULL, oauth_id = NULL 
        WHERE id = $2`,
-      [hash, userId]
+      [hash, userId],
     );
 
     return res.json({ message: "Password set successfully" });
@@ -260,7 +259,7 @@ const updateUser = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       "UPDATE users SET email = $1, username = $2, bio = $3, contact = $4 WHERE id = $5 RETURNING *",
-      [email, username, bio, contact, id]
+      [email, username, bio, contact, id],
     );
 
     const updatedUser = result.rows[0];
@@ -356,7 +355,7 @@ const updateNotificationSettings = async (req: Request, res: Response) => {
   try {
     await pool.query(
       "UPDATE users SET wants_notifications = $1 WHERE id = $2",
-      [wants_notifications, user.id]
+      [wants_notifications, user.id],
     );
     return res.json({ message: "Notification settings updated." });
   } catch (error) {
@@ -382,10 +381,10 @@ const updateThemePreference = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `UPDATE users SET theme_preference = $1 WHERE id = $2 RETURNING theme_preference`,
-      [theme_preference, userId]
+      [theme_preference, userId],
     );
 
-    if (result.rowCount > 0) {
+    if ((result.rowCount ?? 0) > 0) {
       res.json({
         message: "Theme preference updated.",
         theme_preference: result.rows[0].theme_preference,
@@ -418,7 +417,7 @@ const getPublicUserByUsername = async (req: Request, res: Response) => {
           ) AS total_accepted_rsvps
         FROM users
         WHERE username = $1`,
-      [username]
+      [username],
     );
 
     if (result.rowCount === 0) {
@@ -443,14 +442,14 @@ const sendResetLink = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       "SELECT id FROM users WHERE email = $1 LIMIT 1",
-      [email]
+      [email],
     );
 
     const genericResponse = {
       message: "If this email exists, a reset link has been sent",
     };
 
-    if (result.rowCount === 0) {
+    if ((result.rowCount ?? 0) === 0) {
       return res.status(200).json(genericResponse);
     }
 
@@ -469,10 +468,12 @@ const sendResetLink = async (req: Request, res: Response) => {
       `UPDATE users 
        SET reset_token_hash = $1, reset_token_expires = $2
        WHERE id = $3`,
-      [hashedToken, expires, userId]
+      [hashedToken, expires, userId],
     );
 
-    const resetUrl = `http://localhost:5173/reset-password?token=${resetToken}&id=${userId}`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&id=${userId}`;
+
     const message = `
       <p>We received a request to reset your password.</p>
       <p>Click below to reset your password. This link will expire in 1 hour.</p>
@@ -510,7 +511,7 @@ const resetForgottenPassword = async (req: Request, res: Response) => {
        WHERE id = $1 
          AND reset_token_hash = $2 
          AND reset_token_expires > NOW()`,
-      [userId, tokenHash]
+      [userId, tokenHash],
     );
 
     if (result.rowCount === 0) {
@@ -527,7 +528,7 @@ const resetForgottenPassword = async (req: Request, res: Response) => {
            reset_token_hash = NULL, 
            reset_token_expires = NULL 
        WHERE id = $2`,
-      [hashedPassword, userId]
+      [hashedPassword, userId],
     );
 
     res.json({ message: "Password reset successfully." });
@@ -571,7 +572,7 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
 
     if (!tokenResponse.ok) {
       throw new Error(
-        `Token exchange failed with status: ${tokenResponse.status}`
+        `Token exchange failed with status: ${tokenResponse.status}`,
       );
     }
     const tokenData = await tokenResponse.json();
@@ -588,13 +589,13 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
 
     let userResult = await pool.query(
       "SELECT id, username FROM users WHERE oauth_id = $1 AND oauth_provider = 'google'",
-      [googleId]
+      [googleId],
     );
 
     if (userResult.rows.length === 0) {
       userResult = await pool.query(
         "SELECT id, username FROM users WHERE email = $1",
-        [email]
+        [email],
       );
     }
 
@@ -608,7 +609,7 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
              oauth_provider = $2, 
              oauth_id = $3
          WHERE id = $4`,
-        [picture, "google", googleId, userId]
+        [picture, "google", googleId, userId],
       );
     } else {
       const salt = await bcrypt.genSalt(10);
@@ -620,7 +621,7 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
       const newUserResult = await pool.query(
         `INSERT INTO users (email, password, username, is_verified, profile_picture_base64, oauth_provider, oauth_id) 
          VALUES ($1, $2, $3, TRUE, $4, $5, $6) RETURNING id`,
-        [email, hashedPassword, username, picture, "google", googleId]
+        [email, hashedPassword, username, picture, "google", googleId],
       );
       userId = newUserResult.rows[0].id;
     }
@@ -646,7 +647,7 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
 const getAllTags = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      "SELECT id, name FROM tags ORDER BY name ASC"
+      "SELECT id, name FROM tags ORDER BY name ASC",
     );
     res.status(200).json(result.rows);
   } catch (err) {
@@ -661,14 +662,14 @@ const getUserSettings = async (req: Request, res: Response) => {
   try {
     const userResult = await pool.query(
       "SELECT digest_frequency FROM users WHERE id = $1",
-      [userId]
+      [userId],
     );
 
     const tagsResult = await pool.query(
       `SELECT t.id, t.name FROM tags t 
        JOIN user_preferences up ON t.id = up.tag_id 
        WHERE up.user_id = $1`,
-      [userId]
+      [userId],
     );
 
     res.status(200).json({
@@ -701,7 +702,7 @@ const updateUserSettings = async (req: Request, res: Response) => {
     if (tagIds && tagIds.length > 0) {
       const values = tagIds.map((id: number) => `(${userId}, ${id})`).join(",");
       await client.query(
-        `INSERT INTO user_preferences (user_id, tag_id) VALUES ${values}`
+        `INSERT INTO user_preferences (user_id, tag_id) VALUES ${values}`,
       );
     }
 

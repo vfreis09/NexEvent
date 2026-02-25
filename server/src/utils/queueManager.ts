@@ -1,15 +1,15 @@
-const pool = require("../config/dbConfig");
+import { pool } from "../config/dbConfig";
 import { PoolClient } from "pg";
 
 export const insertEventIntoQueue = async (
   eventId: number,
-  authorId: number | undefined
+  authorId: number | undefined,
 ): Promise<void> => {
   let client: PoolClient | null = null;
 
   if (!authorId) {
     console.error(
-      "Queue Manager: Cannot insert event without valid author ID."
+      "Queue Manager: Cannot insert event without valid author ID.",
     );
     return;
   }
@@ -31,18 +31,18 @@ export const insertEventIntoQueue = async (
 
     const { rows: users } = await client.query<{ user_id: number }>(
       usersToNotifyQuery,
-      [eventId, authorId]
+      [eventId, authorId],
     );
 
     if (users.length === 0) {
       console.log(
-        `Queue Manager: No users found to notify for event ${eventId}.`
+        `Queue Manager: No users found to notify for event ${eventId}.`,
       );
       return;
     }
 
     console.log(
-      `Queue Manager: Found ${users.length} users to notify for event ${eventId}. Starting insertions...`
+      `Queue Manager: Found ${users.length} users to notify for event ${eventId}. Starting insertions...`,
     );
 
     const insertValues = users
@@ -57,12 +57,12 @@ export const insertEventIntoQueue = async (
 
     await client.query(insertQuery);
     console.log(
-      `Queue Manager: Successfully queued event ${eventId} for ${users.length} users.`
+      `Queue Manager: Successfully queued event ${eventId} for ${users.length} users.`,
     );
   } catch (error) {
     console.error(
       `Queue Manager: FATAL error inserting event ${eventId} into queue:`,
-      error
+      error,
     );
   } finally {
     if (client) {
