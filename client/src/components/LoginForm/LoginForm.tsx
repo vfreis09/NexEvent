@@ -26,7 +26,6 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setErrorMessage("");
 
     try {
@@ -46,7 +45,6 @@ const LoginForm: React.FC = () => {
         } else {
           setErrorMessage("Login failed. Please try again.");
         }
-
         throw new Error("Login failed");
       }
 
@@ -80,7 +78,7 @@ const LoginForm: React.FC = () => {
         />
       </div>
       <button type="submit">Login</button>
-      <GoogleAuthButton type="button" />
+      <GoogleAuthButton />
       <div className="links-container">
         <Link to="/forgot-password">Forgot your password?</Link>
         <p>

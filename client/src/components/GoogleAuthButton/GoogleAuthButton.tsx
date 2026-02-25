@@ -1,6 +1,7 @@
 import React from "react";
 import OAUTH_CONFIG from "../../config/oauthConfig";
 import { getAndStoreState } from "../../utils/authUtils";
+import googleLogo from "../../assets/googlelogo.png";
 import "./GoogleAuthButton.css";
 
 interface GoogleAuthButtonProps {
@@ -33,11 +34,7 @@ const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       className="google-auth-btn"
       type={type}
     >
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/18px-Google_%22G%22_logo.svg.png"
-        alt="Google G Logo"
-        className="google-icon"
-      />
+      <img src={googleLogo} alt="Google Logo" className="google-icon" />
       Sign in with Google
     </button>
   );

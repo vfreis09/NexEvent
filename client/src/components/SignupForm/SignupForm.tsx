@@ -194,7 +194,7 @@ const SignupForm: React.FC = () => {
         <button type="submit" className="btn btn-primary w-100">
           Signup
         </button>
-        <GoogleAuthButton type="button" />
+        <GoogleAuthButton />
         <div className="links-container mt-3 text-center">
           <p>
             Already part of the app? <Link to="/login">Login</Link>
