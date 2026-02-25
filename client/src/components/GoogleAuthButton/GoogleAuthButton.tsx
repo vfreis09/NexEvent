@@ -35,7 +35,7 @@ const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       type={type}
     >
       <img src={googleLogo} alt="Google Logo" className="google-icon" />
-      Sign in with Google
+      <span>Sign in with Google</span>
     </button>
   );
 };
