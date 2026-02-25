@@ -9,9 +9,11 @@ import { isStrongPassword } from "../utils/password";
 import oauthConfig from "../config/oauthConfig";
 import { pool } from "../config/dbConfig";
 
-const STATE_COOKIE_NAME = "google_oauth_state";
-
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+
+const STATE_COOKIE_NAME = "google_oauth_state";
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "https://nexevent-app.vercel.app";
 
 const jwtSecret = process.env.JWT_SECRET as string | undefined;
 
@@ -21,65 +23,56 @@ if (!jwtSecret) {
   );
 }
 
+// Helper for consistent cookie settings in production (Vercel + Railway)
+const cookieOptions = {
+  httpOnly: true,
+  secure: true, // Required for SameSite: 'none'
+  sameSite: "none" as const, // Required for cross-domain cookies
+  maxAge: 3600000,
+};
+
 const uploadProfilePicture = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   const { base64Image } = req.body;
 
-  if (!userId) {
+  if (!userId)
     return res.status(401).json({ message: "Authentication required." });
-  }
-
-  if (!base64Image || typeof base64Image !== "string") {
-    return res
-      .status(400)
-      .json({ message: "Base64 image data is missing or invalid." });
-  }
-
-  if (!base64Image.startsWith("data:image/")) {
-    return res.status(400).json({ message: "Invalid image format." });
+  if (
+    !base64Image ||
+    typeof base64Image !== "string" ||
+    !base64Image.startsWith("data:image/")
+  ) {
+    return res.status(400).json({ message: "Invalid image data." });
   }
 
   try {
     const result = await pool.query(
-      `UPDATE users 
-         SET profile_picture_base64 = $1 
-         WHERE id = $2
-         RETURNING profile_picture_base64`,
+      `UPDATE users SET profile_picture_base64 = $1 WHERE id = $2 RETURNING profile_picture_base64`,
       [base64Image, userId],
     );
-
-    if ((result.rowCount ?? 0) === 0) {
+    if ((result.rowCount ?? 0) === 0)
       return res.status(404).json({ message: "User not found." });
-    }
 
     res.status(200).json({
       message: "Profile picture uploaded successfully.",
       profilePicture: result.rows[0].profile_picture_base64,
     });
   } catch (error) {
-    console.error("Profile picture upload database error:", error);
-    res.status(500).json({
-      message: "Failed to update profile picture due to a server error.",
-    });
+    console.error("Upload error:", error);
+    res.status(500).json({ message: "Server error during upload." });
   }
 };
 
 const signup = async (req: Request, res: Response) => {
   const { email, username, password, wantsNotifications } = req.body;
-
-  if (!isStrongPassword(password)) {
-    return res.status(400).json({
-      message:
-        "Password is not strong enough. Must be 8+ chars, include uppercase, lowercase, number, and special character.",
-    });
-  }
+  if (!isStrongPassword(password))
+    return res.status(400).json({ message: "Password too weak." });
 
   try {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
-
     const result = await pool.query(
-      `INSERT INTO users (email, password, username, wants_notifications) VALUES ($1, $2, $3, $4) RETURNING id, email, username`,
+      `INSERT INTO users (email, password, username, wants_notifications) VALUES ($1, $2, $3, $4) RETURNING id, email`,
       [email, hashedPassword, username, wantsNotifications],
     );
 
@@ -91,115 +84,65 @@ const signup = async (req: Request, res: Response) => {
     });
 
     res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge: 3600000,
-      })
+      .cookie("token", token, cookieOptions)
       .status(201)
       .json({ user: { id: user.id, email: user.email } });
   } catch (error) {
-    console.log("Error in signup:", error);
+    console.error("Signup error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const genericErrorMessage = "Invalid email or password.";
-  const genericStatusCode = 401;
-
   try {
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
-
-    if (result.rows.length === 0) {
-      return res
-        .status(genericStatusCode)
-        .json({ message: genericErrorMessage });
-    }
+    if (result.rows.length === 0)
+      return res.status(401).json({ message: "Invalid credentials." });
 
     const user = result.rows[0];
-
-    if (!user.password) {
-      console.error(`User ID ${user.id} has no password field.`);
-      return res
-        .status(genericStatusCode)
-        .json({ message: genericErrorMessage });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res
-        .status(genericStatusCode)
-        .json({ message: genericErrorMessage });
-    }
+    const isMatch = await bcrypt.compare(password, user.password || "");
+    if (!isMatch)
+      return res.status(401).json({ message: "Invalid credentials." });
 
     const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
       expiresIn: "1h",
     });
 
     res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 3600000,
-      })
+      .cookie("token", token, cookieOptions)
       .status(200)
       .json({ user: { id: user.id, email: user.email } });
   } catch (error) {
-    console.error("Login attempt error:", error);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const getUser = async (req: Request, res: Response) => {
   const token = req.cookies?.token;
-  if (!token) {
-    return res.json({ isLoggedIn: false, user: null });
-  }
+  if (!token) return res.json({ isLoggedIn: false, user: null });
 
   try {
     const decoded = jwt.verify(token, jwtSecret) as { id: string };
-    const userId = decoded.id;
-
     const { rows } = await pool.query(
-      `SELECT 
-         id, 
-         username, 
-         email, 
-         bio, 
-         role, 
-         contact, 
-         is_verified, 
-         wants_notifications, 
-         theme_preference, 
-         created_at, 
-         profile_picture_base64,
-         oauth_provider
-       FROM users
-       WHERE id = $1`,
-      [userId],
+      `SELECT id, username, email, bio, role, contact, is_verified, wants_notifications, theme_preference, created_at, profile_picture_base64, oauth_provider FROM users WHERE id = $1`,
+      [decoded.id],
     );
 
-    if (rows.length > 0) {
-      return res.json({ isLoggedIn: true, user: rows[0] });
-    } else {
-      return res.json({ isLoggedIn: false, user: null });
-    }
+    return rows.length > 0
+      ? res.json({ isLoggedIn: true, user: rows[0] })
+      : res.json({ isLoggedIn: false, user: null });
   } catch (error) {
-    console.error("Error decoding token:", error);
     return res.json({ isLoggedIn: false, user: null });
   }
 };
 
 const logout = async (req: Request, res: Response) => {
   res
-    .clearCookie("token")
+    .clearCookie("token", cookieOptions)
     .status(200)
     .json({ message: "Logged out successfully" });
 };
@@ -542,19 +485,16 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
   const { code, state } = req.query;
   const storedState = req.cookies[STATE_COOKIE_NAME];
 
-  if (!code) {
-    return res
-      .status(400)
-      .redirect("http://localhost:5173/login?error=missing_code");
-  }
+  if (!code)
+    return res.status(400).redirect(`${FRONTEND_URL}/login?error=missing_code`);
 
+  // Fixed CSRF check: Ensure cookieOptions are used so the state cookie is actually readable
   if (!storedState || state !== storedState) {
-    console.error("CSRF attack detected: State mismatch.");
-    res.clearCookie(STATE_COOKIE_NAME);
-
-    return res.redirect("http://localhost:5173/login?error=csrf");
+    console.error("CSRF State Mismatch.");
+    res.clearCookie(STATE_COOKIE_NAME, cookieOptions);
+    return res.redirect(`${FRONTEND_URL}/login?error=csrf`);
   }
-  res.clearCookie(STATE_COOKIE_NAME);
+  res.clearCookie(STATE_COOKIE_NAME, cookieOptions);
 
   try {
     const params = new URLSearchParams();
@@ -570,77 +510,58 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
       body: params.toString(),
     });
 
-    if (!tokenResponse.ok) {
-      throw new Error(
-        `Token exchange failed with status: ${tokenResponse.status}`,
-      );
-    }
     const tokenData = await tokenResponse.json();
-    const { access_token } = tokenData;
-
     const userInfoResponse = await fetch(oauthConfig.USER_INFO_ENDPOINT, {
-      headers: { Authorization: `Bearer ${access_token}` },
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
 
-    const userInfo = await userInfoResponse.json();
-    const { email, name, picture, sub } = userInfo;
-    const googleId = sub;
+    const {
+      email,
+      name,
+      picture,
+      sub: googleId,
+    } = await userInfoResponse.json();
     let userId;
 
     let userResult = await pool.query(
-      "SELECT id, username FROM users WHERE oauth_id = $1 AND oauth_provider = 'google'",
+      "SELECT id FROM users WHERE oauth_id = $1 AND oauth_provider = 'google'",
       [googleId],
     );
 
     if (userResult.rows.length === 0) {
-      userResult = await pool.query(
-        "SELECT id, username FROM users WHERE email = $1",
-        [email],
-      );
+      userResult = await pool.query("SELECT id FROM users WHERE email = $1", [
+        email,
+      ]);
     }
 
     if (userResult.rows.length > 0) {
       userId = userResult.rows[0].id;
-
       await pool.query(
-        `UPDATE users 
-         SET profile_picture_base64 = $1, 
-             is_verified = TRUE,
-             oauth_provider = $2, 
-             oauth_id = $3
-         WHERE id = $4`,
-        [picture, "google", googleId, userId],
+        `UPDATE users SET profile_picture_base64 = $1, is_verified = TRUE, oauth_provider = 'google', oauth_id = $2 WHERE id = $3`,
+        [picture, googleId, userId],
       );
     } else {
-      const salt = await bcrypt.genSalt(10);
-      const randomPassword = crypto.randomBytes(16).toString("hex");
-      const hashedPassword = await bcrypt.hash(randomPassword, salt);
-
-      let username = name;
-
-      const newUserResult = await pool.query(
+      const newUser = await pool.query(
         `INSERT INTO users (email, password, username, is_verified, profile_picture_base64, oauth_provider, oauth_id) 
-         VALUES ($1, $2, $3, TRUE, $4, $5, $6) RETURNING id`,
-        [email, hashedPassword, username, picture, "google", googleId],
+         VALUES ($1, $2, $3, TRUE, $4, 'google', $5) RETURNING id`,
+        [
+          email,
+          await bcrypt.hash(crypto.randomBytes(16).toString("hex"), 10),
+          name,
+          picture,
+          googleId,
+        ],
       );
-      userId = newUserResult.rows[0].id;
+      userId = newUser.rows[0].id;
     }
 
     const token = jwt.sign({ id: userId, email }, jwtSecret, {
       expiresIn: "1h",
     });
-
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 3600000,
-      })
-      .redirect("http://localhost:5173/");
+    res.cookie("token", token, cookieOptions).redirect(`${FRONTEND_URL}/`);
   } catch (error) {
-    console.error("Google OAuth failed:", (error as any).message || error);
-    res.redirect("http://localhost:5173/login?error=oauth_failed");
+    console.error("OAuth error:", error);
+    res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
   }
 };
 
