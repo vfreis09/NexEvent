@@ -1,6 +1,4 @@
 import React from "react";
-import OAUTH_CONFIG from "../../config/oauthConfig";
-import { getAndStoreState } from "../../utils/authUtils";
 import googleLogo from "../../assets/google-logo.png";
 import "./GoogleAuthButton.css";
 
@@ -11,21 +9,13 @@ interface GoogleAuthButtonProps {
 const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   type = "button",
 }) => {
+  const BACKEND_URL =
+    window.location.hostname === "localhost"
+      ? "http://localhost:3000"
+      : "https://nexevent-app-production.up.railway.app";
+
   const handleGoogleSignIn = (): void => {
-    const state: string = getAndStoreState();
-
-    const params = new URLSearchParams();
-    params.append("client_id", OAUTH_CONFIG.CLIENT_ID);
-    params.append("redirect_uri", OAUTH_CONFIG.REDIRECT_URI);
-    params.append("response_type", "code");
-    params.append("scope", OAUTH_CONFIG.SCOPES.join(" "));
-    params.append("state", state);
-
-    const fullAuthUrl: string = `${
-      OAUTH_CONFIG.AUTH_ENDPOINT
-    }?${params.toString()}`;
-
-    window.location.href = fullAuthUrl;
+    window.location.href = `${BACKEND_URL}/api/user/google/login`;
   };
 
   return (

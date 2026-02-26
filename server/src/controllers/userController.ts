@@ -638,6 +638,23 @@ const updateUserSettings = async (req: Request, res: Response) => {
   }
 };
 
+const googleOAuthInitiate = (req: Request, res: Response) => {
+  const state = crypto.randomBytes(16).toString("hex");
+
+  const params = new URLSearchParams();
+  params.append("client_id", oauthConfig.CLIENT_ID);
+  params.append("redirect_uri", oauthConfig.REDIRECT_URI);
+  params.append("response_type", "code");
+  params.append("scope", "openid email profile");
+  params.append("state", state);
+
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+
+  res
+    .cookie(STATE_COOKIE_NAME, state, cookieOptions) // set on Railway domain ✅
+    .redirect(authUrl);
+};
+
 const userController = {
   signup,
   login,
@@ -657,6 +674,7 @@ const userController = {
   getAllTags,
   getUserSettings,
   updateUserSettings,
+  googleOAuthInitiate,
 };
 
 export default userController;
