@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import { useLoadScript } from "@react-google-maps/api";
+import { useLoadScript, Libraries } from "@react-google-maps/api";
 
 const MapContext = createContext<any>(null);
 
@@ -9,10 +9,13 @@ interface MapProviderProps {
 
 const apiKey = import.meta.env.VITE_PUBLIC_API_KEY as string;
 
+// Must be outside the component to keep the reference stable
+const libraries: Libraries = ["places"];
+
 const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: apiKey,
-    libraries: ["places"],
+    libraries,
   });
 
   if (loadError) {
