@@ -23,12 +23,18 @@ if (!jwtSecret) {
   );
 }
 
-// Helper for consistent cookie settings in production (Vercel + Railway)
 const cookieOptions = {
   httpOnly: true,
-  secure: true, // Required for SameSite: 'none'
-  sameSite: "none" as const, // Required for cross-domain cookies
+  secure: true,
+  sameSite: "none" as const,
   maxAge: 3600000,
+};
+
+// New: used for clearCookie calls only (maxAge must be omitted)
+const clearCookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none" as const,
 };
 
 const uploadProfilePicture = async (req: Request, res: Response) => {
@@ -142,7 +148,7 @@ const getUser = async (req: Request, res: Response) => {
 
 const logout = async (req: Request, res: Response) => {
   res
-    .clearCookie("token", cookieOptions)
+    .clearCookie("token", clearCookieOptions)
     .status(200)
     .json({ message: "Logged out successfully" });
 };
@@ -491,10 +497,10 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
   // Fixed CSRF check: Ensure cookieOptions are used so the state cookie is actually readable
   if (!storedState || state !== storedState) {
     console.error("CSRF State Mismatch.");
-    res.clearCookie(STATE_COOKIE_NAME, cookieOptions);
+    res.clearCookie(STATE_COOKIE_NAME, clearCookieOptions);
     return res.redirect(`${FRONTEND_URL}/login?error=csrf`);
   }
-  res.clearCookie(STATE_COOKIE_NAME, cookieOptions);
+  res.clearCookie(STATE_COOKIE_NAME, clearCookieOptions);
 
   try {
     const params = new URLSearchParams();
