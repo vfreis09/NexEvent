@@ -30,7 +30,7 @@ const cookieOptions = {
   maxAge: 3600000,
 };
 
-// New: used for clearCookie calls only (maxAge must be omitted)
+// used for clearCookie calls only (maxAge must be omitted)
 const clearCookieOptions = {
   httpOnly: true,
   secure: true,
@@ -83,17 +83,26 @@ const signup = async (req: Request, res: Response) => {
     );
 
     const user = result.rows[0];
-    await emailServices.sendVerificationEmail(user.email, user.id);
 
     const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, {
       expiresIn: "1h",
     });
 
+    // Respond immediately — don't block on email
     res
       .cookie("token", token, cookieOptions)
       .status(201)
       .json({ user: { id: user.id, email: user.email } });
-  } catch (error) {
+
+    // Send verification email in background — failure won't affect signup
+    emailServices.sendVerificationEmail(user.email, user.id).catch((error) => {
+      console.error("Background verification email failed:", error);
+    });
+  } catch (error: any) {
+    // Handle duplicate email with a clear message instead of generic 500
+    if (error.code === "23505") {
+      return res.status(409).json({ message: "Email already in use." });
+    }
     console.error("Signup error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -493,7 +502,6 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
   if (!code)
     return res.status(400).redirect(`${FRONTEND_URL}/login?error=missing_code`);
 
-  // Fixed CSRF check: Ensure cookieOptions are used so the state cookie is actually readable
   if (!storedState || state !== storedState) {
     console.error("CSRF State Mismatch.");
     res.clearCookie(STATE_COOKIE_NAME, clearCookieOptions);
@@ -655,9 +663,7 @@ const googleOAuthInitiate = (req: Request, res: Response) => {
 
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-  res
-    .cookie(STATE_COOKIE_NAME, state, cookieOptions) // set on Railway domain ✅
-    .redirect(authUrl);
+  res.cookie(STATE_COOKIE_NAME, state, cookieOptions).redirect(authUrl);
 };
 
 const userController = {

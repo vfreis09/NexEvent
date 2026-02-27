@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { BrevoClient } from "@getbrevo/brevo";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
@@ -14,25 +14,20 @@ if (!jwtSecret) {
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-const brevoClient = nodemailer.createTransport({
-  host: process.env.BREVO_HOST,
-  port: Number(process.env.BREVO_PORT),
-  auth: {
-    user: process.env.BREVO_USER,
-    pass: process.env.BREVO_PASS,
-  },
-});
+const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY as string });
+
+const FROM_EMAIL = "a39336001@smtp-brevo.com";
+const FROM_NAME = "NexEvent";
 
 const sendEmail = async (to: string, subject: string, message: string) => {
   try {
-    const msg = {
-      to,
-      from: "NexEvent <a39336001@smtp-brevo.com>",
+    await brevo.transactionalEmails.sendTransacEmail({
+      to: [{ email: to }],
+      sender: { email: FROM_EMAIL, name: FROM_NAME },
       subject,
-      text: message.replace(/<[^>]+>/g, ""),
-      html: message,
-    };
-    await brevoClient.sendMail(msg);
+      htmlContent: message,
+      textContent: message.replace(/<[^>]+>/g, ""),
+    });
   } catch (error) {
     console.error(`Error sending email to ${to}:`, error);
     throw new Error("Failed to send email.");
