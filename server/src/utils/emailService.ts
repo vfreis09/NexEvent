@@ -16,7 +16,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY as string });
 
-const FROM_EMAIL = "a39336001@smtp-brevo.com";
+const FROM_EMAIL = "reis.vicente27@gmail.com";
 const FROM_NAME = "NexEvent";
 
 const sendEmail = async (to: string, subject: string, message: string) => {
