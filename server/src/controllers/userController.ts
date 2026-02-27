@@ -420,8 +420,7 @@ const sendResetLink = async (req: Request, res: Response) => {
       [hashedToken, expires, userId],
     );
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&id=${userId}`;
+    const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}&id=${userId}`;
 
     const message = `
       <p>We received a request to reset your password.</p>

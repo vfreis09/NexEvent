@@ -6,19 +6,20 @@ import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const jwtSecret = process.env.JWT_SECRET as string | undefined;
-
 if (!jwtSecret) {
   throw new Error(
-    "JWT_SECRET is not defined. Check your environment variables."
+    "JWT_SECRET is not defined. Check your environment variables.",
   );
 }
 
-const mailtrapClient = nodemailer.createTransport({
-  host: process.env.MAILTRAP_HOST,
-  port: Number(process.env.MAILTRAP_PORT),
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+const brevoClient = nodemailer.createTransport({
+  host: process.env.BREVO_HOST,
+  port: Number(process.env.BREVO_PORT),
   auth: {
-    user: process.env.MAILTRAP_USER,
-    pass: process.env.MAILTRAP_PASS,
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_PASS,
   },
 });
 
@@ -26,13 +27,12 @@ const sendEmail = async (to: string, subject: string, message: string) => {
   try {
     const msg = {
       to,
-      from: "no-reply@yourdomain.com",
+      from: "NexEvent <a39336001@smtp-brevo.com>",
       subject,
       text: message.replace(/<[^>]+>/g, ""),
       html: message,
     };
-
-    await mailtrapClient.sendMail(msg);
+    await brevoClient.sendMail(msg);
   } catch (error) {
     console.error(`Error sending email to ${to}:`, error);
     throw new Error("Failed to send email.");
@@ -44,14 +44,13 @@ const sendVerificationEmail = async (email: string, userId: string) => {
     const token = jwt.sign({ userId }, jwtSecret as string, {
       expiresIn: "1h",
     });
-    const verificationLink = `http://localhost:5173/verify-email?token=${token}`;
+    const verificationLink = `${FRONTEND_URL}/verify-email?token=${token}`;
     const message = `
       <h3>Verify Your Email</h3>
       <p>Click the link below to verify your email address:</p>
       <a href="${verificationLink}">${verificationLink}</a>
       <p>This link will expire in 1 hour.</p>
     `;
-
     await sendEmail(email, "Verify Your Email", message);
     console.log(`Verification email sent to ${email}`);
   } catch (error) {
@@ -63,11 +62,9 @@ const sendVerificationEmail = async (email: string, userId: string) => {
 const sendEventUpdateEmail = async (
   email: string,
   eventName: string,
-  eventId: number | string
+  eventId: number | string,
 ) => {
-  const eventIdString =
-    typeof eventId === "number" ? eventId.toString() : eventId;
-  const eventLink = `http://localhost:5173/event/${eventIdString}`;
+  const eventLink = `${FRONTEND_URL}/event/${eventId}`;
   const subject = `Event Updated: ${eventName}`;
   const message = `
     <h3>Event Updated!</h3>
@@ -82,9 +79,9 @@ const sendEventUpdateEmail = async (
 const sendEventCancelationEmail = async (
   email: string,
   eventName: string,
-  eventId: string
+  eventId: string,
 ) => {
-  const eventLink = `http://localhost:5173/event/${eventId}`;
+  const eventLink = `${FRONTEND_URL}/event/${eventId}`;
   const subject = `Event Canceled: ${eventName}`;
   const message = `
     <h3>Event Canceled</h3>
@@ -98,9 +95,9 @@ const sendEventCancelationEmail = async (
 const sendInviteEmail = async (
   email: string,
   eventName: string,
-  eventId: number
+  eventId: number,
 ) => {
-  const eventLink = `http://localhost:5173/event/${eventId}`;
+  const eventLink = `${FRONTEND_URL}/event/${eventId}`;
   const subject = `You're Invited to: ${eventName}`;
   const message = `
     <h3>You've Been Invited</h3>
