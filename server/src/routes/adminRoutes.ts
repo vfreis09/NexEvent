@@ -9,49 +9,57 @@ router.get(
   "/admin/users",
   authenticateUser,
   authorizeAdmin,
-  adminController.getUsers
+  adminController.getUsers,
 );
 
 router.put(
   "/admin/users/:id/role",
   authenticateUser,
   authorizeAdmin,
-  adminController.updateUserRole
+  adminController.updateUserRole,
 );
 
 router.get(
   "/admin/stats",
   authenticateUser,
   authorizeAdmin,
-  adminController.getStats
+  adminController.getStats,
 );
 
 router.get(
   "/admin/events",
   authenticateUser,
   authorizeAdmin,
-  adminController.getEvents
+  adminController.getEvents,
 );
 
 router.put(
   "/admin/events/:id",
   authenticateUser,
   authorizeAdmin,
-  adminController.updateEvent
+  adminController.updateEvent,
 );
 
 router.put(
   "/admin/events/:id/cancel",
   authenticateUser,
   authorizeAdmin,
-  adminController.cancelEvent
+  adminController.cancelEvent,
 );
 
 router.delete(
   "/admin/events/:id",
   authenticateUser,
   authorizeAdmin,
-  adminController.deleteEvent
+  adminController.deleteEvent,
+);
+
+// Manual digest trigger for testing — admin only
+router.post(
+  "/admin/trigger-digest",
+  authenticateUser,
+  authorizeAdmin,
+  adminController.triggerDigest,
 );
 
 export default router;

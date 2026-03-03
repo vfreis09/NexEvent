@@ -3,6 +3,8 @@ import emailServices from "../utils/emailService";
 import { rankEventsForUser, EventDetail } from "../utils/eventRanking";
 import { PoolClient } from "pg";
 
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
 interface UserBatchData {
   user_id: number;
   email: string;
@@ -19,9 +21,7 @@ const buildDigestHtml = (
     newEvents.length > 0
       ? `
         <h2 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">✨ Personalized for You</h2>
-        <p style="color: #7f8c8d; font-size: 0.9em;">Based on your interests in: ${interestedTags.join(
-          ", ",
-        )}</p>
+        <p style="color: #7f8c8d; font-size: 0.9em;">Based on your interests in: ${interestedTags.join(", ")}</p>
         <table style="width: 100%; border-collapse: collapse;">
             ${newEvents
               .map((e) => {
@@ -31,27 +31,15 @@ const buildDigestHtml = (
                 return `
                 <tr style="border-bottom: 1px solid #eee;">
                     <td style="padding: 15px 0;">
-                        <strong style="font-size: 1.1em;"><a href="http://localhost:5173/event/${
-                          e.id
-                        }" style="color: #3498db; text-decoration: none;">${
-                          e.title
-                        }</a></strong>
+                        <strong style="font-size: 1.1em;"><a href="${FRONTEND_URL}/event/${e.id}" style="color: #3498db; text-decoration: none;">${e.title}</a></strong>
                         <br>
-                        <small style="color: #e67e22;">📅 ${e.event_datetime.toLocaleDateString()} at ${e.event_datetime.toLocaleTimeString(
-                          [],
-                          { hour: "2-digit", minute: "2-digit" },
-                        )}</small>
+                        <small style="color: #e67e22;">📅 ${e.event_datetime.toLocaleDateString()} at ${e.event_datetime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
                         ${
                           matches.length > 0
-                            ? `<br><span style="background: #d4edda; color: #155724; font-size: 0.75em; padding: 2px 6px; border-radius: 4px;">Matched: ${matches.join(
-                                ", ",
-                              )}</span>`
+                            ? `<br><span style="background: #d4edda; color: #155724; font-size: 0.75em; padding: 2px 6px; border-radius: 4px;">Matched: ${matches.join(", ")}</span>`
                             : ""
                         }
-                        <p style="margin-top: 8px; color: #34495e; font-size: 0.95em; line-height: 1.4;">${e.description.substring(
-                          0,
-                          120,
-                        )}...</p>
+                        <p style="margin-top: 8px; color: #34495e; font-size: 0.95em; line-height: 1.4;">${e.description.substring(0, 120)}...</p>
                     </td>
                 </tr>`;
               })
@@ -69,11 +57,7 @@ const buildDigestHtml = (
               .map(
                 (e) => `
                 <li style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 4px solid #3498db;">
-                    <strong><a href="http://localhost:5173/event/${
-                      e.id
-                    }" style="color: #2c3e50; text-decoration: none;">${
-                      e.title
-                    }</a></strong>
+                    <strong><a href="${FRONTEND_URL}/event/${e.id}" style="color: #2c3e50; text-decoration: none;">${e.title}</a></strong>
                     <br><small style="color: #7f8c8d;">${e.event_datetime.toLocaleDateString()}</small>
                 </li>`,
               )
@@ -89,7 +73,7 @@ const buildDigestHtml = (
             ${newEventsHtml}
             ${remindersHtml}
             <div style="text-align: center; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
-                <a href="http://localhost:5173/settings" style="color: #3498db; font-size: 0.85em; text-decoration: none;">Manage Notifications</a>
+                <a href="${FRONTEND_URL}/settings" style="color: #3498db; font-size: 0.85em; text-decoration: none;">Manage Notifications</a>
             </div>
         </div>
       </body>
@@ -164,7 +148,6 @@ export const processDigestQueue = async (
 
           if (hoursRemaining > 0 && hoursRemaining < 24) {
             const urgentMsg = `Reminder: "${reminder.title}" starts in less than 24 hours!`;
-
             await client.query(
               `INSERT INTO notifications (user_id, event_id, message)
                SELECT $1, $2, $3
@@ -184,9 +167,7 @@ export const processDigestQueue = async (
         );
         await emailServices.sendEmail(
           email,
-          `Your ${
-            frequency.charAt(0).toUpperCase() + frequency.slice(1)
-          } Event Digest - ${now.toLocaleDateString()}`,
+          `Your ${frequency.charAt(0).toUpperCase() + frequency.slice(1)} Event Digest - ${now.toLocaleDateString()}`,
           emailContent,
         );
 

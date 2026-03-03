@@ -18,17 +18,21 @@ for (const p of envPaths) {
 
 async function test() {
   console.log(`--- Connection Check ---`);
-  console.log(`DB User: ${process.env.DB_USERNAME || "❌ NOT FOUND"}`);
-  console.log(`DB Name: ${process.env.DB_DATABASE || "❌ NOT FOUND"}`);
+  // Fixed: app uses DATABASE_URL, not DB_USERNAME/DB_DATABASE
+  console.log(
+    `DATABASE_URL: ${process.env.DATABASE_URL ? "✅ FOUND" : "❌ NOT FOUND"}`,
+  );
+  console.log(
+    `BREVO_API_KEY: ${process.env.BREVO_API_KEY ? "✅ FOUND" : "❌ NOT FOUND"}`,
+  );
   console.log(`-----------------------`);
 
-  if (!process.env.DB_USERNAME) {
-    console.error("❌ Failed to load env. Authentication will fail.");
+  if (!process.env.DATABASE_URL) {
+    console.error("❌ Failed to load DATABASE_URL. Check your .env file.");
     process.exit(1);
   }
 
   const { processDigestQueue } = require("./src/jobs/digestProcessor");
-
   console.log("🚀 Manually triggering the Daily Digest...");
 
   try {

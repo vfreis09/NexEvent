@@ -18,16 +18,16 @@ export const insertEventIntoQueue = async (
     client = (await (pool as any).connect()) as PoolClient;
 
     const usersToNotifyQuery = `
-            SELECT DISTINCT u.id AS user_id
-            FROM users u
-            JOIN user_preferences up ON u.id = up.user_id
-            JOIN event_tags et ON up.tag_id = et.tag_id
-            WHERE 
-                et.event_id = $1 
-                AND u.id != $2
-                AND u.is_verified = TRUE
-                AND u.wants_notifications = TRUE;
-        `;
+      SELECT DISTINCT u.id AS user_id
+      FROM users u
+      JOIN user_preferences up ON u.id = up.user_id
+      JOIN event_tags et ON up.tag_id = et.tag_id
+      WHERE 
+          et.event_id = $1 
+          AND u.id != $2
+          AND u.is_verified = TRUE
+          AND u.wants_notifications = TRUE;
+    `;
 
     const { rows: users } = await client.query<{ user_id: number }>(
       usersToNotifyQuery,
@@ -45,17 +45,15 @@ export const insertEventIntoQueue = async (
       `Queue Manager: Found ${users.length} users to notify for event ${eventId}. Starting insertions...`,
     );
 
-    const insertValues = users
-      .map((user) => `(${user.user_id}, ${eventId})`)
-      .join(", ");
+    for (const user of users) {
+      await client.query(
+        `INSERT INTO email_queue (user_id, event_id)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id, event_id, status) DO NOTHING`,
+        [user.user_id, eventId],
+      );
+    }
 
-    const insertQuery = `
-            INSERT INTO email_queue (user_id, event_id)
-            VALUES ${insertValues}
-            ON CONFLICT (user_id, event_id, status) DO NOTHING;
-        `;
-
-    await client.query(insertQuery);
     console.log(
       `Queue Manager: Successfully queued event ${eventId} for ${users.length} users.`,
     );

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { pool } from "../config/dbConfig";
+import { processDigestQueue } from "../jobs/digestProcessor";
 
 const getUsers = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
@@ -147,7 +148,7 @@ const updateEvent = async (req: Request, res: Response) => {
       `UPDATE events 
        SET title = COALESCE($1, title),
            description = COALESCE($2, description),
-           event_datetime = COALESCE($3, event_datetime), -- Use event_datetime from your schema
+           event_datetime = COALESCE($3, event_datetime),
            location = COALESCE($4, location),
            status = COALESCE($5, status)
        WHERE id = $6
@@ -232,6 +233,25 @@ const deleteEvent = async (req: Request, res: Response) => {
   }
 };
 
+const triggerDigest = async (req: Request, res: Response) => {
+  const { frequency } = req.body;
+
+  if (!["daily", "weekly"].includes(frequency)) {
+    return res
+      .status(400)
+      .json({ message: "frequency must be 'daily' or 'weekly'" });
+  }
+
+  try {
+    console.log(`Admin manually triggered ${frequency} digest...`);
+    await processDigestQueue(frequency as "daily" | "weekly");
+    return res.json({ message: `${frequency} digest processed successfully.` });
+  } catch (err) {
+    console.error("Error triggering digest:", err);
+    return res.status(500).json({ message: "Failed to process digest." });
+  }
+};
+
 const adminController = {
   getUsers,
   updateUserRole,
@@ -240,6 +260,7 @@ const adminController = {
   updateEvent,
   cancelEvent,
   deleteEvent,
+  triggerDigest,
 };
 
 export default adminController;

@@ -15,6 +15,7 @@ const createEvent = async (req: Request, res: Response) => {
     location,
     max_attendees,
     address,
+    tagIds,
   } = req.body;
 
   const maxAttendees =
@@ -61,6 +62,16 @@ const createEvent = async (req: Request, res: Response) => {
       ],
     );
     const event = result.rows[0];
+
+    // createEvent - replace the tag insertion block
+    if (Array.isArray(tagIds) && tagIds.length > 0) {
+      for (const tagId of tagIds) {
+        await pool.query(
+          `INSERT INTO event_tags (event_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [event.id, tagId],
+        );
+      }
+    }
 
     await updateEventStatus(event.id);
 
@@ -125,12 +136,7 @@ const getEvents = async (req: Request, res: Response) => {
 
     res.json({
       events: eventsResult.rows,
-      pagination: {
-        totalEvents,
-        totalPages,
-        currentPage: page,
-        limit: limit,
-      },
+      pagination: { totalEvents, totalPages, currentPage: page, limit },
     });
   } catch (error) {
     console.error(
@@ -152,12 +158,19 @@ const getEventById = async (req: Request, res: Response) => {
       [id],
     );
 
-    if (result.rows.length > 0) {
-      await updateEventStatus(id);
-      res.json(result.rows[0]);
-    } else {
-      res.status(404).json({ message: "Event not found" });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
     }
+
+    await updateEventStatus(id);
+
+    // Fetch tags for this event
+    const tagsResult = await pool.query(
+      `SELECT t.id, t.name FROM tags t JOIN event_tags et ON t.id = et.tag_id WHERE et.event_id = $1`,
+      [id],
+    );
+
+    res.json({ ...result.rows[0], tags: tagsResult.rows });
   } catch (error) {
     console.error("Error fetching event:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -166,16 +179,21 @@ const getEventById = async (req: Request, res: Response) => {
 
 const updateEvent = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
-  let { title, description, eventDateTime, location, max_attendees, address } =
-    req.body;
+  let {
+    title,
+    description,
+    eventDateTime,
+    location,
+    max_attendees,
+    address,
+    tagIds,
+  } = req.body;
 
   const authorId = req.user?.id;
 
   try {
     const existingEventResult = await pool.query(
-      `SELECT event_datetime, author_id, location, address
-       FROM events 
-       WHERE id = $1`,
+      `SELECT event_datetime, author_id, location, address FROM events WHERE id = $1`,
       [id],
     );
 
@@ -240,74 +258,78 @@ const updateEvent = async (req: Request, res: Response) => {
       ],
     );
 
-    if (result.rows.length > 0) {
-      const updatedEvent = result.rows[0];
-
-      await updateEventStatus(id);
-
-      res.json(updatedEvent);
-
-      const rsvpResult = await pool.query(
-        `SELECT r.*, u.email FROM rsvps r
-         JOIN users u ON r.user_id = u.id
-         WHERE r.event_id = $1
-         AND r.status = 'Accepted'
-         AND u.is_verified = true
-         AND u.wants_notifications = true`,
-        [id],
-      );
-
-      for (const user of rsvpResult.rows) {
-        try {
-          await emailServices.sendEventUpdateEmail(
-            user.email,
-            updatedEvent.title,
-            updatedEvent.id,
-          );
-
-          const existingNotification = await pool.query(
-            `SELECT * FROM notifications
-             WHERE user_id = $1 AND event_id = $2
-             ORDER BY created_at DESC
-             LIMIT 1`,
-            [user.user_id, updatedEvent.id],
-          );
-
-          const message = `Event "${updatedEvent.title}" has been updated.`;
-
-          if (
-            existingNotification.rows.length > 0 &&
-            !existingNotification.rows[0].is_read
-          ) {
-            await pool.query(
-              `UPDATE notifications
-               SET message = $1, created_at = CURRENT_TIMESTAMP
-               WHERE id = $2`,
-              [message, existingNotification.rows[0].id],
-            );
-          } else {
-            await pool.query(
-              `INSERT INTO notifications (user_id, event_id, message)
-               VALUES ($1, $2, $3)`,
-              [user.user_id, updatedEvent.id, message],
-            );
-          }
-        } catch (notifError) {
-          console.error(
-            `Failed to handle notification for ${user.email}:`,
-            notifError,
-          );
-        }
-      }
-
-      insertEventIntoQueue(id, authorId).catch((error) => {
-        console.error("Background queue insertion failed after update:", error);
-      });
-    } else {
+    if (result.rows.length === 0) {
       return res
         .status(404)
         .json({ message: "Event not found or not authorized" });
     }
+
+    const updatedEvent = result.rows[0];
+
+    // updateEvent - replace the tag update block
+    await pool.query(`DELETE FROM event_tags WHERE event_id = $1`, [id]);
+    if (Array.isArray(tagIds) && tagIds.length > 0) {
+      for (const tagId of tagIds) {
+        await pool.query(
+          `INSERT INTO event_tags (event_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [id, tagId],
+        );
+      }
+    }
+
+    await updateEventStatus(id);
+    res.json(updatedEvent);
+
+    const rsvpResult = await pool.query(
+      `SELECT r.*, u.email FROM rsvps r
+       JOIN users u ON r.user_id = u.id
+       WHERE r.event_id = $1
+       AND r.status = 'Accepted'
+       AND u.is_verified = true
+       AND u.wants_notifications = true`,
+      [id],
+    );
+
+    for (const user of rsvpResult.rows) {
+      try {
+        await emailServices.sendEventUpdateEmail(
+          user.email,
+          updatedEvent.title,
+          updatedEvent.id,
+        );
+
+        const existingNotification = await pool.query(
+          `SELECT * FROM notifications WHERE user_id = $1 AND event_id = $2 ORDER BY created_at DESC LIMIT 1`,
+          [user.user_id, updatedEvent.id],
+        );
+
+        const message = `Event "${updatedEvent.title}" has been updated.`;
+
+        if (
+          existingNotification.rows.length > 0 &&
+          !existingNotification.rows[0].is_read
+        ) {
+          await pool.query(
+            `UPDATE notifications SET message = $1, created_at = CURRENT_TIMESTAMP WHERE id = $2`,
+            [message, existingNotification.rows[0].id],
+          );
+        } else {
+          await pool.query(
+            `INSERT INTO notifications (user_id, event_id, message) VALUES ($1, $2, $3)`,
+            [user.user_id, updatedEvent.id, message],
+          );
+        }
+      } catch (notifError) {
+        console.error(
+          `Failed to handle notification for ${user.email}:`,
+          notifError,
+        );
+      }
+    }
+
+    insertEventIntoQueue(id, authorId).catch((error) => {
+      console.error("Background queue insertion failed after update:", error);
+    });
   } catch (error) {
     console.error("Error updating event:", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -357,17 +379,14 @@ const cancelEvent = async (req: Request, res: Response) => {
 
     for (const user of rsvpResult.rows) {
       const message = `Event "${canceledEvent.title}" has been canceled.`;
-
       try {
         await emailServices.sendEventCancelationEmail(
           user.email,
           canceledEvent.title,
           canceledEvent.id,
         );
-
         await pool.query(
-          `INSERT INTO notifications (user_id, event_id, message)
-           VALUES ($1, $2, $3)`,
+          `INSERT INTO notifications (user_id, event_id, message) VALUES ($1, $2, $3)`,
           [user.user_id, canceledEvent.id, message],
         );
       } catch (notifError) {
@@ -426,10 +445,7 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
 
     if (queryLimit > 3) {
       const countResult = await pool.query(
-        `SELECT COUNT(*) FROM events e WHERE ${whereClause.replace(
-          "$1",
-          userId,
-        )}`,
+        `SELECT COUNT(*) FROM events e WHERE ${whereClause.replace("$1", userId)}`,
       );
       totalEvents = parseInt(countResult.rows[0].count, 10);
       totalPages = Math.ceil(totalEvents / queryLimit);
@@ -456,8 +472,8 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
     res.json({
       events: eventsResult.rows,
       pagination: {
-        totalEvents: totalEvents,
-        totalPages: totalPages,
+        totalEvents,
+        totalPages,
         currentPage: page,
         limit: queryLimit,
       },

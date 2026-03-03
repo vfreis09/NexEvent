@@ -6,10 +6,16 @@ import { useMapContext } from "../../context/MapProvider";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { useToast } from "../../hooks/useToast";
+import { Badge } from "react-bootstrap";
 import "./EventForm.css";
 
 interface EventFormProps {
   isEditing: boolean;
+}
+
+interface Tag {
+  id: number;
+  name: string;
 }
 
 type LatLngLiteral = google.maps.LatLngLiteral;
@@ -34,6 +40,8 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [address, setAddress] = useState<string>("");
   const [maxAttendees, setMaxAttendees] = useState<number | string>("");
   const [isEventExpired, setIsEventExpired] = useState(false);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
 
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -57,9 +65,15 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       description.trim() !== "" &&
       eventDateTime.trim() !== "" &&
       location !== null;
-
     return !hasRequiredFields || hasTimeError;
   }, [title, description, eventDateTime, location, hasTimeError]);
+
+  useEffect(() => {
+    fetch(`${BASE_URL}/tags`)
+      .then((r) => r.json())
+      .then((data) => setAvailableTags(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Failed to load tags", err));
+  }, []);
 
   useEffect(() => {
     if (isEditing && eventId && !isNaN(eventId)) {
@@ -82,32 +96,33 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             );
           }
 
-          const utcDate = eventDate;
-          const localDate = toZonedTime(utcDate, timeZone);
-
-          const formattedDateTime = format(localDate, "yyyy-MM-dd'T'HH:mm");
-
+          const localDate = toZonedTime(eventDate, timeZone);
           setTitle(data.title);
           setDescription(data.description);
-          setEventDateTime(formattedDateTime);
-
-          const myLocation = {
+          setEventDateTime(format(localDate, "yyyy-MM-dd'T'HH:mm"));
+          setLocation({
             lat: data.location?.y ?? 37.7749,
             lng: data.location?.x ?? -122.4194,
-          };
-
-          setLocation(myLocation);
+          });
           setAddress(data.address ?? "");
           setMaxAttendees(data.max_attendees ?? "");
+          setSelectedTagIds((data.tags ?? []).map((t: Tag) => t.id));
         } catch (error) {
           console.error("Error fetching event:", error);
           showNotification("Failed to load event details.", "Error", "danger");
         }
       };
-
       fetchEvent();
     }
   }, [isEditing, eventId, timeZone, showNotification]);
+
+  const toggleTag = (tagId: number) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId],
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,9 +155,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           title,
@@ -151,15 +164,16 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           location: locationPoint,
           max_attendees: maxAttendees,
           address,
+          tagIds: selectedTagIds,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        const errorMessage =
+        throw new Error(
           errorData.message ||
-          (isEditing ? "Event update failed" : "Event creation failed");
-        throw new Error(errorMessage);
+            (isEditing ? "Event update failed" : "Event creation failed"),
+        );
       }
 
       navigate("/", {
@@ -170,10 +184,6 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         },
       });
     } catch (error: any) {
-      console.error(
-        isEditing ? "Event update failed" : "Event creation failed",
-        error,
-      );
       showNotification(
         error.message ||
           (isEditing ? "Event update failed" : "Event creation failed"),
@@ -254,11 +264,28 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             />
           </div>
           <div className="mb-3">
+            <label className="form-label">Tags:</label>
+            <div className="d-flex flex-wrap gap-2">
+              {availableTags.map((tag) => (
+                <Badge
+                  key={tag.id}
+                  pill
+                  bg={selectedTagIds.includes(tag.id) ? "primary" : "light"}
+                  style={{
+                    cursor: "pointer",
+                    color: selectedTagIds.includes(tag.id) ? "white" : "black",
+                  }}
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="mb-3">
             <label className="form-label">Search Location:</label>
             <div
-              className={`border p-2 rounded ${
-                isEditing && isEventExpired ? "disabled-search" : ""
-              }`}
+              className={`border p-2 rounded ${isEditing && isEventExpired ? "disabled-search" : ""}`}
             >
               <Places
                 setPosition={handleLocationChange}
