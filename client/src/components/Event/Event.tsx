@@ -35,7 +35,6 @@ const Event: React.FC<EventProps> = ({
         </div>
       )}
       <h2>{event.title}</h2>
-
       <div className="event-host-details">
         <div className="host-avatar-frame-small">
           <img
@@ -50,9 +49,7 @@ const Event: React.FC<EventProps> = ({
           </Link>
         </p>
       </div>
-
       <p className="event-description">{event.description}</p>
-
       <div className="event-info-grid">
         <div className="event-info-row">
           <strong>Date & Time</strong>
@@ -76,7 +73,6 @@ const Event: React.FC<EventProps> = ({
           <span>{event.status}</span>
         </div>
       </div>
-
       {isVerified && isOwner && user?.role !== "banned" && (
         <div className="event-owner-actions">
           <Link to={`/edit/${event.id}`} className="edit-event-link">

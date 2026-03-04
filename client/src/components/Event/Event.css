@@ -364,3 +364,20 @@
   border-color: #444;
   color: white;
 }
+
+.private-event-banner {
+  background-color: #f0e8ff;
+  border-left: 4px solid #5a2d82;
+  color: #5a2d82;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 1.2rem;
+}
+
+.dark-mode .private-event-banner {
+  background-color: #2a2040;
+  border-left-color: #9370db;
+  color: #c49eff;
+}

@@ -81,7 +81,10 @@ function EventDetails() {
     const fetchEventData = async () => {
       try {
         // Updated to use dynamic BASE_URL
-        const eventRes = await fetch(`${BASE_URL}/events/${eventId}`);
+        const eventRes = await fetch(`${BASE_URL}/events/${eventId}`, {
+          credentials: "include",
+        });
+
         if (!eventRes.ok) throw new Error("Event not found");
         const fetchedEvent = await eventRes.json();
 

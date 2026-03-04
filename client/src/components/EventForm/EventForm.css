@@ -10,3 +10,65 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.visibility-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  gap: 4px;
+}
+
+.visibility-option span {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.visibility-option small {
+  color: #888;
+  font-size: 0.78rem;
+}
+
+.visibility-option:hover {
+  border-color: #9370db;
+  background-color: #f8f5ff;
+}
+
+.visibility-option.selected {
+  border-color: #5a2d82;
+  background-color: #f0e8ff;
+}
+
+.visibility-option.selected span {
+  color: #5a2d82;
+}
+
+.dark-mode .visibility-option {
+  border-color: #444;
+  background-color: transparent;
+  color: #e0e0e0;
+}
+
+.dark-mode .visibility-option small {
+  color: #aaa;
+}
+
+.dark-mode .visibility-option:hover {
+  border-color: #9370db;
+  background-color: #2a2040;
+}
+
+.dark-mode .visibility-option.selected {
+  border-color: #9370db;
+  background-color: #2a2040;
+}
+
+.dark-mode .visibility-option.selected span {
+  color: #c49eff;
+}
