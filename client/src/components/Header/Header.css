@@ -1,3 +1,6 @@
+/* ============================================
+   NAVBAR BASE
+   ============================================ */
 .custom-navbar {
   background-color: #ffffff;
   border-bottom: 1px solid #eee;
@@ -15,6 +18,9 @@
   width: 100%;
 }
 
+/* ============================================
+   HEADER LEFT
+   ============================================ */
 .header-left {
   display: flex;
   align-items: center;
@@ -28,6 +34,9 @@
   text-decoration: none;
 }
 
+/* ============================================
+   HEADER RIGHT
+   ============================================ */
 .header-right {
   display: flex;
   align-items: center;
@@ -35,6 +44,9 @@
   position: relative;
 }
 
+/* ============================================
+   NAV BUTTONS
+   ============================================ */
 .nav-button {
   padding: 8px 16px;
   border-radius: 6px;
@@ -75,6 +87,30 @@
   border-color: #ccc;
 }
 
+/* ============================================
+   SEARCH BAR
+   ============================================ */
+.search-bar-container {
+  position: relative;
+  flex-grow: 1;
+  max-width: 450px;
+  margin: 0 20px;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.25rem;
+  width: 100%;
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: white;
+}
+
+/* ============================================
+   BELL / NOTIFICATIONS
+   ============================================ */
 .bell-button {
   background: none !important;
   color: #333;
@@ -87,35 +123,6 @@
 .bell-button:hover {
   background-color: #f0f0f0 !important;
   border-radius: 50%;
-}
-
-.user-menu-button {
-  background: none !important;
-  color: #333;
-  border: none !important;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 8px 12px;
-  max-width: 140px;
-  display: inline-block;
-  vertical-align: middle;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-.user-menu-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.user-menu-button:hover {
-  background-color: #f0f0f0 !important;
-  border-radius: 6px;
 }
 
 .notification-badge-dot {
@@ -148,11 +155,6 @@
   overflow-y: auto;
 }
 
-.user-menu-dropdown {
-  width: 200px;
-  padding: 8px 0;
-}
-
 .notification-header-actions {
   display: flex;
   justify-content: space-between;
@@ -175,6 +177,43 @@
 
 .mark-all-btn:hover {
   background-color: rgba(106, 13, 173, 0.08);
+}
+
+/* ============================================
+   USER MENU
+   ============================================ */
+.user-menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.user-menu-button {
+  background: none !important;
+  color: #333;
+  border: none !important;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  max-width: 140px;
+  display: inline-block;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.user-menu-button:hover {
+  background-color: #f0f0f0 !important;
+  border-radius: 6px;
+}
+
+.user-menu-dropdown {
+  width: 200px;
+  padding: 8px 0;
 }
 
 .user-menu-item,
@@ -206,13 +245,9 @@
   padding-top: 12px;
 }
 
-.search-bar-container {
-  position: relative;
-  flex-grow: 1;
-  max-width: 450px;
-  margin: 0 20px;
-}
-
+/* ============================================
+   DARK MODE
+   ============================================ */
 .dark-mode .custom-navbar {
   background-color: #1e1e1e;
   border-bottom: 1px solid #333;
@@ -257,6 +292,28 @@
   opacity: 0.7;
 }
 
+.dark-mode .suggestions-dropdown {
+  background-color: #252525 !important;
+  border: 1px solid #444 !important;
+  color: #eee !important;
+}
+
+.dark-mode .suggestions-dropdown .loading-text {
+  color: #bbb !important;
+}
+
+.dark-mode .suggestions-dropdown .suggestion-item {
+  color: #eee;
+}
+
+.dark-mode .suggestions-dropdown .suggestion-item:hover {
+  background-color: #3d3d3d !important;
+}
+
+.dark-mode .suggestions-dropdown .text-muted {
+  color: #bbb !important;
+}
+
 .dark-mode .notification-dropdown,
 .dark-mode .user-menu-dropdown {
   background-color: #252525;
@@ -291,20 +348,26 @@
   border-top-color: #444 !important;
 }
 
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 768px) {
   .header-wrapper {
     flex-direction: column;
     padding: 15px;
     gap: 15px;
   }
+
   .header-right {
     width: 100%;
     justify-content: center;
   }
+
   .search-bar-container {
     width: 100%;
     margin: 0;
   }
+
   .notification-dropdown {
     position: fixed;
     left: 10px;
@@ -324,6 +387,7 @@
   .notification-dropdown {
     top: 205px;
   }
+
   .nav-button {
     padding: 6px 10px;
     font-size: 0.9rem;

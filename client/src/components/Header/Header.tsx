@@ -331,7 +331,7 @@ const Header: React.FC = () => {
             {(hasSuggestions || (loadingSearch && searchQuery.length > 1)) && (
               <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll shadow rounded p-2">
                 {loadingSearch && (
-                  <div className="p-1 text-center text-muted">Loading...</div>
+                  <div className="p-1 text-center loading-text">Loading...</div>
                 )}
                 {suggestions.events.map((item) => (
                   <div
