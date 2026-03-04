@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "react-bootstrap";
 import { FaBell, FaMoon } from "react-icons/fa";
@@ -160,28 +160,6 @@ const Header: React.FC = () => {
     }
   };
 
-  const fetchSuggestions = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSuggestions({ events: [], users: [] });
-      setLoadingSearch(false);
-      return;
-    }
-
-    setLoadingSearch(true);
-    try {
-      const response = await fetch(`${BASE_URL}/search?q=${query}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data);
-      }
-    } catch (error) {
-      console.error("Search suggestion error:", error);
-      setSuggestions({ events: [], users: [] });
-    } finally {
-      setLoadingSearch(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (isLoggedIn && user) {
       fetchNotifications();
@@ -189,16 +167,40 @@ const Header: React.FC = () => {
   }, [isLoggedIn, user]);
 
   useEffect(() => {
-    let debounceTimer: NodeJS.Timeout;
+    const controller = new AbortController();
+
     if (searchQuery.length > 1) {
-      debounceTimer = setTimeout(() => {
-        fetchSuggestions(searchQuery);
+      setLoadingSearch(true);
+      const debounceTimer = setTimeout(async () => {
+        try {
+          const response = await fetch(`${BASE_URL}/search?q=${searchQuery}`, {
+            signal: controller.signal,
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setSuggestions(data);
+          }
+        } catch (err: any) {
+          if (err.name !== "AbortError") {
+            console.error(err);
+            setSuggestions({ events: [], users: [] });
+          }
+        } finally {
+          if (!controller.signal.aborted) {
+            setLoadingSearch(false);
+          }
+        }
       }, 300);
+
+      return () => {
+        clearTimeout(debounceTimer);
+        controller.abort();
+      };
     } else {
       setSuggestions({ events: [], users: [] });
+      setLoadingSearch(false);
     }
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, fetchSuggestions]);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (isLoggedIn && !user && !hasFetchedUser) {
@@ -312,7 +314,6 @@ const Header: React.FC = () => {
               </button>
             </form>
 
-            {/* Dropdown moved OUTSIDE the form */}
             {(hasSuggestions || (loadingSearch && searchQuery.length > 1)) && (
               <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll shadow rounded p-2">
                 {loadingSearch && (

@@ -58,41 +58,56 @@ const SearchResults: React.FC = () => {
 
   useTheme();
 
-  const fetchResults = useCallback(async () => {
-    if (!query) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${BASE_URL}/search?q=${query}&eventPage=${eventPage}&eventLimit=${resultsPerPage}&userPage=${userPage}&userLimit=${resultsPerPage}`,
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Guard against unexpected API response shape
-        if (!data?.events?.results || !data?.users?.results) return;
-
-        setResults(data);
+  const fetchResults = useCallback(
+    async (signal: AbortSignal) => {
+      if (!query) {
+        // Clear results if query is empty to prevent showing old data
+        setResults({
+          events: { results: [], pagination: initialPaginationState },
+          users: { results: [], pagination: initialPaginationState },
+        });
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Full search error:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [query, eventPage, userPage, resultsPerPage]);
+
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${BASE_URL}/search?q=${query}&eventPage=${eventPage}&eventLimit=${resultsPerPage}&userPage=${userPage}&userLimit=${resultsPerPage}`,
+          { signal }, // Pass the signal to fetch
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.events && data?.users) {
+            setResults(data);
+          }
+        }
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          // This is expected, we don't need to log it
+          return;
+        }
+        console.error("Full search error:", error);
+      } finally {
+        // Only stop loading if the request wasn't aborted
+        if (!signal.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [query, eventPage, userPage],
+  );
 
   useEffect(() => {
-    setEventPage(1);
-    setUserPage(1);
-    fetchResults();
-  }, [query]);
+    const controller = new AbortController();
 
-  useEffect(() => {
-    if (query) {
-      fetchResults();
-    }
-  }, [eventPage, userPage, fetchResults, query]);
+    fetchResults(controller.signal);
+
+    // Cleanup function: This runs when the component unmounts
+    // OR when query/page changes again.
+    return () => controller.abort();
+  }, [query, eventPage, userPage, fetchResults]);
 
   const totalResults =
     results.events.pagination.totalItems + results.users.pagination.totalItems;
@@ -115,8 +130,8 @@ const SearchResults: React.FC = () => {
         </p>
       ) : (
         <p className="text-muted search-found-text">
-          Found {results.events.pagination.totalItems} event(s) and{" "}
-          {results.users.pagination.totalItems} user(s).
+          Found {results?.events?.pagination?.totalItems ?? 0} event(s) and{" "}
+          {results?.users?.pagination?.totalItems ?? 0} user(s).
         </p>
       )}
       <div className="row search-results-row">
