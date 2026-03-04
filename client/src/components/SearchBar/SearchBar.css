@@ -10,6 +10,7 @@
   z-index: 1000;
   max-height: 300px;
   overflow-y: auto;
+  background-color: white; /* Light mode default */
 }
 
 .search-dropdown-base {
@@ -32,27 +33,37 @@
   margin-top: 0.5rem;
   margin-bottom: 0.25rem;
   padding-left: 0.25rem;
+  color: #333;
 }
 
 .suggestion-date {
   font-size: 0.8rem;
 }
 
+/* --- DARK MODE STYLES --- */
+
+/* Ensures the dropdown is visible in dark mode */
 .dark-mode .suggestions-dropdown {
-  background-color: #252525 !important; /* Match your other dark backgrounds */
-  border: 1px solid #444;
-  color: #eee;
+  background-color: #252525 !important;
+  border: 1px solid #444 !important;
+  color: #eee !important;
 }
 
-.dark-mode .suggestions-dropdown .text-muted {
-  color: #aaa !important; /* Lighten the "Loading..." text */
+/* Fixes the "Black on Black" Loading and Date text */
+.dark-mode .suggestions-dropdown .text-muted,
+.dark-mode .suggestions-dropdown .loading-text,
+.dark-mode .suggestions-dropdown .suggestion-date {
+  color: #bbb !important;
 }
 
+/* Enhances category headers for Dark Mode */
 .dark-mode .suggestion-category {
-  color: #9370db; /* Give the "Events" / "Users" headers some color */
+  color: #9370db !important; /* Soft purple/blue for visibility */
   border-bottom: 1px solid #444;
 }
 
-.dark-mode .suggestion-item:hover {
+/* Hover state for items in Dark Mode */
+.dark-mode .suggestion-item-base:hover {
   background-color: #3d3d3d !important;
+  color: #ffffff !important;
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SearchType } from "../../types/SearchType";
+import { useTheme } from "../../context/ThemeContext";
 import "./SearchBar.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -13,6 +14,7 @@ const SearchBar: React.FC = () => {
     users: SearchType[];
   }>({ events: [], users: [] });
   const [loading, setLoading] = useState(false);
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -104,7 +106,10 @@ const SearchBar: React.FC = () => {
     suggestions.events.length > 0 || suggestions.users.length > 0;
 
   return (
-    <div className="search-bar-container" ref={searchRef}>
+    <div
+      className={`search-bar-container ${theme === "dark" ? "dark-mode" : ""}`}
+      ref={searchRef}
+    >
       <form onSubmit={handleSearchSubmit} className="d-flex position-relative">
         <input
           type="search"
@@ -120,7 +125,7 @@ const SearchBar: React.FC = () => {
       {(hasSuggestions || (loading && query.length >= 2)) && (
         <div className="suggestions-dropdown search-dropdown-base shadow rounded mt-1 p-2">
           {loading && (
-            <div className="p-1 text-center text-muted small border-bottom mb-1">
+            <div className="p-1 text-center text-muted small border-bottom mb-1 loading-text">
               Loading...
             </div>
           )}
