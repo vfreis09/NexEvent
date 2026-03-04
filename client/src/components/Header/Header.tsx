@@ -36,10 +36,13 @@ const Header: React.FC = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
+
+  // FIX: Using SearchType here so the import is no longer "unused"
   const [suggestions, setSuggestions] = useState<{
     events: SearchType[];
     users: SearchType[];
   }>({ events: [], users: [] });
+
   const [loadingSearch, setLoadingSearch] = useState(false);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
@@ -178,11 +181,21 @@ const Header: React.FC = () => {
           });
           if (response.ok) {
             const data = await response.json();
-            setSuggestions(data);
+
+            // NORMALIZATION: Still checking if it's an array or a results object
+            // but casting to SearchType[] to keep TypeScript happy.
+            setSuggestions({
+              events: (Array.isArray(data.events)
+                ? data.events
+                : data.events?.results || []) as SearchType[],
+              users: (Array.isArray(data.users)
+                ? data.users
+                : data.users?.results || []) as SearchType[],
+            });
           }
         } catch (err: any) {
           if (err.name !== "AbortError") {
-            console.error(err);
+            console.error("Search error:", err);
             setSuggestions({ events: [], users: [] });
           }
         } finally {
@@ -264,6 +277,7 @@ const Header: React.FC = () => {
   };
 
   const formatEventDate = (dateString: string) => {
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
@@ -326,9 +340,11 @@ const Header: React.FC = () => {
                     className="p-1 rounded suggestion-item"
                   >
                     <strong>{item.title}</strong>
-                    <small className="text-muted ms-2">
-                      ({formatEventDate(item.event_datetime!)})
-                    </small>
+                    {item.event_datetime && (
+                      <small className="text-muted ms-2">
+                        ({formatEventDate(item.event_datetime)})
+                      </small>
+                    )}
                   </div>
                 ))}
                 {suggestions.users.map((item) => (
@@ -342,6 +358,13 @@ const Header: React.FC = () => {
                     {item.username}
                   </div>
                 ))}
+                {!loadingSearch &&
+                  !hasSuggestions &&
+                  searchQuery.length > 1 && (
+                    <div className="p-2 text-center text-muted small">
+                      No quick results found.
+                    </div>
+                  )}
               </div>
             )}
           </div>

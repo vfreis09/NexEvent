@@ -141,7 +141,7 @@ const SearchResults: React.FC = () => {
           </h3>
           <ul className="list-group search-list-group">
             {results.events.results.length === 0 ? (
-              <p className="text-muted p-3">No events found.</p>
+              <p className="search-empty-message p-3">No events found.</p>
             ) : (
               (results.events.results ?? []).map((event) => (
                 <li
@@ -174,7 +174,7 @@ const SearchResults: React.FC = () => {
           </h3>
           <ul className="list-group search-list-group">
             {results.users.results.length === 0 ? (
-              <p className="text-muted p-3">No users found.</p>
+              <p className="search-empty-message p-3">No users found.</p>
             ) : (
               (results.users.results ?? []).map((user) => (
                 <li key={user.id} className="list-group-item search-list-item">

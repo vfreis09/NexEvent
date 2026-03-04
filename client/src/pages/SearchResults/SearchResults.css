@@ -164,3 +164,13 @@
   border-color: #444 !important;
   color: #eee !important;
 }
+
+.search-empty-message {
+  color: #6c757d; /* Standard muted gray */
+  font-style: italic;
+  margin-bottom: 0;
+}
+
+.dark-mode .search-empty-message {
+  color: #aaa !important; /* Lighter gray for better contrast on dark backgrounds */
+}
