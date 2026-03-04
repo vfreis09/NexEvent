@@ -63,11 +63,11 @@ const Event: React.FC<EventProps> = ({
             {event.max_attendees !== null && ` / ${event.max_attendees}`}
           </span>
         </div>
-        <div className="event-info-row">
+        <div
+          className={`event-info-row status-${event.status.toLowerCase()}-card`}
+        >
           <strong>Status</strong>
-          <span className={`status-${event.status.toLowerCase()}`}>
-            {event.status}
-          </span>
+          <span>{event.status}</span>
         </div>
       </div>
 
