@@ -40,6 +40,10 @@
   font-size: 0.8rem;
 }
 
+.loading-text {
+  color: #888;
+}
+
 /* --- DARK MODE STYLES --- */
 
 /* Ensures the dropdown is visible in dark mode */

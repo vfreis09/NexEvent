@@ -125,7 +125,7 @@ const SearchBar: React.FC = () => {
       {(hasSuggestions || (loading && query.length >= 2)) && (
         <div className="suggestions-dropdown search-dropdown-base shadow rounded mt-1 p-2">
           {loading && (
-            <div className="p-1 text-center text-muted small border-bottom mb-1 loading-text">
+            <div className="p-1 text-center small border-bottom mb-1 loading-text">
               Loading...
             </div>
           )}
