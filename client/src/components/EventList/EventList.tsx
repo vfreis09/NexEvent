@@ -13,7 +13,7 @@ interface EventListProps {
     message: string,
     header: string,
     bg: string,
-    textColor?: string
+    textColor?: string,
   ) => void;
   isPast?: boolean;
   isCompact?: boolean;
@@ -54,6 +54,7 @@ const EventList: React.FC<EventListProps> = ({
       {events.map((event) => {
         const isOwner = user && event.author_id === user.id;
         const eventIsExpired = new Date(event.event_datetime) < new Date();
+        const isPrivate = event.visibility === "private";
         let cardClass = "event-card";
 
         if (isPast) {
@@ -74,6 +75,9 @@ const EventList: React.FC<EventListProps> = ({
                   {event.author_username}
                 </Link>
               </span>
+              {isOwner && isPrivate && (
+                <span className="private-badge">🔒 Private</span>
+              )}
             </div>
             <div className="event-card-header">
               <Link to={`/event/${event.id}`} className="event-title-link">
@@ -104,15 +108,15 @@ const EventList: React.FC<EventListProps> = ({
               {event.status === "canceled"
                 ? "Canceled"
                 : eventIsExpired && isPast
-                ? "Completed"
-                : event.max_attendees !== null &&
-                  event.number_of_attendees >= event.max_attendees
-                ? "Full"
-                : isCompact
-                ? "Upcoming"
-                : eventIsExpired
-                ? "Expired"
-                : "Active"}
+                  ? "Completed"
+                  : event.max_attendees !== null &&
+                      event.number_of_attendees >= event.max_attendees
+                    ? "Full"
+                    : isCompact
+                      ? "Upcoming"
+                      : eventIsExpired
+                        ? "Expired"
+                        : "Active"}
             </div>
             {isVerified &&
               user?.role !== "banned" &&

@@ -22,12 +22,14 @@ export const insertEventIntoQueue = async (
       FROM users u
       JOIN user_preferences up ON u.id = up.user_id
       JOIN event_tags et ON up.tag_id = et.tag_id
+      JOIN events e ON et.event_id = e.id
       WHERE 
-          et.event_id = $1 
-          AND u.id != $2
-          AND u.is_verified = TRUE
-          AND u.wants_notifications = TRUE;
-    `;
+        et.event_id = $1 
+        AND u.id != $2
+        AND u.is_verified = TRUE
+        AND u.wants_notifications = TRUE
+        AND e.visibility = 'public';
+  `;
 
     const { rows: users } = await client.query<{ user_id: number }>(
       usersToNotifyQuery,

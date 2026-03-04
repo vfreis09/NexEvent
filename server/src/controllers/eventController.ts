@@ -16,6 +16,7 @@ const createEvent = async (req: Request, res: Response) => {
     max_attendees,
     address,
     tagIds,
+    visibility,
   } = req.body;
 
   const maxAttendees =
@@ -48,9 +49,9 @@ const createEvent = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      `INSERT INTO events (title, description, event_datetime, location, address, author_id, max_attendees)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
+      `INSERT INTO events (title, description, event_datetime, location, address, author_id, max_attendees, visibility)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *`,
       [
         title,
         description,
@@ -59,6 +60,7 @@ const createEvent = async (req: Request, res: Response) => {
         address,
         authorId,
         maxAttendees,
+        visibility || "public",
       ],
     );
     const event = result.rows[0];
@@ -102,7 +104,9 @@ const getEvents = async (req: Request, res: Response) => {
   }
 
   const now = new Date().toISOString();
-  let whereClause = `events.status != 'canceled'`;
+  const requestingUserId = (req as any).user?.id ?? null;
+
+  let whereClause = `events.status != 'canceled' AND (events.visibility = 'public' OR events.author_id = $3)`;
   let orderByClause = `ORDER BY events.event_datetime DESC, events.created_at DESC`;
 
   if (filterType === "upcoming") {
@@ -116,6 +120,7 @@ const getEvents = async (req: Request, res: Response) => {
   try {
     const countResult = await pool.query(
       `SELECT COUNT(*) FROM events WHERE ${whereClause}`,
+      [limit, offset, requestingUserId],
     );
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
@@ -127,7 +132,7 @@ const getEvents = async (req: Request, res: Response) => {
        WHERE ${whereClause}
        ${orderByClause}
        LIMIT $1 OFFSET $2`,
-      [limit, offset],
+      [limit, offset, requestingUserId],
     );
 
     await Promise.all(
@@ -170,6 +175,16 @@ const getEventById = async (req: Request, res: Response) => {
       [id],
     );
 
+    const event = result.rows[0];
+    const requestingUserId = (req as any).user?.id ?? null;
+
+    if (
+      event.visibility === "private" &&
+      event.author_id !== requestingUserId
+    ) {
+      return res.status(403).json({ message: "This event is private." });
+    }
+
     res.json({ ...result.rows[0], tags: tagsResult.rows });
   } catch (error) {
     console.error("Error fetching event:", error);
@@ -187,6 +202,7 @@ const updateEvent = async (req: Request, res: Response) => {
     max_attendees,
     address,
     tagIds,
+    visibility,
   } = req.body;
 
   const authorId = req.user?.id;
@@ -243,8 +259,8 @@ const updateEvent = async (req: Request, res: Response) => {
     }
     const result = await pool.query(
       `UPDATE events 
-       SET title = $1, description = $2, event_datetime = $3, location = $4, address = $5, max_attendees = $6
-       WHERE id = $7 AND author_id = $8 
+       SET title = $1, description = $2, event_datetime = $3, location = $4, address = $5, max_attendees = $6, visibility = $7
+       WHERE id = $8 AND author_id = $9
        RETURNING *`,
       [
         title,
@@ -253,6 +269,7 @@ const updateEvent = async (req: Request, res: Response) => {
         locationPoint,
         address,
         maxAttendees,
+        visibility || "public",
         id,
         authorId,
       ],
@@ -429,7 +446,11 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
     const userId = userResult.rows[0].id;
     const now = new Date().toISOString();
 
-    let whereClause = `e.author_id = $1`;
+    const requestingUserId = (req as any).user?.id ?? null;
+    const isOwnProfile = requestingUserId === userId;
+    let whereClause = isOwnProfile
+      ? `e.author_id = $1`
+      : `e.author_id = $1 AND e.visibility = 'public'`;
     let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
 
     if (filterType === "upcoming") {

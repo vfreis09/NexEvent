@@ -42,6 +42,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [isEventExpired, setIsEventExpired] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [visibility, setVisibility] = useState<"public" | "private">("public");
 
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -79,7 +80,9 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
     if (isEditing && eventId && !isNaN(eventId)) {
       const fetchEvent = async () => {
         try {
-          const response = await fetch(`${BASE_URL}/events/${eventId}`);
+          const response = await fetch(`${BASE_URL}/events/${eventId}`, {
+            credentials: "include",
+          });
           if (!response.ok) throw new Error("Failed to fetch event details");
 
           const data = await response.json();
@@ -107,6 +110,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           setAddress(data.address ?? "");
           setMaxAttendees(data.max_attendees ?? "");
           setSelectedTagIds((data.tags ?? []).map((t: Tag) => t.id));
+          setVisibility(data.visibility ?? "public");
         } catch (error) {
           console.error("Error fetching event:", error);
           showNotification("Failed to load event details.", "Error", "danger");
@@ -165,6 +169,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           max_attendees: maxAttendees,
           address,
           tagIds: selectedTagIds,
+          visibility,
         }),
       });
 
@@ -262,6 +267,25 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
               value={maxAttendees}
               onChange={(e) => setMaxAttendees(e.target.value)}
             />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Visibility:</label>
+            <div className="d-flex gap-3">
+              <div
+                className={`visibility-option ${visibility === "public" ? "selected" : ""}`}
+                onClick={() => setVisibility("public")}
+              >
+                <span>🌐 Public</span>
+                <small>Anyone can see this event</small>
+              </div>
+              <div
+                className={`visibility-option ${visibility === "private" ? "selected" : ""}`}
+                onClick={() => setVisibility("private")}
+              >
+                <span>🔒 Private</span>
+                <small>Only you can see this event</small>
+              </div>
+            </div>
           </div>
           <div className="mb-3">
             <label className="form-label">Tags:</label>

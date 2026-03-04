@@ -47,8 +47,10 @@ const createTableQuery = `
     address TEXT,
     author_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     status VARCHAR(10) DEFAULT 'active',
+    visibility VARCHAR(10) DEFAULT 'public' NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired', 'canceled'))
+    CONSTRAINT status_check CHECK (status IN ('active', 'full', 'expired', 'canceled')),
+    CONSTRAINT visibility_check CHECK (visibility IN ('public', 'private'))
   );
 
   CREATE TABLE IF NOT EXISTS tags (

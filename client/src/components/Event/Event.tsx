@@ -24,10 +24,16 @@ const Event: React.FC<EventProps> = ({
   useTheme();
 
   const isOwner = user && event.author_id === user.id;
+  const isPrivate = event.visibility === "private";
   const imageSrc = hostPicture || defaultAvatar;
 
   return (
     <div className="event-container">
+      {isOwner && isPrivate && (
+        <div className="private-event-banner">
+          🔒 This event is private — only you can see it
+        </div>
+      )}
       <h2>{event.title}</h2>
 
       <div className="event-host-details">

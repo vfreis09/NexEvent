@@ -18,6 +18,7 @@ export interface EventData {
   max_attendees: number | null;
   author_id: number;
   status: string;
+  visibility: "public" | "private";
   created_at: string;
   author_username: string;
   author?: AuthorData;
