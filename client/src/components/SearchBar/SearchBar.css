@@ -37,3 +37,22 @@
 .suggestion-date {
   font-size: 0.8rem;
 }
+
+.dark-mode .suggestions-dropdown {
+  background-color: #252525 !important; /* Match your other dark backgrounds */
+  border: 1px solid #444;
+  color: #eee;
+}
+
+.dark-mode .suggestions-dropdown .text-muted {
+  color: #aaa !important; /* Lighten the "Loading..." text */
+}
+
+.dark-mode .suggestion-category {
+  color: #9370db; /* Give the "Events" / "Users" headers some color */
+  border-bottom: 1px solid #444;
+}
+
+.dark-mode .suggestion-item:hover {
+  background-color: #3d3d3d !important;
+}

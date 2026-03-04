@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SearchType } from "../../types/SearchType";
-import "./SearchBar.css"; // Import the new CSS file
+import "./SearchBar.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
@@ -17,27 +17,47 @@ const SearchBar: React.FC = () => {
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     if (query.length < 2) {
       setSuggestions({ events: [], users: [] });
+      setLoading(false);
       return;
     }
 
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`${BASE_URL}/search?q=${query}`);
+        const response = await fetch(`${BASE_URL}/search?q=${query}`, {
+          signal: controller.signal,
+        });
+
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data);
+          setSuggestions({
+            events: (Array.isArray(data.events)
+              ? data.events
+              : data.events?.results || []) as SearchType[],
+            users: (Array.isArray(data.users)
+              ? data.users
+              : data.users?.results || []) as SearchType[],
+          });
         }
-      } catch (error) {
-        console.error("Search suggestion error:", error);
+      } catch (error: any) {
+        if (error.name !== "AbortError") {
+          console.error("Search suggestion error:", error);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
 
   useEffect(() => {
@@ -66,11 +86,8 @@ const SearchBar: React.FC = () => {
     id: number,
     username?: string,
   ) => {
-    if (type === "event") {
-      navigate(`/event/${id}`);
-    } else if (type === "user" && username) {
-      navigate(`/user/${username}`);
-    }
+    if (type === "event") navigate(`/event/${id}`);
+    else if (type === "user" && username) navigate(`/user/${username}`);
     setSuggestions({ events: [], users: [] });
     setQuery("");
   };
@@ -100,12 +117,17 @@ const SearchBar: React.FC = () => {
           Search
         </button>
       </form>
-      {hasSuggestions && (
-        <div className="suggestions-dropdown search-dropdown-base bg-white shadow rounded mt-1 p-2">
+      {(hasSuggestions || (loading && query.length >= 2)) && (
+        <div className="suggestions-dropdown search-dropdown-base shadow rounded mt-1 p-2">
+          {loading && (
+            <div className="p-1 text-center text-muted small border-bottom mb-1">
+              Loading...
+            </div>
+          )}
           {suggestions.events.length > 0 && (
-            <>
+            <div className="mb-2">
               <h6 className="suggestion-category">Events</h6>
-              <ul className="list-unstyled">
+              <ul className="list-unstyled mb-0">
                 {suggestions.events.map((item) => (
                   <li
                     key={`event-${item.id}`}
@@ -119,12 +141,12 @@ const SearchBar: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            </>
+            </div>
           )}
           {suggestions.users.length > 0 && (
-            <>
+            <div>
               <h6 className="suggestion-category">Users</h6>
-              <ul className="list-unstyled">
+              <ul className="list-unstyled mb-0">
                 {suggestions.users.map((item) => (
                   <li
                     key={`user-${item.id}`}
@@ -137,13 +159,8 @@ const SearchBar: React.FC = () => {
                   </li>
                 ))}
               </ul>
-            </>
+            </div>
           )}
-        </div>
-      )}
-      {loading && query.length >= 2 && (
-        <div className="suggestions-dropdown search-dropdown-base bg-white shadow rounded mt-1 p-2">
-          <p className="text-muted mb-0">Loading...</p>
         </div>
       )}
     </div>
