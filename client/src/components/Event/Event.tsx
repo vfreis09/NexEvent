@@ -24,12 +24,12 @@ const Event: React.FC<EventProps> = ({
   useTheme();
 
   const isOwner = user && event.author_id === user.id;
-
   const imageSrc = hostPicture || defaultAvatar;
 
   return (
     <div className="event-container">
       <h2>{event.title}</h2>
+
       <div className="event-host-details">
         <div className="host-avatar-frame-small">
           <img
@@ -44,28 +44,33 @@ const Event: React.FC<EventProps> = ({
           </Link>
         </p>
       </div>
+
       <p className="event-description">{event.description}</p>
-      <div className="event-info-row">
-        <strong>Date & Time:</strong>
-        <span>{new Date(event.event_datetime).toLocaleString()}</span>
+
+      <div className="event-info-grid">
+        <div className="event-info-row">
+          <strong>Date & Time</strong>
+          <span>{new Date(event.event_datetime).toLocaleString()}</span>
+        </div>
+        <div className="event-info-row">
+          <strong>Location</strong>
+          <span>{event.address}</span>
+        </div>
+        <div className="event-info-row">
+          <strong>Attendees</strong>
+          <span>
+            {event.number_of_attendees}
+            {event.max_attendees !== null && ` / ${event.max_attendees}`}
+          </span>
+        </div>
+        <div className="event-info-row">
+          <strong>Status</strong>
+          <span className={`status-${event.status.toLowerCase()}`}>
+            {event.status}
+          </span>
+        </div>
       </div>
-      <div className="event-info-row">
-        <strong>Location:</strong>
-        <span>{event.address}</span>
-      </div>
-      <div className="event-info-row">
-        <strong>Attendees:</strong>
-        <span>
-          {event.number_of_attendees}
-          {event.max_attendees !== null && ` / ${event.max_attendees}`}
-        </span>
-      </div>
-      <div className="event-info-row">
-        <strong>Status:</strong>
-        <span className={`status-${event.status.toLowerCase()}`}>
-          {event.status}
-        </span>
-      </div>
+
       {isVerified && isOwner && user?.role !== "banned" && (
         <div className="event-owner-actions">
           <Link to={`/edit/${event.id}`} className="edit-event-link">
