@@ -68,7 +68,11 @@ const SearchResults: React.FC = () => {
       );
 
       if (response.ok) {
-        const data: SearchData = await response.json();
+        const data = await response.json();
+
+        // Guard against unexpected API response shape
+        if (!data?.events?.results || !data?.users?.results) return;
+
         setResults(data);
       }
     } catch (error) {
@@ -106,7 +110,7 @@ const SearchResults: React.FC = () => {
       <h2>Search Results for: "{query}"</h2>
       <hr className="search-separator" />
       {totalResults === 0 ? (
-        <p className="alert alert-info search-alert">
+        <p className="search-no-results">
           No events or users found matching "{query}".
         </p>
       ) : (
@@ -124,7 +128,7 @@ const SearchResults: React.FC = () => {
             {results.events.results.length === 0 ? (
               <p className="text-muted p-3">No events found.</p>
             ) : (
-              results.events.results.map((event) => (
+              (results.events.results ?? []).map((event) => (
                 <li
                   key={event.id}
                   className="list-group-item d-flex justify-content-between align-items-center search-list-item"
@@ -157,7 +161,7 @@ const SearchResults: React.FC = () => {
             {results.users.results.length === 0 ? (
               <p className="text-muted p-3">No users found.</p>
             ) : (
-              results.users.results.map((user) => (
+              (results.users.results ?? []).map((user) => (
                 <li key={user.id} className="list-group-item search-list-item">
                   <Link
                     to={`/user/${user.username}`}

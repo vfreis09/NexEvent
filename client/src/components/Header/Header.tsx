@@ -310,38 +310,39 @@ const Header: React.FC = () => {
               <button type="submit" className="btn btn-outline-primary">
                 Search
               </button>
-              {(hasSuggestions ||
-                (loadingSearch && searchQuery.length > 1)) && (
-                <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll shadow rounded p-2">
-                  {loadingSearch && (
-                    <div className="p-1 text-center text-muted">Loading...</div>
-                  )}
-                  {suggestions.events.map((item) => (
-                    <div
-                      key={`event-${item.id}`}
-                      onClick={() => handleSuggestionClick("event", item.id)}
-                      className="p-1 rounded suggestion-item"
-                    >
-                      <strong>{item.title}</strong>
-                      <small className="text-muted ms-2">
-                        ({formatEventDate(item.event_datetime!)})
-                      </small>
-                    </div>
-                  ))}
-                  {suggestions.users.map((item) => (
-                    <div
-                      key={`user-${item.id}`}
-                      onClick={() =>
-                        handleSuggestionClick("user", item.id, item.username)
-                      }
-                      className="p-1 rounded suggestion-item"
-                    >
-                      {item.username}
-                    </div>
-                  ))}
-                </div>
-              )}
             </form>
+
+            {/* Dropdown moved OUTSIDE the form */}
+            {(hasSuggestions || (loadingSearch && searchQuery.length > 1)) && (
+              <div className="suggestions-dropdown search-dropdown-base suggestion-list-scroll shadow rounded p-2">
+                {loadingSearch && (
+                  <div className="p-1 text-center text-muted">Loading...</div>
+                )}
+                {suggestions.events.map((item) => (
+                  <div
+                    key={`event-${item.id}`}
+                    onClick={() => handleSuggestionClick("event", item.id)}
+                    className="p-1 rounded suggestion-item"
+                  >
+                    <strong>{item.title}</strong>
+                    <small className="text-muted ms-2">
+                      ({formatEventDate(item.event_datetime!)})
+                    </small>
+                  </div>
+                ))}
+                {suggestions.users.map((item) => (
+                  <div
+                    key={`user-${item.id}`}
+                    onClick={() =>
+                      handleSuggestionClick("user", item.id, item.username)
+                    }
+                    className="p-1 rounded suggestion-item"
+                  >
+                    {item.username}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="header-right">
             {!isLoggedIn && (

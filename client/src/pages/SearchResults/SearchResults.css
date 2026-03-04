@@ -142,3 +142,25 @@
   border-color: #9370db !important;
   color: white !important;
 }
+
+.search-no-results {
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border-left: 4px solid #5a2d82;
+  background-color: #f8f5ff;
+  color: #444;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dark-mode .search-no-results {
+  background-color: #252535;
+  border-left-color: #9370db;
+  color: #ccc;
+}
+
+.dark-mode .search-list-item.list-group-item {
+  background-color: #252525 !important;
+  border-color: #444 !important;
+  color: #eee !important;
+}
