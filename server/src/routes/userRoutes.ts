@@ -3,6 +3,7 @@ import userController from "../controllers/userController";
 import eventController from "../controllers/eventController";
 import authenticateUser from "../middlewares/authMiddleware";
 import checkBannedUser from "../middlewares/checkBannedUser";
+import resetLinkLimiter from "../middlewares/resetLinkLimiter";
 
 const router = Router();
 
@@ -61,14 +62,10 @@ router.put(
 // --- Password reset (no auth needed) ---
 router.post(
   "/user/forgot-password",
-  checkBannedUser,
+  resetLinkLimiter,
   userController.sendResetLink,
 );
-router.post(
-  "/user/reset-password",
-  checkBannedUser,
-  userController.resetForgottenPassword,
-);
+router.post("/user/reset-password", userController.resetForgottenPassword);
 
 // --- Email verification ---
 router.post(
@@ -77,7 +74,7 @@ router.post(
   checkBannedUser,
   userController.requestVerificationEmail,
 );
-router.get("/verify-email", checkBannedUser, userController.verifyEmail);
+router.get("/verify-email", userController.verifyEmail);
 
 // --- Tags ---
 router.get("/tags", userController.getAllTags);
