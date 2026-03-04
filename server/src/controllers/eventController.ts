@@ -119,19 +119,19 @@ const getEvents = async (req: Request, res: Response) => {
 
   try {
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM events WHERE ${whereClause}`,
-      [limit, offset, requestingUserId],
+      `SELECT COUNT(*) FROM events WHERE ${whereClause.replace("$3::integer", "$1::integer")}`,
+      [requestingUserId],
     );
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
 
     const eventsResult = await pool.query(
       `SELECT events.*, users.username AS author_username
-       FROM events
-       JOIN users ON events.author_id = users.id
-       WHERE ${whereClause}
-       ${orderByClause}
-       LIMIT $1 OFFSET $2`,
+   FROM events
+   JOIN users ON events.author_id = users.id
+   WHERE ${whereClause}
+   ${orderByClause}
+   LIMIT $1 OFFSET $2`,
       [limit, offset, requestingUserId],
     );
 
