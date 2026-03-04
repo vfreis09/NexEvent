@@ -284,7 +284,7 @@ const updateEvent = async (req: Request, res: Response) => {
       `SELECT r.*, u.email FROM rsvps r
        JOIN users u ON r.user_id = u.id
        WHERE r.event_id = $1
-       AND r.status = 'Accepted'
+       AND r.status = 'accepted'
        AND u.is_verified = true
        AND u.wants_notifications = true`,
       [id],
@@ -371,7 +371,7 @@ const cancelEvent = async (req: Request, res: Response) => {
        FROM rsvps r
        JOIN users u ON r.user_id = u.id
        WHERE r.event_id = $1
-       AND r.status = 'Accepted'
+       AND r.status = 'accepted'
        AND u.is_verified = true
        AND u.wants_notifications = true`,
       [id],

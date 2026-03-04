@@ -29,7 +29,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
 
     const updateAttendeesCount = async (): Promise<number> => {
       const result = await pool.query(
-        `SELECT COUNT(*) FROM rsvps WHERE event_id = $1 AND status = 'Accepted'`,
+        `SELECT COUNT(*) FROM rsvps WHERE event_id = $1 AND status = 'accepted'`,
         [eventId],
       );
       const attendeesCount = parseInt(result.rows[0].count, 10);
@@ -42,7 +42,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
       return attendeesCount;
     };
 
-    if (status === "Accepted" && event.max_attendees !== null) {
+    if (status === "accepted" && event.max_attendees !== null) {
       const currentAttendees = await updateAttendeesCount();
       if (currentAttendees >= event.max_attendees) {
         res.status(400).json({ message: "Event is full" });

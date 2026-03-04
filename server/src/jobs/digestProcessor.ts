@@ -136,7 +136,7 @@ export const processDigestQueue = async (
         const { rows: reminders } = await client.query<EventDetail>(
           `SELECT e.id, e.title, e.description, e.event_datetime
            FROM events e JOIN rsvps r ON e.id = r.event_id
-           WHERE r.user_id = $1 AND r.status = 'Accepted'
+           WHERE r.user_id = $1 AND r.status = 'accepted'
            AND e.event_datetime BETWEEN NOW() AND NOW() + interval '7 days'
            ORDER BY e.event_datetime ASC;`,
           [user_id],
