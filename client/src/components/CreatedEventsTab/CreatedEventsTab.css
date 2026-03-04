@@ -2,13 +2,12 @@
   padding: 0.5rem 0;
 }
 
-.created-events-tab-view h3 {
+.created-events-tab-view > h3 {
   font-size: 1.35rem;
   font-weight: 700;
   color: #333;
   margin: 2rem auto 1.25rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #ddd;
   width: 90%;
 }
 
@@ -33,9 +32,8 @@
   font-style: italic;
 }
 
-.dark-mode .created-events-tab-view h3 {
+.dark-mode .created-events-tab-view > h3 {
   color: #ffffff;
-  border-bottom: 1px solid #444;
 }
 
 .dark-mode .past-events-header {
