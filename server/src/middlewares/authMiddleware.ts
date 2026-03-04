@@ -66,4 +66,34 @@ const authenticateUser = async (
   }
 };
 
+export const optionalAuthenticateUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const token = req.cookies?.token;
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      Number(decoded.id),
+    ]);
+
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      req.user = {
+        id: Number(user.id),
+        email: user.email,
+        isVerified: user.is_verified,
+        role: user.role,
+      } as UserPayload;
+    }
+  } catch {
+    // invalid token, continue as guest
+  }
+
+  next();
+};
+
 export default authenticateUser;

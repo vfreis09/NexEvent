@@ -1,7 +1,9 @@
 import { Router } from "express";
 import eventController from "../controllers/eventController";
 import rsvpController from "../controllers/rsvpController";
-import authenticateUser from "../middlewares/authMiddleware";
+import authenticateUser, {
+  optionalAuthenticateUser,
+} from "../middlewares/authMiddleware";
 import requireVerifiedUser from "../middlewares/verifyEmailMiddleware";
 import checkBannedUser from "../middlewares/checkBannedUser";
 
@@ -12,16 +14,20 @@ router.post(
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
-  eventController.createEvent
+  eventController.createEvent,
 );
-router.get("/events", eventController.getEvents);
-router.get("/events/:id", eventController.getEventById);
+router.get("/events", optionalAuthenticateUser, eventController.getEvents);
+router.get(
+  "/events/:id",
+  optionalAuthenticateUser,
+  eventController.getEventById,
+);
 router.put(
   "/events/:id",
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
-  eventController.updateEvent
+  eventController.updateEvent,
 );
 
 router.put(
@@ -29,7 +35,7 @@ router.put(
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
-  eventController.cancelEvent
+  eventController.cancelEvent,
 );
 
 router.post(
@@ -37,7 +43,7 @@ router.post(
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
-  rsvpController.createRsvp
+  rsvpController.createRsvp,
 );
 
 export default router;
