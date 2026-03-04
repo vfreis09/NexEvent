@@ -33,7 +33,7 @@ const CreatedEventsTab = () => {
       if (isUpcoming) setLoadingUpcoming(true);
       else setLoadingPast(true);
 
-      const url = `${BASE_URL}/${profileUser.username}/events?page=${page}&limit=${EventsPerPage}&type=${type}`;
+      const url = `${BASE_URL}/user/${profileUser.username}/events?page=${page}&limit=${EventsPerPage}&type=${type}`;
 
       try {
         const res = await fetch(url, {
