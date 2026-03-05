@@ -1,7 +1,9 @@
 import { Router } from "express";
 import userController from "../controllers/userController";
 import eventController from "../controllers/eventController";
-import authenticateUser from "../middlewares/authMiddleware";
+import authenticateUser, {
+  optionalAuthenticateUser,
+} from "../middlewares/authMiddleware";
 import checkBannedUser from "../middlewares/checkBannedUser";
 import resetLinkLimiter from "../middlewares/resetLinkLimiter";
 
@@ -87,6 +89,10 @@ router.put(
   userController.updateUser,
 );
 router.get("/user/:username", userController.getPublicUserByUsername);
-router.get("/user/:username/events", eventController.getEventsByAuthor);
+router.get(
+  "/user/:username/events",
+  optionalAuthenticateUser,
+  eventController.getEventsByAuthor,
+);
 
 export default router;

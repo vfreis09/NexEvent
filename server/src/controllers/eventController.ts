@@ -182,7 +182,13 @@ const getEventById = async (req: Request, res: Response) => {
       event.visibility === "private" &&
       event.author_id !== requestingUserId
     ) {
-      return res.status(403).json({ message: "This event is private." });
+      const inviteCheck = await pool.query(
+        `SELECT 1 FROM invites WHERE event_id = $1 AND invited_user_id = $2 AND status = 'accepted'`,
+        [id, requestingUserId],
+      );
+      if (inviteCheck.rows.length === 0) {
+        return res.status(403).json({ message: "This event is private." });
+      }
     }
 
     res.json({ ...result.rows[0], tags: tagsResult.rows });
@@ -448,9 +454,19 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
 
     const requestingUserId = (req as any).user?.id ?? null;
     const isOwnProfile = requestingUserId === userId;
+
     let whereClause = isOwnProfile
       ? `e.author_id = $1`
-      : `e.author_id = $1 AND e.visibility = 'public'`;
+      : `e.author_id = $1 AND (
+          e.visibility = 'public' OR
+          EXISTS (
+            SELECT 1 FROM invites i
+            WHERE i.event_id = e.id
+            AND i.invited_user_id = $4
+            AND i.status = 'accepted'
+          )
+        )`;
+
     let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
 
     if (filterType === "upcoming") {
@@ -466,7 +482,8 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
 
     if (queryLimit > 3) {
       const countResult = await pool.query(
-        `SELECT COUNT(*) FROM events e WHERE ${whereClause.replace("$1", userId)}`,
+        `SELECT COUNT(*) FROM events e WHERE ${whereClause}`,
+        isOwnProfile ? [userId] : [userId, null, null, requestingUserId],
       );
       totalEvents = parseInt(countResult.rows[0].count, 10);
       totalPages = Math.ceil(totalEvents / queryLimit);
@@ -479,7 +496,9 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
        WHERE ${whereClause}
        ${orderByClause}
        LIMIT $2 OFFSET $3`,
-      [userId, queryLimit, offset],
+      isOwnProfile
+        ? [userId, queryLimit, offset]
+        : [userId, queryLimit, offset, requestingUserId],
     );
 
     await Promise.all(
