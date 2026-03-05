@@ -170,16 +170,7 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
 
     let whereClause = isOwnProfile
       ? `r.user_id = $1`
-      : `r.user_id = $1 AND (
-          e.visibility = 'public'
-          OR e.author_id = $1
-          OR EXISTS (
-            SELECT 1 FROM invites i
-            WHERE i.event_id = e.id
-            AND i.invited_user_id = $1
-            AND i.status = 'accepted'
-          )
-        )`;
+      : `r.user_id = $1 AND e.visibility = 'public'`;
 
     let queryParams: any[] = [userId];
     let orderByClause = `ORDER BY e.event_datetime DESC`;
