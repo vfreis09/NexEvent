@@ -128,7 +128,7 @@ const getEvents = async (req: Request, res: Response) => {
 
   try {
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM events WHERE ${whereClause.replace("$3::integer", "$1::integer")}`,
+      `SELECT COUNT(*) FROM events WHERE ${whereClause.replace(/\$3::integer/g, "$1::integer")}`,
       [requestingUserId],
     );
     const totalEvents = parseInt(countResult.rows[0].count, 10);
