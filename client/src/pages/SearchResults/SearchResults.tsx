@@ -74,7 +74,7 @@ const SearchResults: React.FC = () => {
       try {
         const response = await fetch(
           `${BASE_URL}/search?q=${query}&eventPage=${eventPage}&eventLimit=${resultsPerPage}&userPage=${userPage}&userLimit=${resultsPerPage}`,
-          { signal }, // Pass the signal to fetch
+          { signal, credentials: "include" },
         );
 
         if (response.ok) {
