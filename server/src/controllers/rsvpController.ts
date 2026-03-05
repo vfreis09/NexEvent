@@ -27,6 +27,17 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
 
     const event = eventResult.rows[0];
 
+    if (event.visibility === "private" && event.author_id !== userId) {
+      const inviteCheck = await pool.query(
+        `SELECT 1 FROM invites WHERE event_id = $1 AND invited_user_id = $2 AND status = 'accepted'`,
+        [eventId, userId],
+      );
+      if (inviteCheck.rows.length === 0) {
+        res.status(403).json({ message: "This event is private." });
+        return;
+      }
+    }
+
     const updateAttendeesCount = async (): Promise<number> => {
       const result = await pool.query(
         `SELECT COUNT(*) FROM rsvps WHERE event_id = $1 AND status = 'accepted'`,
@@ -153,9 +164,23 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
     }
 
     const userId = userResult.rows[0].id;
+    const requestingUserId = (req as any).user?.id ?? null;
+    const isOwnProfile = requestingUserId === userId;
     const now = new Date();
 
-    let whereClause = `r.user_id = $1`;
+    let whereClause = isOwnProfile
+      ? `r.user_id = $1`
+      : `r.user_id = $1 AND (
+          e.visibility = 'public'
+          OR e.author_id = $1
+          OR EXISTS (
+            SELECT 1 FROM invites i
+            WHERE i.event_id = e.id
+            AND i.invited_user_id = $1
+            AND i.status = 'accepted'
+          )
+        )`;
+
     let queryParams: any[] = [userId];
     let orderByClause = `ORDER BY e.event_datetime DESC`;
 
@@ -176,6 +201,7 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
        WHERE ${whereClause}`,
       queryParams,
     );
+
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
     const limitIdx = queryParams.length + 1;

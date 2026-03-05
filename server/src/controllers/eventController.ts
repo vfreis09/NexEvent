@@ -106,7 +106,16 @@ const getEvents = async (req: Request, res: Response) => {
   const now = new Date().toISOString();
   const requestingUserId = (req as any).user?.id ?? null;
 
-  let whereClause = `events.status != 'canceled' AND (events.visibility = 'public' OR events.author_id = $3::integer)`;
+  let whereClause = `events.status != 'canceled' AND (
+  events.visibility = 'public' 
+  OR events.author_id = $3::integer
+  OR EXISTS (
+    SELECT 1 FROM invites i 
+    WHERE i.event_id = events.id 
+    AND i.invited_user_id = $3::integer 
+    AND i.status = 'accepted'
+  )
+)`;
   let orderByClause = `ORDER BY events.event_datetime DESC, events.created_at DESC`;
 
   if (filterType === "upcoming") {

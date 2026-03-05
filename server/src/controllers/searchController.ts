@@ -30,19 +30,37 @@ const unifiedSearch = async (req: Request, res: Response) => {
     const [eventCountResult, eventsResult] = await Promise.all([
       pool.query(
         `SELECT COUNT(*) FROM events 
-          WHERE (title ILIKE $1 OR description ILIKE $1) 
-          AND status != 'canceled'
-          AND (visibility = 'public' OR author_id = $2::integer)`,
+         WHERE (title ILIKE $1 OR description ILIKE $1) 
+         AND status != 'canceled'
+         AND (
+           visibility = 'public' 
+           OR author_id = $2::integer
+           OR EXISTS (
+             SELECT 1 FROM invites i 
+             WHERE i.event_id = events.id 
+             AND i.invited_user_id = $2::integer 
+             AND i.status = 'accepted'
+           )
+         )`,
         [searchTerm, requestingUserId],
       ),
       pool.query(
         `SELECT id, title, event_datetime, address
-          FROM events 
-          WHERE (title ILIKE $1 OR description ILIKE $1) 
-          AND status != 'canceled'
-          AND (visibility = 'public' OR author_id = $2::integer)
-          ORDER BY event_datetime DESC
-          LIMIT $3 OFFSET $4`,
+         FROM events 
+         WHERE (title ILIKE $1 OR description ILIKE $1) 
+         AND status != 'canceled'
+         AND (
+           visibility = 'public' 
+           OR author_id = $2::integer
+           OR EXISTS (
+             SELECT 1 FROM invites i 
+             WHERE i.event_id = events.id 
+             AND i.invited_user_id = $2::integer 
+             AND i.status = 'accepted'
+           )
+         )
+         ORDER BY event_datetime DESC
+         LIMIT $3 OFFSET $4`,
         [searchTerm, requestingUserId, eventLimit, eventOffset],
       ),
     ]);
@@ -56,13 +74,10 @@ const unifiedSearch = async (req: Request, res: Response) => {
          WHERE username ILIKE $1 AND is_verified = true`,
         [searchTerm],
       ),
-
       pool.query(
-        `SELECT 
-            id, username 
+        `SELECT id, username 
          FROM users 
-         WHERE 
-            username ILIKE $1 AND is_verified = true
+         WHERE username ILIKE $1 AND is_verified = true
          ORDER BY username ASC
          LIMIT $2 OFFSET $3`,
         [searchTerm, userLimit, userOffset],

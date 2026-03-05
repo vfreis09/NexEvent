@@ -1,6 +1,8 @@
 import { Router } from "express";
 import rsvpController from "../controllers/rsvpController";
-import authenticateUser from "../middlewares/authMiddleware";
+import authenticateUser, {
+  optionalAuthenticateUser,
+} from "../middlewares/authMiddleware";
 import requireVerifiedUser from "../middlewares/verifyEmailMiddleware";
 import checkBannedUser from "../middlewares/checkBannedUser";
 
@@ -8,8 +10,9 @@ const router = Router();
 
 router.get(
   "/rsvps/user/:username",
+  optionalAuthenticateUser,
   checkBannedUser,
-  rsvpController.getEventsRsvpedByUser
+  rsvpController.getEventsRsvpedByUser,
 );
 
 router.post(
@@ -17,7 +20,7 @@ router.post(
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
-  rsvpController.createRsvp
+  rsvpController.createRsvp,
 );
 
 router.get(
@@ -25,7 +28,7 @@ router.get(
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
-  rsvpController.getRsvps
+  rsvpController.getRsvps,
 );
 
 router.get(
@@ -33,7 +36,7 @@ router.get(
   authenticateUser,
   requireVerifiedUser,
   checkBannedUser,
-  rsvpController.getSingleRsvp
+  rsvpController.getSingleRsvp,
 );
 
 export default router;

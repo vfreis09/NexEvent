@@ -75,9 +75,7 @@ const EventList: React.FC<EventListProps> = ({
                   {event.author_username}
                 </Link>
               </span>
-              {isOwner && isPrivate && (
-                <span className="private-badge">🔒 Private</span>
-              )}
+              {isPrivate && <span className="private-badge">🔒 Private</span>}
             </div>
             <div className="event-card-header">
               <Link to={`/event/${event.id}`} className="event-title-link">

@@ -29,9 +29,11 @@ const Event: React.FC<EventProps> = ({
 
   return (
     <div className="event-container">
-      {isOwner && isPrivate && (
+      {isPrivate && (
         <div className="private-event-banner">
-          🔒 This event is private — only you can see it
+          {isOwner
+            ? "🔒 This event is private — only you and invited users can see it"
+            : "🔒 This is a private event — you were invited"}
         </div>
       )}
       <h2>{event.title}</h2>
