@@ -24,23 +24,26 @@ const unifiedSearch = async (req: Request, res: Response) => {
   const userPage = parseInt(req.query.userPage as string) || 1;
   const userLimit = parseInt(req.query.userLimit as string) || 10;
   const userOffset = (userPage - 1) * userLimit;
+  const requestingUserId = (req as any).user?.id ?? null;
 
   try {
     const [eventCountResult, eventsResult] = await Promise.all([
       pool.query(
         `SELECT COUNT(*) FROM events 
-         WHERE (title ILIKE $1 OR description ILIKE $1) AND status != 'canceled'`,
-        [searchTerm],
+          WHERE (title ILIKE $1 OR description ILIKE $1) 
+          AND status != 'canceled'
+          AND (visibility = 'public' OR author_id = $2::integer)`,
+        [searchTerm, requestingUserId],
       ),
       pool.query(
-        `SELECT 
-            id, title, event_datetime, address
-         FROM events 
-         WHERE 
-            (title ILIKE $1 OR description ILIKE $1) AND status != 'canceled'
-         ORDER BY event_datetime DESC
-         LIMIT $2 OFFSET $3`,
-        [searchTerm, eventLimit, eventOffset],
+        `SELECT id, title, event_datetime, address
+          FROM events 
+          WHERE (title ILIKE $1 OR description ILIKE $1) 
+          AND status != 'canceled'
+          AND (visibility = 'public' OR author_id = $2::integer)
+          ORDER BY event_datetime DESC
+          LIMIT $3 OFFSET $4`,
+        [searchTerm, requestingUserId, eventLimit, eventOffset],
       ),
     ]);
 
