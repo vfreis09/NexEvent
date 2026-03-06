@@ -78,7 +78,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
 
     await updateAttendeesCount();
 
-    if (status !== previousStatus) {
+    if (status !== previousStatus && event.author_id !== userId) {
       const message = `${userEmail} has RSVP'd as "${status}" to your event "${event.title}".`;
 
       const existingNotif = await pool.query(
