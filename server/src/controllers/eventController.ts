@@ -314,12 +314,13 @@ const updateEvent = async (req: Request, res: Response) => {
 
     const rsvpResult = await pool.query(
       `SELECT r.*, u.email FROM rsvps r
-       JOIN users u ON r.user_id = u.id
-       WHERE r.event_id = $1
-       AND r.status = 'accepted'
-       AND u.is_verified = true
-       AND u.wants_notifications = true`,
-      [id],
+        JOIN users u ON r.user_id = u.id
+        WHERE r.event_id = $1
+        AND r.status = 'accepted'
+        AND u.is_verified = true
+        AND u.wants_notifications = true
+        AND r.user_id != $2`,
+      [id, authorId],
     );
 
     for (const user of rsvpResult.rows) {
@@ -400,13 +401,14 @@ const cancelEvent = async (req: Request, res: Response) => {
 
     const rsvpResult = await pool.query(
       `SELECT r.user_id, u.email
-       FROM rsvps r
-       JOIN users u ON r.user_id = u.id
-       WHERE r.event_id = $1
-       AND r.status = 'accepted'
-       AND u.is_verified = true
-       AND u.wants_notifications = true`,
-      [id],
+        FROM rsvps r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.event_id = $1
+        AND r.status = 'accepted'
+        AND u.is_verified = true
+        AND u.wants_notifications = true
+        AND r.user_id != $2`,
+      [id, authorId],
     );
 
     for (const user of rsvpResult.rows) {
