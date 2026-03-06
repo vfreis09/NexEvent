@@ -16,7 +16,7 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
 
   try {
     const eventResult = await pool.query(
-      `SELECT id, title, max_attendees, number_of_attendees, author_id FROM events WHERE id = $1`,
+      `SELECT id, title, max_attendees, number_of_attendees, author_id, visibility FROM events WHERE id = $1`,
       [eventId],
     );
 
@@ -81,11 +81,25 @@ const createRsvp = async (req: Request, res: Response): Promise<void> => {
     if (status !== previousStatus) {
       const message = `${userEmail} has RSVP'd as "${status}" to your event "${event.title}".`;
 
-      await pool.query(
-        `INSERT INTO notifications (user_id, message, event_id)
-         VALUES ($1, $2, $3)`,
-        [event.author_id, message, eventId],
+      const existingNotif = await pool.query(
+        `SELECT id, is_read FROM notifications 
+         WHERE user_id = $1 AND event_id = $2 
+         ORDER BY created_at DESC LIMIT 1`,
+        [event.author_id, eventId],
       );
+
+      if (existingNotif.rows.length > 0 && !existingNotif.rows[0].is_read) {
+        await pool.query(
+          `UPDATE notifications SET message = $1, created_at = CURRENT_TIMESTAMP 
+           WHERE id = $2`,
+          [message, existingNotif.rows[0].id],
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO notifications (user_id, message, event_id) VALUES ($1, $2, $3)`,
+          [event.author_id, message, eventId],
+        );
+      }
     }
 
     res.status(200).json({ message: "RSVP updated successfully" });
