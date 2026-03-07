@@ -37,7 +37,6 @@ const Header: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  // FIX: Using SearchType here so the import is no longer "unused"
   const [suggestions, setSuggestions] = useState<{
     events: SearchType[];
     users: SearchType[];
@@ -183,8 +182,6 @@ const Header: React.FC = () => {
           if (response.ok) {
             const data = await response.json();
 
-            // NORMALIZATION: Still checking if it's an array or a results object
-            // but casting to SearchType[] to keep TypeScript happy.
             setSuggestions({
               events: (Array.isArray(data.events)
                 ? data.events

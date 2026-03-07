@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
 
-// Environment variable loading logic
 const envPaths = [
   path.join(process.cwd(), ".env"),
   path.join(__dirname, ".env"),
@@ -21,7 +20,6 @@ for (const p of envPaths) {
 
 dotenv.config();
 
-// Database connection using your Supabase/Railway string
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -61,7 +59,6 @@ const seedDatabase = async () => {
       await client.query(`TRUNCATE ${table} RESTART IDENTITY CASCADE`);
     }
 
-    // Keeping your requested path exactly as is
     const tagsPath = path.join(__dirname, "src", "data", "tags.json");
     if (!fs.existsSync(tagsPath))
       throw new Error(`tags.json not found at ${tagsPath}`);
@@ -98,9 +95,9 @@ const seedDatabase = async () => {
           faker.internet.username().toLowerCase() + i,
           faker.person.bio(),
           i === 1 ? "admin" : "user",
-          true, // is_verified
-          true, // Setting to true so notifications actually trigger for them
-          faker.helpers.arrayElement(["daily", "weekly", "never"]), // Randomizing frequencies
+          true,
+          true,
+          faker.helpers.arrayElement(["daily", "weekly", "never"]),
         ],
       );
       userIds.push(res.rows[0].id);
@@ -136,7 +133,7 @@ const seedDatabase = async () => {
           `(${faker.location.longitude()}, ${faker.location.latitude()})`,
           faker.location.streetAddress(),
           authorId,
-          isPast ? "expired" : "active", // Matches your DB check constraint
+          isPast ? "expired" : "active",
         ],
       );
       const eventId = res.rows[0].id;
@@ -161,7 +158,6 @@ const seedDatabase = async () => {
         max: 5,
       });
       for (const uId of attendees) {
-        // Find the author of this specific event to avoid self-RSVP
         const eventAuthor = (
           await client.query("SELECT author_id FROM events WHERE id = $1", [
             eId,
@@ -172,7 +168,7 @@ const seedDatabase = async () => {
         await client.query(
           `
           INSERT INTO rsvps (user_id, event_id, status) 
-          VALUES ($1, $2, 'accepted') ON CONFLICT DO NOTHING`, // Lowercase to match your DB CHECK
+          VALUES ($1, $2, 'accepted') ON CONFLICT DO NOTHING`,
           [uId, eId],
         );
       }

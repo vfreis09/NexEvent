@@ -12,7 +12,6 @@ import Toast from "react-bootstrap/Toast";
 import ToastContainer from "react-bootstrap/ToastContainer";
 import "./EventDetails.css";
 
-// Dynamic API URL Logic (No dotenv needed!)
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
@@ -20,7 +19,6 @@ const fetchProfilePicture = async (
   username: string,
 ): Promise<string | null> => {
   try {
-    // Updated to use dynamic BASE_URL
     const response = await fetch(`${BASE_URL}/user/${username}`);
     if (!response.ok) {
       console.error(
@@ -63,7 +61,6 @@ function EventDetails() {
 
   const handleCancel = async (eventId: number) => {
     try {
-      // Updated to use dynamic BASE_URL
       const response = await fetch(`${BASE_URL}/events/${eventId}/cancel`, {
         method: "PUT",
         credentials: "include",
@@ -80,7 +77,6 @@ function EventDetails() {
   useEffect(() => {
     const fetchEventData = async () => {
       try {
-        // Updated to use dynamic BASE_URL
         const eventRes = await fetch(`${BASE_URL}/events/${eventId}`, {
           credentials: "include",
         });

@@ -171,7 +171,6 @@ export const processDigestQueue = async (
           emailContent,
         );
 
-        // Mark as sent — keeps an audit trail instead of deleting
         await client.query(
           `UPDATE email_queue SET status = 'sent'
            WHERE user_id = $1 AND event_id = ANY($2::int[]) AND status = 'pending'`,
@@ -181,8 +180,6 @@ export const processDigestQueue = async (
         console.log(`Digest sent to user ${user_id} (${email})`);
       } catch (userError) {
         console.error(`Error processing user ${user_id}:`, userError);
-
-        // Mark as error so it won't be retried on the next run
         await client.query(
           `UPDATE email_queue SET status = 'error'
            WHERE user_id = $1 AND event_id = ANY($2::int[]) AND status = 'pending'`,

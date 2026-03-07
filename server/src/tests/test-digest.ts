@@ -18,7 +18,7 @@ for (const p of envPaths) {
 
 async function test() {
   console.log(`--- Connection Check ---`);
-  // Fixed: app uses DATABASE_URL, not DB_USERNAME/DB_DATABASE
+
   console.log(
     `DATABASE_URL: ${process.env.DATABASE_URL ? "✅ FOUND" : "❌ NOT FOUND"}`,
   );

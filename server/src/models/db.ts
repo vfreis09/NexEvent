@@ -3,17 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// 1. Setup the Pool
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },
-  // Add this line to prevent errors with the Supabase pooler
   max: 10,
 });
 
-// 2. Define the Table Creation Query
 const createTableQuery = `
   CREATE TABLE IF NOT EXISTS users(
     id SERIAL PRIMARY KEY,
@@ -112,15 +109,13 @@ const createTableQuery = `
   );
 `;
 
-// 3. Define the Initialization Function
 const initDb = async () => {
   try {
-    // Run the table creation
     await pool.query(createTableQuery);
     console.log("✅ Database tables verified/created.");
   } catch (err) {
     console.error("❌ Error during database initialization:", err);
-    throw err; // Pass error to app.ts so it doesn't start the server
+    throw err;
   }
 };
 

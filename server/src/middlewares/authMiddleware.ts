@@ -89,9 +89,7 @@ export const optionalAuthenticateUser = async (
         role: user.role,
       } as UserPayload;
     }
-  } catch {
-    // invalid token, continue as guest
-  }
+  } catch {}
 
   next();
 };

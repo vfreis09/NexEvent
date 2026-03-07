@@ -21,7 +21,6 @@ interface PaginatedUsersResponse {
   };
 }
 
-// Dynamic API URL Logic
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const API_URL = rawUrl
   ? `https://${rawUrl}/api/admin`
@@ -42,7 +41,6 @@ const ManageUsers: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    // Using the dynamic API_URL
     const url = `${API_URL}/users?page=${currentPage}&limit=${usersPerPage}`;
 
     try {
@@ -83,7 +81,6 @@ const ManageUsers: React.FC = () => {
     role: "user" | "admin" | "banned",
   ) => {
     try {
-      // Note: updateUserRole in adminApi.ts also uses the dynamic URL
       const updatedUser = await updateUserRole(id.toString(), role);
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, role: updatedUser.role } : u)),

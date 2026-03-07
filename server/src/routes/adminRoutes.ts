@@ -54,7 +54,6 @@ router.delete(
   adminController.deleteEvent,
 );
 
-// Manual digest trigger for testing — admin only
 router.post(
   "/admin/trigger-digest",
   authenticateUser,

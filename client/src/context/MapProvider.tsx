@@ -9,7 +9,6 @@ interface MapProviderProps {
 
 const apiKey = import.meta.env.VITE_PUBLIC_API_KEY as string;
 
-// Must be outside the component to keep the reference stable
 const libraries: Libraries = ["places"];
 
 const MapProvider: React.FC<MapProviderProps> = ({ children }) => {

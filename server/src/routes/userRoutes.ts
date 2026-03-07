@@ -9,16 +9,13 @@ import resetLinkLimiter from "../middlewares/resetLinkLimiter";
 
 const router = Router();
 
-// --- Auth ---
 router.post("/signup", userController.signup);
 router.post("/login", userController.login);
 router.post("/logout", authenticateUser, userController.logout);
 
-// --- Google OAuth (must be before /user/:username) ---
 router.get("/user/google/login", userController.googleOAuthInitiate);
 router.get("/user/google/callback", userController.googleOAuthCallback);
 
-// --- User (exact routes before parameterized) ---
 router.get("/user", authenticateUser, userController.getUser);
 router.post(
   "/user/profile/upload",
@@ -27,7 +24,6 @@ router.post(
   userController.uploadProfilePicture,
 );
 
-// ⚠️ These MUST come before PUT /user/:id, or Express will match :id = "change-password" etc.
 router.put(
   "/user/change-password",
   authenticateUser,
@@ -35,7 +31,6 @@ router.put(
   userController.changePassword,
 );
 
-// --- User settings (specific paths before /:id and /:username) ---
 router.get(
   "/user/settings/all",
   authenticateUser,
@@ -61,7 +56,6 @@ router.put(
   userController.updateThemePreference,
 );
 
-// --- Password reset (no auth needed) ---
 router.post(
   "/user/forgot-password",
   resetLinkLimiter,
@@ -69,7 +63,6 @@ router.post(
 );
 router.post("/user/reset-password", userController.resetForgottenPassword);
 
-// --- Email verification ---
 router.post(
   "/send-verification-email",
   authenticateUser,
@@ -78,10 +71,8 @@ router.post(
 );
 router.get("/verify-email", userController.verifyEmail);
 
-// --- Tags ---
 router.get("/tags", userController.getAllTags);
 
-// --- Parameterized routes LAST ---
 router.put(
   "/user/:id",
   authenticateUser,

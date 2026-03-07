@@ -30,7 +30,6 @@ const cookieOptions = {
   maxAge: 3600000,
 };
 
-// used for clearCookie calls only (maxAge must be omitted)
 const clearCookieOptions = {
   httpOnly: true,
   secure: true,
@@ -88,18 +87,15 @@ const signup = async (req: Request, res: Response) => {
       expiresIn: "1h",
     });
 
-    // Respond immediately — don't block on email
     res
       .cookie("token", token, cookieOptions)
       .status(201)
       .json({ user: { id: user.id, email: user.email } });
 
-    // Send verification email in background — failure won't affect signup
     emailServices.sendVerificationEmail(user.email, user.id).catch((error) => {
       console.error("Background verification email failed:", error);
     });
   } catch (error: any) {
-    // Handle duplicate email with a clear message instead of generic 500
     if (error.code === "23505") {
       return res.status(409).json({ message: "Email already in use." });
     }

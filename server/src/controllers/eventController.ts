@@ -65,7 +65,6 @@ const createEvent = async (req: Request, res: Response) => {
     );
     const event = result.rows[0];
 
-    // createEvent - replace the tag insertion block
     if (Array.isArray(tagIds) && tagIds.length > 0) {
       for (const tagId of tagIds) {
         await pool.query(
@@ -178,7 +177,6 @@ const getEventById = async (req: Request, res: Response) => {
 
     await updateEventStatus(id);
 
-    // Fetch tags for this event
     const tagsResult = await pool.query(
       `SELECT t.id, t.name FROM tags t JOIN event_tags et ON t.id = et.tag_id WHERE et.event_id = $1`,
       [id],
@@ -298,7 +296,6 @@ const updateEvent = async (req: Request, res: Response) => {
 
     const updatedEvent = result.rows[0];
 
-    // updateEvent - replace the tag update block
     await pool.query(`DELETE FROM event_tags WHERE event_id = $1`, [id]);
     if (Array.isArray(tagIds) && tagIds.length > 0) {
       for (const tagId of tagIds) {

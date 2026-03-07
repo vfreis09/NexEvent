@@ -61,7 +61,6 @@ const SearchResults: React.FC = () => {
   const fetchResults = useCallback(
     async (signal: AbortSignal) => {
       if (!query) {
-        // Clear results if query is empty to prevent showing old data
         setResults({
           events: { results: [], pagination: initialPaginationState },
           users: { results: [], pagination: initialPaginationState },
@@ -85,12 +84,10 @@ const SearchResults: React.FC = () => {
         }
       } catch (error: any) {
         if (error.name === "AbortError") {
-          // This is expected, we don't need to log it
           return;
         }
         console.error("Full search error:", error);
       } finally {
-        // Only stop loading if the request wasn't aborted
         if (!signal.aborted) {
           setLoading(false);
         }
@@ -104,8 +101,6 @@ const SearchResults: React.FC = () => {
 
     fetchResults(controller.signal);
 
-    // Cleanup function: This runs when the component unmounts
-    // OR when query/page changes again.
     return () => controller.abort();
   }, [query, eventPage, userPage, fetchResults]);
 

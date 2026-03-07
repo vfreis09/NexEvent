@@ -166,11 +166,11 @@
 }
 
 .search-empty-message {
-  color: #6c757d; /* Standard muted gray */
+  color: #6c757d;
   font-style: italic;
   margin-bottom: 0;
 }
 
 .dark-mode .search-empty-message {
-  color: #aaa !important; /* Lighter gray for better contrast on dark backgrounds */
+  color: #aaa !important;
 }

@@ -8,7 +8,6 @@ import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
 import "./ManageEvents.css";
 
-// 1. Minimum change: Setup the smart API_URL logic at the top
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const API_URL = rawUrl
   ? `https://${rawUrl}/api/admin`
@@ -31,7 +30,6 @@ const ManageEvents: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    // 2. Updated to use the smart API_URL
     const url = `${API_URL}/events?page=${currentPage}&limit=${eventsPerPage}`;
 
     try {
@@ -67,7 +65,6 @@ const ManageEvents: React.FC = () => {
 
   const handleCancel = async (id: number, title: string) => {
     try {
-      // 3. Updated to use the smart API_URL
       const res = await fetch(`${API_URL}/events/${id}/cancel`, {
         method: "PUT",
         credentials: "include",
@@ -92,7 +89,6 @@ const ManageEvents: React.FC = () => {
 
   const handleDelete = async (id: number, title: string) => {
     try {
-      // 4. Updated to use the smart API_URL
       const res = await fetch(`${API_URL}/events/${id}`, {
         method: "DELETE",
         credentials: "include",

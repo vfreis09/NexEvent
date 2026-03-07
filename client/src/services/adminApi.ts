@@ -1,7 +1,5 @@
-// Minimum changes, no dotenv needed
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 
-// This fixes the "domain only" problem by adding protocol and path if missing
 const API_URL = rawUrl
   ? `https://${rawUrl}/api/admin`
   : "http://localhost:3000/api/admin";
