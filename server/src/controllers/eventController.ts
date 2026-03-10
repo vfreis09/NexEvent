@@ -459,13 +459,50 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
 
     const userId = userResult.rows[0].id;
     const now = new Date().toISOString();
-
     const requestingUserId = (req as any).user?.id ?? null;
     const isOwnProfile = requestingUserId === userId;
 
-    let whereClause = isOwnProfile
-      ? `e.author_id = $1`
-      : `e.author_id = $1 AND (
+    const visibilityClause = isOwnProfile
+      ? ``
+      : `AND (
+          e.visibility = 'public' OR
+          EXISTS (
+            SELECT 1 FROM invites i
+            WHERE i.event_id = e.id
+            AND i.invited_user_id = $2
+            AND i.status = 'accepted'
+          )
+        )`;
+
+    let timeClause = ``;
+    if (filterType === "upcoming") {
+      timeClause = `AND e.event_datetime >= '${now}' AND e.status != 'canceled'`;
+    } else if (filterType === "past") {
+      timeClause = `AND (e.event_datetime < '${now}' OR e.status = 'canceled')`;
+    }
+
+    let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
+    if (filterType === "upcoming") {
+      orderByClause = `ORDER BY e.event_datetime ASC, e.created_at DESC`;
+    }
+
+    let totalEvents = 0;
+    let totalPages = 1;
+
+    if (queryLimit > 3) {
+      const countParams = isOwnProfile ? [userId] : [userId, requestingUserId];
+      const countResult = await pool.query(
+        `SELECT COUNT(*) FROM events e
+         WHERE e.author_id = $1 ${visibilityClause} ${timeClause}`,
+        countParams,
+      );
+      totalEvents = parseInt(countResult.rows[0].count, 10);
+      totalPages = Math.ceil(totalEvents / queryLimit);
+    }
+
+    const eventsVisibilityClause = isOwnProfile
+      ? ``
+      : `AND (
           e.visibility = 'public' OR
           EXISTS (
             SELECT 1 FROM invites i
@@ -475,38 +512,18 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
           )
         )`;
 
-    let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
-
-    if (filterType === "upcoming") {
-      whereClause += ` AND e.event_datetime >= '${now}' AND e.status != 'canceled'`;
-      orderByClause = `ORDER BY e.event_datetime ASC, e.created_at DESC`;
-    } else if (filterType === "past") {
-      whereClause += ` AND (e.event_datetime < '${now}' OR e.status = 'canceled')`;
-      orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
-    }
-
-    let totalEvents = 0;
-    let totalPages = 1;
-
-    if (queryLimit > 3) {
-      const countResult = await pool.query(
-        `SELECT COUNT(*) FROM events e WHERE ${whereClause}`,
-        isOwnProfile ? [userId] : [userId, null, null, requestingUserId],
-      );
-      totalEvents = parseInt(countResult.rows[0].count, 10);
-      totalPages = Math.ceil(totalEvents / queryLimit);
-    }
+    const eventsParams = isOwnProfile
+      ? [userId, queryLimit, offset]
+      : [userId, queryLimit, offset, requestingUserId];
 
     const eventsResult = await pool.query(
       `SELECT e.*, u.username AS author_username
        FROM events e
        JOIN users u ON e.author_id = u.id
-       WHERE ${whereClause}
+       WHERE e.author_id = $1 ${eventsVisibilityClause} ${timeClause}
        ${orderByClause}
        LIMIT $2 OFFSET $3`,
-      isOwnProfile
-        ? [userId, queryLimit, offset]
-        : [userId, queryLimit, offset, requestingUserId],
+      eventsParams,
     );
 
     await Promise.all(
