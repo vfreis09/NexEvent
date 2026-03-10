@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useTheme } from "../../context/ThemeContext";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
@@ -45,69 +46,36 @@ const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 const SearchResults: React.FC = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
-  const [loading, setLoading] = useState(true);
 
   const [eventPage, setEventPage] = useState(1);
   const [userPage, setUserPage] = useState(1);
   const resultsPerPage = 10;
 
-  const [results, setResults] = useState<SearchData>({
-    events: { results: [], pagination: initialPaginationState },
-    users: { results: [], pagination: initialPaginationState },
-  });
-
   useTheme();
 
-  const fetchResults = useCallback(
-    async (signal: AbortSignal) => {
-      if (!query) {
-        setResults({
-          events: { results: [], pagination: initialPaginationState },
-          users: { results: [], pagination: initialPaginationState },
-        });
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `${BASE_URL}/search?q=${query}&eventPage=${eventPage}&eventLimit=${resultsPerPage}&userPage=${userPage}&userLimit=${resultsPerPage}`,
-          { signal, credentials: "include" },
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data?.events && data?.users) {
-            setResults(data);
-          }
-        }
-      } catch (error: any) {
-        if (error.name === "AbortError") {
-          return;
-        }
-        console.error("Full search error:", error);
-      } finally {
-        if (!signal.aborted) {
-          setLoading(false);
-        }
-      }
+  const { data, isLoading } = useQuery<SearchData>({
+    queryKey: ["search", query, eventPage, userPage],
+    queryFn: async () => {
+      const res = await fetch(
+        `${BASE_URL}/search?q=${query}&eventPage=${eventPage}&eventLimit=${resultsPerPage}&userPage=${userPage}&userLimit=${resultsPerPage}`,
+        { credentials: "include" },
+      );
+      if (!res.ok) throw new Error("Search failed");
+      return res.json();
     },
-    [query, eventPage, userPage],
-  );
+    enabled: !!query,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetchResults(controller.signal);
-
-    return () => controller.abort();
-  }, [query, eventPage, userPage, fetchResults]);
+  const results: SearchData = data ?? {
+    events: { results: [], pagination: initialPaginationState },
+    users: { results: [], pagination: initialPaginationState },
+  };
 
   const totalResults =
     results.events.pagination.totalItems + results.users.pagination.totalItems;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mt-5 search-loading">
         Loading search results for "{query}"...
@@ -125,8 +93,8 @@ const SearchResults: React.FC = () => {
         </p>
       ) : (
         <p className="text-muted search-found-text">
-          Found {results?.events?.pagination?.totalItems ?? 0} event(s) and{" "}
-          {results?.users?.pagination?.totalItems ?? 0} user(s).
+          Found {results.events.pagination.totalItems ?? 0} event(s) and{" "}
+          {results.users.pagination.totalItems ?? 0} user(s).
         </p>
       )}
       <div className="row search-results-row">
@@ -138,7 +106,7 @@ const SearchResults: React.FC = () => {
             {results.events.results.length === 0 ? (
               <p className="search-empty-message p-3">No events found.</p>
             ) : (
-              (results.events.results ?? []).map((event) => (
+              results.events.results.map((event) => (
                 <li
                   key={event.id}
                   className="list-group-item d-flex justify-content-between align-items-center search-list-item"
@@ -171,7 +139,7 @@ const SearchResults: React.FC = () => {
             {results.users.results.length === 0 ? (
               <p className="search-empty-message p-3">No users found.</p>
             ) : (
-              (results.users.results ?? []).map((user) => (
+              results.users.results.map((user) => (
                 <li key={user.id} className="list-group-item search-list-item">
                   <Link
                     to={`/user/${user.username}`}

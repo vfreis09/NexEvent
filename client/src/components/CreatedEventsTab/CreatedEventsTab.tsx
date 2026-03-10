@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
@@ -12,79 +13,49 @@ const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const EventsPerPage = 10;
 
+const fetchEvents = async (
+  username: string,
+  page: number,
+  type: "upcoming" | "past",
+) => {
+  const res = await fetch(
+    `${BASE_URL}/user/${username}/events?page=${page}&limit=${EventsPerPage}&type=${type}`,
+    { credentials: "include" },
+  );
+  if (!res.ok) throw new Error("Failed to fetch events.");
+  const data = await res.json();
+  return {
+    events: Array.isArray(data) ? data : data.events || [],
+    totalPages: data.pagination?.totalPages || 1,
+    currentPage: data.pagination?.currentPage || page,
+  };
+};
+
 const CreatedEventsTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
-
-  const [upcomingEvents, setUpcomingEvents] = useState<EventData[]>([]);
-  const [pastEvents, setPastEvents] = useState<EventData[]>([]);
-  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
-  const [loadingPast, setLoadingPast] = useState(true);
-
   const [upcPage, setUpcPage] = useState(1);
-  const [upcTotalPages, setUpcTotalPages] = useState(1);
   const [pastPage, setPastPage] = useState(1);
-  const [pastTotalPages, setPastTotalPages] = useState(1);
-
+  const queryClient = useQueryClient();
   const { showNotification } = useToast();
 
-  const fetchEvents = useCallback(
-    async (page: number, type: "upcoming" | "past") => {
-      const isUpcoming = type === "upcoming";
-      if (isUpcoming) setLoadingUpcoming(true);
-      else setLoadingPast(true);
+  const { data: upcomingData, isLoading: loadingUpcoming } = useQuery({
+    queryKey: ["created-events", profileUser.username, "upcoming", upcPage],
+    queryFn: () => fetchEvents(profileUser.username, upcPage, "upcoming"),
+    enabled: !!profileUser.username,
+    staleTime: 1000 * 60 * 5,
+  });
 
-      const url = `${BASE_URL}/user/${profileUser.username}/events?page=${page}&limit=${EventsPerPage}&type=${type}`;
+  const { data: pastData, isLoading: loadingPast } = useQuery({
+    queryKey: ["created-events", profileUser.username, "past", pastPage],
+    queryFn: () => fetchEvents(profileUser.username, pastPage, "past"),
+    enabled: !!profileUser.username,
+    staleTime: 1000 * 60 * 5,
+  });
 
-      try {
-        const res = await fetch(url, {
-          credentials: "include",
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch events.");
-
-        const data = await res.json();
-
-        const eventsList = Array.isArray(data) ? data : data.events || [];
-        const totalPages = data.pagination?.totalPages || 1;
-        const currentPage = data.pagination?.currentPage || page;
-
-        if (isUpcoming) {
-          setUpcomingEvents(eventsList);
-          setUpcPage(currentPage);
-          setUpcTotalPages(totalPages);
-        } else {
-          setPastEvents(eventsList);
-          setPastPage(currentPage);
-          setPastTotalPages(totalPages);
-        }
-      } catch (err) {
-        console.error(`Failed to load ${type} events`, err);
-        showNotification(
-          `Failed to load ${type} created events.`,
-          "Error",
-          "danger",
-        );
-        if (isUpcoming) setUpcomingEvents([]);
-        else setPastEvents([]);
-      } finally {
-        if (isUpcoming) setLoadingUpcoming(false);
-        else setLoadingPast(false);
-      }
-    },
-    [profileUser.username, showNotification],
-  );
-
-  useEffect(() => {
-    if (profileUser?.username) {
-      fetchEvents(upcPage, "upcoming");
-    }
-  }, [profileUser.username, upcPage, fetchEvents]);
-
-  useEffect(() => {
-    if (profileUser?.username) {
-      fetchEvents(pastPage, "past");
-    }
-  }, [profileUser.username, pastPage, fetchEvents]);
+  const upcomingEvents: EventData[] = upcomingData?.events ?? [];
+  const pastEvents: EventData[] = pastData?.events ?? [];
+  const upcTotalPages = upcomingData?.totalPages ?? 1;
+  const pastTotalPages = pastData?.totalPages ?? 1;
 
   const handleUpcomingPageChange = (page: number) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -96,14 +67,10 @@ const CreatedEventsTab = () => {
     setPastPage(page);
   };
 
-  const handleEventUpdate = (updatedEvent: EventData) => {
-    const updateList = (prevEvents: EventData[]): EventData[] =>
-      prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event,
-      );
-
-    setUpcomingEvents(updateList);
-    setPastEvents(updateList);
+  const handleEventUpdate = (_updatedEvent: EventData) => {
+    queryClient.invalidateQueries({
+      queryKey: ["created-events", profileUser.username],
+    });
   };
 
   return (

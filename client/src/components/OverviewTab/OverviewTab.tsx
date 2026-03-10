@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
@@ -8,74 +8,60 @@ import { useTheme } from "../../context/ThemeContext";
 import "./OverviewTab.css";
 
 const MAX_EVENTS_TO_SHOW = 3;
-
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const OverviewTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
-  const [createdEvents, setCreatedEvents] = useState<EventData[]>([]);
-  const [rsvpedEvents, setRsvpedEvents] = useState<EventData[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const { showNotification } = useToast();
-
+  const queryClient = useQueryClient();
   useTheme();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const createdRes = await fetch(
-          `${BASE_URL}/user/${profileUser.username}/events?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
-          { credentials: "include" },
-        );
-        const rsvpRes = await fetch(
-          `${BASE_URL}/rsvps/user/${profileUser.username}?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
-          { credentials: "include" },
-        );
+  const { data: createdEvents = [], isLoading: loadingCreated } = useQuery<
+    EventData[]
+  >({
+    queryKey: ["overview-created", profileUser.username],
+    queryFn: async () => {
+      const res = await fetch(
+        `${BASE_URL}/user/${profileUser.username}/events?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
+        { credentials: "include" },
+      );
+      const data = await res.json();
+      return Array.isArray(data) ? data : data.events || [];
+    },
+    enabled: !!profileUser.username,
+    staleTime: 1000 * 60 * 5,
+  });
 
-        const createdData = await createdRes.json();
-        const rsvpData = await rsvpRes.json();
+  const { data: rsvpedEvents = [], isLoading: loadingRsvp } = useQuery<
+    EventData[]
+  >({
+    queryKey: ["overview-rsvps", profileUser.username],
+    queryFn: async () => {
+      const res = await fetch(
+        `${BASE_URL}/rsvps/user/${profileUser.username}?limit=${MAX_EVENTS_TO_SHOW}&type=upcoming`,
+        { credentials: "include" },
+      );
+      const data = await res.json();
+      return Array.isArray(data) ? data : data.events || [];
+    },
+    enabled: !!profileUser.username,
+    staleTime: 1000 * 60 * 5,
+  });
 
-        setCreatedEvents(
-          Array.isArray(createdData) ? createdData : createdData.events || [],
-        );
-        setRsvpedEvents(
-          Array.isArray(rsvpData) ? rsvpData : rsvpData.events || [],
-        );
-      } catch (err) {
-        console.error("Error loading overview data", err);
-        showNotification("Failed to load overview data.", "Error", "danger");
-        setCreatedEvents([]);
-        setRsvpedEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (profileUser?.username) {
-      fetchData();
-    }
-  }, [profileUser.username, showNotification]);
-
-  const handleCreatedEventUpdate = (updatedEvent: EventData) => {
-    setCreatedEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event,
-      ),
-    );
+  const handleCreatedEventUpdate = (_updatedEvent: EventData) => {
+    queryClient.invalidateQueries({
+      queryKey: ["overview-created", profileUser.username],
+    });
   };
 
-  const handleRsvpedEventUpdate = (updatedEvent: EventData) => {
-    setRsvpedEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event,
-      ),
-    );
+  const handleRsvpedEventUpdate = (_updatedEvent: EventData) => {
+    queryClient.invalidateQueries({
+      queryKey: ["overview-rsvps", profileUser.username],
+    });
   };
 
-  if (loading)
+  if (loadingCreated || loadingRsvp)
     return <p className="overview-loading-message">Loading summary...</p>;
 
   return (
@@ -90,7 +76,7 @@ const OverviewTab = () => {
             isCompact={true}
           />
         ) : (
-          <p className="no-events-message">No upcoming created events. </p>
+          <p className="no-events-message">No upcoming created events.</p>
         )}
       </div>
       <div className="overview-section">

@@ -1,5 +1,5 @@
 import { useParams, NavLink, Outlet } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../../context/UserContext";
 import UserProfileCard from "../../components/UserProfileCard/UserProfileCard";
 import { PublicUser } from "../../types/PublicUser";
@@ -11,45 +11,31 @@ const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const UserProfilePage = () => {
   const { username } = useParams<{ username: string }>();
-  const [profileUser, setProfileUser] = useState<PublicUser | null>(null);
-  const [notFound, setNotFound] = useState(false);
-  const [loading, setLoading] = useState(true);
   const { user } = useUser();
   useTheme();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      setNotFound(false);
-      try {
-        const res = await fetch(`${BASE_URL}/user/${username}`, {
-          credentials: "include",
-        });
-        if (res.status === 404) {
-          setNotFound(true);
-          setProfileUser(null);
-          return;
-        }
+  const {
+    data: profileUser,
+    isLoading,
+    error,
+  } = useQuery<PublicUser>({
+    queryKey: ["user-profile", username],
+    queryFn: async () => {
+      const res = await fetch(`${BASE_URL}/user/${username}`, {
+        credentials: "include",
+      });
+      if (res.status === 404) throw new Error("User not found");
+      if (!res.ok) throw new Error("Network error");
+      return res.json();
+    },
+    enabled: !!username,
+    staleTime: 1000 * 60 * 5,
+  });
 
-        if (!res.ok) throw new Error("Network error");
-
-        const data = await res.json();
-        setProfileUser(data);
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
-        setNotFound(true);
-        setProfileUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (username) fetchUser();
-  }, [username]);
-
-  if (loading)
+  if (isLoading)
     return <p className="profile-loading-message">Loading profile...</p>;
-  if (notFound || !profileUser)
+
+  if (error || !profileUser)
     return <p className="profile-error-message">User not found</p>;
 
   return (

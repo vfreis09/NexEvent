@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
@@ -9,73 +10,44 @@ import { PaginatedResponse } from "../../types/PaginationTypes";
 import "./RsvpTab.css";
 
 const EventsPerPage = 10;
-
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const RsvpTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
-
-  const [upcomingRsvps, setUpcomingRsvps] = useState<EventData[]>([]);
-  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
-
   const [upcPage, setUpcPage] = useState(1);
-  const [upcTotalPages, setUpcTotalPages] = useState(1);
-
   const { showNotification } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchRsvps = useCallback(
-    async (page: number) => {
-      setLoadingUpcoming(true);
-
-      const url = `${BASE_URL}/rsvps/user/${profileUser.username}?page=${page}&limit=${EventsPerPage}&type=upcoming`;
-
-      try {
-        const res = await fetch(url, {
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch RSVPs.");
-        }
-
-        const data: PaginatedResponse = await res.json();
-
-        const eventsList = Array.isArray(data) ? data : data.events || [];
-        const totalPages = data.pagination?.totalPages || 1;
-        const currentPage = data.pagination?.currentPage || page;
-
-        setUpcomingRsvps(eventsList);
-        setUpcPage(currentPage);
-        setUpcTotalPages(totalPages);
-      } catch (err) {
-        console.error(`Failed to load upcoming RSVPs`, err);
-        showNotification(`Failed to load RSVPs.`, "Error", "danger");
-        setUpcomingRsvps([]);
-      } finally {
-        setLoadingUpcoming(false);
-      }
+  const { data, isLoading: loadingUpcoming } = useQuery<PaginatedResponse>({
+    queryKey: ["rsvp-tab", profileUser.username, upcPage],
+    queryFn: async () => {
+      const res = await fetch(
+        `${BASE_URL}/rsvps/user/${profileUser.username}?page=${upcPage}&limit=${EventsPerPage}&type=upcoming`,
+        { credentials: "include" },
+      );
+      if (!res.ok) throw new Error("Failed to fetch RSVPs.");
+      return res.json();
     },
-    [profileUser.username, showNotification],
-  );
+    enabled: !!profileUser.username,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    if (profileUser?.username) {
-      fetchRsvps(upcPage);
-    }
-  }, [profileUser.username, upcPage, fetchRsvps]);
+  const upcomingRsvps: EventData[] = Array.isArray(data)
+    ? data
+    : data?.events || [];
+  const upcTotalPages = data?.pagination?.totalPages || 1;
+  const currentPage = data?.pagination?.currentPage || upcPage;
 
   const handleUpcomingPageChange = (page: number) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setUpcPage(page);
   };
 
-  const handleEventUpdate = (updatedEvent: EventData) => {
-    setUpcomingRsvps((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event,
-      ),
-    );
+  const handleEventUpdate = (_updatedEvent: EventData) => {
+    queryClient.invalidateQueries({
+      queryKey: ["rsvp-tab", profileUser.username],
+    });
   };
 
   return (
@@ -91,7 +63,7 @@ const RsvpTab = () => {
             showNotification={showNotification}
           />
           <PaginationControls
-            currentPage={upcPage}
+            currentPage={currentPage}
             totalPages={upcTotalPages}
             onPageChange={handleUpcomingPageChange}
           />

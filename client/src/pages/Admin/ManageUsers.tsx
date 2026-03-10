@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Container, Table, Alert, Form, Spinner } from "react-bootstrap";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateUserRole } from "../../services/adminApi";
 import { User as AppUser } from "../../types/User";
 import { useToast } from "../../hooks/useToast";
@@ -27,51 +28,33 @@ const API_URL = rawUrl
   : "http://localhost:3000/api/admin";
 
 const ManageUsers: React.FC = () => {
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const usersPerPage = 20;
+  const queryClient = useQueryClient();
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   useTheme();
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    const url = `${API_URL}/users?page=${currentPage}&limit=${usersPerPage}`;
-
-    try {
-      const res = await fetch(url, { credentials: "include" });
+  const { data, isLoading, error } = useQuery<PaginatedUsersResponse>({
+    queryKey: ["admin-users", currentPage],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_URL}/users?page=${currentPage}&limit=${usersPerPage}`,
+        { credentials: "include" },
+      );
       if (!res.ok) throw new Error("Failed to fetch users");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-      const data: PaginatedUsersResponse = await res.json();
-
-      setUsers(data.users);
-      setCurrentPage(data.pagination.currentPage);
-      setTotalPages(data.pagination.totalPages);
-    } catch (err: any) {
-      console.error("Failed to fetch users. Full Error Details:", err);
-      const errorMessage = err.message || "Could not connect to the user API.";
-      setError(errorMessage);
-      showNotification("Failed to fetch users.", "Error", "danger");
-      setUsers([]);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, showNotification]);
-
-  useEffect(() => {
-    fetchUsers();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [fetchUsers]);
+  const users: AdminUser[] = data?.users ?? [];
+  const totalPages = data?.pagination.totalPages ?? 1;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -81,17 +64,14 @@ const ManageUsers: React.FC = () => {
     role: "user" | "admin" | "banned",
   ) => {
     try {
-      const updatedUser = await updateUserRole(id.toString(), role);
-      setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, role: updatedUser.role } : u)),
-      );
+      await updateUserRole(id.toString(), role);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       showNotification(
         `User '${username}' role changed to '${role}'.`,
         "Success",
         "success",
       );
     } catch (err: any) {
-      setError(err.message);
       showNotification(
         `Failed to change role for user '${username}'.`,
         "Error",
@@ -100,7 +80,7 @@ const ManageUsers: React.FC = () => {
     }
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <div className="manage-loading">
         <Spinner animation="border" variant="primary" />
@@ -122,9 +102,9 @@ const ManageUsers: React.FC = () => {
       <Container className="manage-users">
         <h1 className="page-title">Manage Users</h1>
 
-        {error && <Alert variant="danger">{error}</Alert>}
+        {error && <Alert variant="danger">{(error as Error).message}</Alert>}
 
-        {Array.isArray(users) && users.length === 0 && !error ? (
+        {users.length === 0 && !isLoading && !error ? (
           <Alert variant="info">No users found to manage.</Alert>
         ) : (
           <>

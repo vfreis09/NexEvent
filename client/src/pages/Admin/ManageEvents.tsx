@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Container, Table, Button, Alert, Spinner } from "react-bootstrap";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EventType } from "../../types/EventType";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../../components/ToastComponent/ToastComponent";
@@ -14,52 +15,33 @@ const API_URL = rawUrl
   : "http://localhost:3000/api/admin";
 
 const ManageEvents: React.FC = () => {
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const eventsPerPage = 10;
-
+  const queryClient = useQueryClient();
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   useTheme();
 
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    const url = `${API_URL}/events?page=${currentPage}&limit=${eventsPerPage}`;
-
-    try {
-      const res = await fetch(url, {
-        credentials: "include",
-      });
+  const { data, isLoading, error } = useQuery<PaginatedResponse>({
+    queryKey: ["admin-events", currentPage],
+    queryFn: async () => {
+      const res = await fetch(
+        `${API_URL}/events?page=${currentPage}&limit=${eventsPerPage}`,
+        { credentials: "include" },
+      );
       if (!res.ok) throw new Error("Failed to fetch events");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-      const data: PaginatedResponse = await res.json();
-      setEvents(data.events);
-      setCurrentPage(data.pagination.currentPage);
-      setTotalPages(data.pagination.totalPages);
-    } catch (err: any) {
-      setError(err.message);
-      showNotification("Failed to fetch events.", "Error", "danger");
-      setEvents([]);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, eventsPerPage, showNotification]);
-
-  useEffect(() => {
-    fetchEvents();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [fetchEvents]);
+  const events: EventType[] = data?.events ?? [];
+  const totalPages = data?.pagination.totalPages ?? 1;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -70,19 +52,13 @@ const ManageEvents: React.FC = () => {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to cancel event");
-      const data = await res.json();
-      setEvents((prev) =>
-        prev.map((e) =>
-          e.id === id ? { ...e, status: data.event.status } : e,
-        ),
-      );
+      queryClient.invalidateQueries({ queryKey: ["admin-events"] });
       showNotification(
         `Event '${title}' was successfully canceled.`,
         "Success",
         "success",
       );
-    } catch (err: any) {
-      setError(err.message);
+    } catch {
       showNotification(`Failed to cancel event '${title}'.`, "Error", "danger");
     }
   };
@@ -94,28 +70,21 @@ const ManageEvents: React.FC = () => {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to delete event");
-      setEvents((prev) => {
-        const newEvents = prev.filter((e) => e.id !== id);
-        if (newEvents.length === 0 && currentPage > 1) {
-          setCurrentPage(currentPage - 1);
-        } else if (newEvents.length === 0 && totalPages > 1) {
-          fetchEvents();
-        }
-        return newEvents;
-      });
-
+      if (events.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+      queryClient.invalidateQueries({ queryKey: ["admin-events"] });
       showNotification(
         `Event '${title}' was successfully deleted.`,
         "Success",
         "success",
       );
-    } catch (err: any) {
-      setError(err.message);
+    } catch {
       showNotification(`Failed to delete event '${title}'.`, "Error", "danger");
     }
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <div className="events-loading">
         <Spinner animation="border" variant="primary" />
@@ -136,10 +105,8 @@ const ManageEvents: React.FC = () => {
       )}
       <Container className="manage-events">
         <h1 className="page-title">Manage Events</h1>
-
-        {error && <Alert variant="danger">{error}</Alert>}
-
-        {events.length === 0 && !loading && !error ? (
+        {error && <Alert variant="danger">{(error as Error).message}</Alert>}
+        {events.length === 0 && !isLoading && !error ? (
           <Alert variant="info">No events found to manage.</Alert>
         ) : (
           <>

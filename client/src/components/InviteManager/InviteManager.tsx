@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Invite } from "../../types/Invite";
 import { useTheme } from "../../context/ThemeContext";
 import "./InviteManager.css";
@@ -22,9 +23,9 @@ const InviteManager: React.FC<InviteManagerProps> = ({
   currentAttendees,
 }) => {
   const [identifier, setIdentifier] = useState("");
-  const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   useTheme();
 
@@ -33,54 +34,40 @@ const InviteManager: React.FC<InviteManagerProps> = ({
     new Date(eventDateTime) < new Date() ||
     (maxAttendees !== null && currentAttendees >= maxAttendees);
 
-  const fetchInvites = async () => {
-    try {
+  const { data: invites = [] } = useQuery<Invite[]>({
+    queryKey: ["invites", eventId],
+    queryFn: async () => {
       const res = await fetch(`${BASE_URL}/events/${eventId}/invites`, {
-        method: "GET",
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch invites");
-      const data = await res.json();
-      setInvites(data);
-    } catch (err) {
-      console.error(err);
-      setMessage("Failed to load invites.");
-    }
-  };
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-
     try {
       const res = await fetch(`${BASE_URL}/events/${eventId}/invite`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ identifier }),
       });
-
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Failed to send invite");
-
       setMessage("User invited successfully!");
       setIdentifier("");
-      fetchInvites();
+      queryClient.invalidateQueries({ queryKey: ["invites", eventId] });
     } catch (err: any) {
-      console.error(err);
       setMessage(err.message || "An error occurred.");
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchInvites();
-  }, [eventId]);
 
   const disabledReason =
     status === "canceled"
@@ -99,7 +86,6 @@ const InviteManager: React.FC<InviteManagerProps> = ({
           </p>
         )}
       </div>
-
       {!isInviteDisabled && (
         <form onSubmit={handleInvite} className="invite-form">
           <input
@@ -114,9 +100,7 @@ const InviteManager: React.FC<InviteManagerProps> = ({
           </button>
         </form>
       )}
-
       {message && <p className="invite-message">{message}</p>}
-
       <div className="invite-list">
         <h4>Current Invites</h4>
         {invites.length === 0 ? (

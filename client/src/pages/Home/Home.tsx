@@ -1,36 +1,42 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../../components/ToastComponent/ToastComponent";
 import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
+import { useState } from "react";
 import "./Home.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
+const fetchEvents = async (
+  page: number,
+  type: "upcoming" | "past",
+): Promise<PaginatedResponse> => {
+  const res = await fetch(
+    `${BASE_URL}/events/?page=${page}&limit=10&type=${type}`,
+    { credentials: "include" },
+  );
+  if (!res.ok) throw new Error(`Failed to fetch ${type} events`);
+  return res.json();
+};
+
 function HomePage() {
-  const [upcomingEvents, setUpcomingEvents] = useState<EventData[]>([]);
-  const [pastEvents, setPastEvents] = useState<EventData[]>([]);
-
   const [upcPage, setUpcPage] = useState(1);
-  const [upcTotalPages, setUpcTotalPages] = useState(1);
-
   const [pastPage, setPastPage] = useState(1);
-  const [pastTotalPages, setPastTotalPages] = useState(1);
-
-  const [loading, setLoading] = useState(true);
 
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   useTheme();
 
   useEffect(() => {
     const state = location.state as { successMessage?: string } | null;
-
     if (state?.successMessage) {
       showNotification(
         "Success! Your event is live and ready for RSVPs.",
@@ -38,65 +44,31 @@ function HomePage() {
         "success",
         "white",
       );
-
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [location.state, showNotification]);
 
-  const fetchEvents = useCallback(
-    async (page: number, type: "upcoming" | "past") => {
-      const limit = 10;
-      const url = `${BASE_URL}/events/?page=${page}&limit=${limit}&type=${type}`;
+  const { data: upcomingData, isLoading: upcomingLoading } =
+    useQuery<PaginatedResponse>({
+      queryKey: ["events", "upcoming", upcPage],
+      queryFn: () => fetchEvents(upcPage, "upcoming"),
+      staleTime: 1000 * 60 * 5,
+    });
 
-      try {
-        const response = await fetch(url, {
-          credentials: "include",
-        });
+  const { data: pastData, isLoading: pastLoading } =
+    useQuery<PaginatedResponse>({
+      queryKey: ["events", "past", pastPage],
+      queryFn: () => fetchEvents(pastPage, "past"),
+      staleTime: 1000 * 60 * 5,
+    });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+  const upcomingEvents: EventData[] = upcomingData?.events ?? [];
+  const pastEvents: EventData[] = pastData?.events ?? [];
+  const upcTotalPages = upcomingData?.pagination.totalPages ?? 1;
+  const pastTotalPages = pastData?.pagination.totalPages ?? 1;
 
-        const result: PaginatedResponse = await response.json();
+  const loading = upcomingLoading || pastLoading;
 
-        const events: EventData[] = result.events;
-        const pagination = result.pagination;
-        if (type === "upcoming") {
-          setUpcomingEvents(events);
-          setUpcPage(pagination.currentPage);
-          setUpcTotalPages(pagination.totalPages);
-        } else {
-          setPastEvents(events);
-          setPastPage(pagination.currentPage);
-          setPastTotalPages(pagination.totalPages);
-        }
-      } catch (error) {
-        console.error(`Fetch error for ${type}:`, error);
-        showNotification(
-          `Uh oh, we couldn't fetch ${type} events right now.`,
-          "Error",
-          "danger",
-          "white",
-        );
-        if (type === "upcoming") setUpcomingEvents([]);
-        else setPastEvents([]);
-      }
-    },
-    [showNotification],
-  );
-
-  useEffect(() => {
-    const fetchUpcoming = fetchEvents(upcPage, "upcoming");
-    const fetchPast = fetchEvents(pastPage, "past");
-
-    const initialFetch = async () => {
-      setLoading(true);
-      await Promise.all([fetchUpcoming, fetchPast]);
-      setLoading(false);
-    };
-
-    initialFetch();
-  }, [fetchEvents, upcPage, pastPage]);
   const handleUpcomingPageChange = (page: number) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setUpcPage(page);
@@ -108,46 +80,8 @@ function HomePage() {
   };
 
   const handleEventUpdate = (updatedEvent: EventData) => {
-    if (!updatedEvent || typeof updatedEvent.id === "undefined") {
-      return;
-    }
-
-    const updateList = (prevEvents: EventData[]): EventData[] => {
-      const now = new Date();
-      const isUpcoming = new Date(updatedEvent.event_datetime) >= now;
-
-      if (isUpcoming && !upcomingEvents.some((e) => e.id === updatedEvent.id)) {
-        setPastEvents((prev) => prev.filter((e) => e.id !== updatedEvent.id));
-        return [
-          ...prevEvents.filter((e) => e.id !== updatedEvent.id),
-          updatedEvent,
-        ].sort(
-          (a, b) =>
-            new Date(a.event_datetime).getTime() -
-            new Date(b.event_datetime).getTime(),
-        );
-      }
-      if (!isUpcoming && !pastEvents.some((e) => e.id === updatedEvent.id)) {
-        setUpcomingEvents((prev) =>
-          prev.filter((e) => e.id !== updatedEvent.id),
-        );
-        return [
-          ...prevEvents.filter((e) => e.id !== updatedEvent.id),
-          updatedEvent,
-        ].sort(
-          (a, b) =>
-            new Date(b.event_datetime).getTime() -
-            new Date(a.event_datetime).getTime(),
-        );
-      }
-
-      return prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event,
-      );
-    };
-
-    setUpcomingEvents(updateList);
-    setPastEvents(updateList);
+    if (!updatedEvent || typeof updatedEvent.id === "undefined") return;
+    queryClient.invalidateQueries({ queryKey: ["events"] });
   };
 
   return (

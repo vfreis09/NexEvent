@@ -9,6 +9,7 @@ import { Notification } from "../../types/Notification";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
 import { SearchType } from "../../types/SearchType";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import "./Header.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -26,62 +27,49 @@ const Header: React.FC = () => {
   } = useUser();
 
   const { theme, toggleTheme } = useTheme();
-
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-
   const [suggestions, setSuggestions] = useState<{
     events: SearchType[];
     users: SearchType[];
   }>({ events: [], users: [] });
-
   const [loadingSearch, setLoadingSearch] = useState(false);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
-  const fetchNotifications = async () => {
-    setLoadingNotifications(true);
-    try {
+  const { data: notifications = [] } = useQuery<Notification[]>({
+    queryKey: ["notifications"],
+    queryFn: async () => {
       const res = await fetch(`${BASE_URL}/notifications`, {
         credentials: "include",
       });
-
       if (!res.ok) throw new Error("Failed to fetch notifications");
-
-      const data: Notification[] = await res.json();
-      setNotifications(data);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    } finally {
-      setLoadingNotifications(false);
-    }
-  };
+      return res.json();
+    },
+    enabled: !!user && isLoggedIn,
+    staleTime: 1000 * 30,
+  });
 
   const markNotificationRead = async (notificationId: number) => {
     try {
       const res = await fetch(
         `${BASE_URL}/notifications/${notificationId}/read`,
-        {
-          method: "PATCH",
-          credentials: "include",
-        },
+        { method: "PATCH", credentials: "include" },
       );
       if (!res.ok) throw new Error("Failed to mark notification as read");
-
-      setNotifications((prev) =>
-        prev.map((n) =>
+      queryClient.setQueryData<Notification[]>(["notifications"], (prev) =>
+        (prev ?? []).map((n) =>
           n.id === notificationId ? { ...n, is_read: true } : n,
         ),
       );
-
       return true;
     } catch (error) {
       console.error("Error marking notification read:", error);
@@ -96,15 +84,15 @@ const Header: React.FC = () => {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to clear notifications");
-
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      queryClient.setQueryData<Notification[]>(["notifications"], (prev) =>
+        (prev ?? []).map((n) => ({ ...n, is_read: true })),
+      );
       showNotification(
         "All notifications marked as read.",
         "Success",
         "success",
       );
     } catch (error) {
-      console.error("Error marking all read:", error);
       showNotification("Could not clear notifications.", "Error", "danger");
     }
   };
@@ -132,7 +120,6 @@ const Header: React.FC = () => {
           body: JSON.stringify({ status: "accepted" }),
         });
         if (!rsvpRes.ok) throw new Error("Failed to create RSVP");
-
         showNotification(
           "Invite accepted! You are now RSVP'd.",
           "Success",
@@ -144,7 +131,9 @@ const Header: React.FC = () => {
 
       const markRes = await markNotificationRead(notificationId);
       if (markRes) {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+        queryClient.setQueryData<Notification[]>(["notifications"], (prev) =>
+          (prev ?? []).filter((n) => n.id !== notificationId),
+        );
       }
     } catch (error) {
       showNotification(
@@ -158,15 +147,9 @@ const Header: React.FC = () => {
   const toggleNotifications = () => {
     setShowNotifications((prev) => !prev);
     if (!showNotifications) {
-      fetchNotifications();
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   };
-
-  useEffect(() => {
-    if (isLoggedIn && user) {
-      fetchNotifications();
-    }
-  }, [isLoggedIn, user]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -181,7 +164,6 @@ const Header: React.FC = () => {
           });
           if (response.ok) {
             const data = await response.json();
-
             setSuggestions({
               events: (Array.isArray(data.events)
                 ? data.events
@@ -248,6 +230,7 @@ const Header: React.FC = () => {
       if (!response.ok) throw new Error("Logout failed");
       setUser(null);
       setIsLoggedIn(false);
+      queryClient.clear();
       navigate("/");
       showNotification("Successfully logged out.", "Success", "success");
     } catch (error) {
@@ -397,9 +380,7 @@ const Header: React.FC = () => {
                         </button>
                       )}
                     </div>
-                    {loadingNotifications ? (
-                      <div className="notification-item">Loading...</div>
-                    ) : notifications.length > 0 ? (
+                    {notifications.length > 0 ? (
                       notifications.map((note) => {
                         const isInvite =
                           note.invite_id !== undefined &&
@@ -407,9 +388,7 @@ const Header: React.FC = () => {
                         return (
                           <div
                             key={note.id}
-                            className={`notification-item ${
-                              note.is_read ? "read" : "unread"
-                            }`}
+                            className={`notification-item ${note.is_read ? "read" : "unread"}`}
                           >
                             <p
                               className="mb-2"
