@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
 import GoogleAuthButton from "../GoogleAuthButton/GoogleAuthButton";
@@ -8,15 +9,22 @@ import "./LoginForm.css";
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
-const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
+interface LoginFormData {
+  email: string;
+  password: string;
+}
 
+const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { loadUser, isLoggedIn } = useUser();
-
   useTheme();
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>();
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -24,60 +32,59 @@ const LoginForm: React.FC = () => {
     }
   }, [isLoggedIn, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage("");
-
+  const onSubmit = async (data: LoginFormData) => {
     try {
       const response = await fetch(`${BASE_URL}/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        if (response.status === 401 || response.status === 404) {
-          const errorData = await response.json();
-          setErrorMessage(errorData.message || "Invalid email or password.");
-        } else {
-          setErrorMessage("Login failed. Please try again.");
-        }
-        throw new Error("Login failed");
+        const errorData = await response.json();
+        setError("root", {
+          message: errorData.message || "Invalid email or password.",
+        });
+        return;
       }
 
       await loadUser();
       navigate("/");
     } catch (error) {
-      console.error("Login failed", error);
+      setError("root", { message: "Login failed. Please try again." });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="login-form">
+    <form onSubmit={handleSubmit(onSubmit)} className="login-form">
       <h1>Login</h1>
-      {errorMessage && <div className="error-message">{errorMessage}</div>}
+      {errors.root && (
+        <div className="error-message">{errors.root.message}</div>
+      )}
       <div>
         <input
           placeholder="Email"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+          {...register("email", { required: "Email is required" })}
         />
+        {errors.email && (
+          <span className="error-message">{errors.email.message}</span>
+        )}
       </div>
       <div>
         <input
           placeholder="Password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
+          {...register("password", { required: "Password is required" })}
         />
+        {errors.password && (
+          <span className="error-message">{errors.password.message}</span>
+        )}
       </div>
-      <button type="submit">Login</button>
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Logging in..." : "Login"}
+      </button>
       <GoogleAuthButton />
       <div className="links-container">
         <Link to="/forgot-password">Forgot your password?</Link>

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Invite } from "../../types/Invite";
 import { useTheme } from "../../context/ThemeContext";
@@ -12,6 +13,10 @@ interface InviteManagerProps {
   currentAttendees: number;
 }
 
+interface InviteFormData {
+  identifier: string;
+}
+
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
@@ -22,12 +27,16 @@ const InviteManager: React.FC<InviteManagerProps> = ({
   maxAttendees,
   currentAttendees,
 }) => {
-  const [identifier, setIdentifier] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
-
   useTheme();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = useForm<InviteFormData>();
 
   const isInviteDisabled =
     status === "canceled" ||
@@ -46,26 +55,20 @@ const InviteManager: React.FC<InviteManagerProps> = ({
     staleTime: 1000 * 60 * 5,
   });
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
+  const onSubmit = async (data: InviteFormData) => {
     try {
       const res = await fetch(`${BASE_URL}/events/${eventId}/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ identifier }),
+        body: JSON.stringify({ identifier: data.identifier }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to send invite");
-      setMessage("User invited successfully!");
-      setIdentifier("");
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.message || "Failed to send invite");
+      reset();
       queryClient.invalidateQueries({ queryKey: ["invites", eventId] });
     } catch (err: any) {
-      setMessage(err.message || "An error occurred.");
-    } finally {
-      setLoading(false);
+      setError("root", { message: err.message || "An error occurred." });
     }
   };
 
@@ -87,20 +90,23 @@ const InviteManager: React.FC<InviteManagerProps> = ({
         )}
       </div>
       {!isInviteDisabled && (
-        <form onSubmit={handleInvite} className="invite-form">
+        <form onSubmit={handleSubmit(onSubmit)} className="invite-form">
           <input
             type="text"
             placeholder="Username or email"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            required
+            {...register("identifier", { required: true })}
           />
-          <button type="submit" disabled={loading}>
-            {loading ? "Inviting..." : "Send"}
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Inviting..." : "Send"}
           </button>
+          {isSubmitSuccessful && !errors.root && (
+            <p className="invite-message">User invited successfully!</p>
+          )}
+          {errors.root && (
+            <p className="invite-message">{errors.root.message}</p>
+          )}
         </form>
       )}
-      {message && <p className="invite-message">{message}</p>}
       <div className="invite-list">
         <h4>Current Invites</h4>
         {invites.length === 0 ? (

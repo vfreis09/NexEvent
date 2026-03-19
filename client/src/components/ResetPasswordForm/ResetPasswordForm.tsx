@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import zxcvbn from "zxcvbn";
 import { getPasswordFeedback, isStrongPassword } from "../../utils/password";
 import "./ResetPasswordForm.css";
@@ -7,105 +7,99 @@ interface ResetPasswordFormProps {
   onSubmit: (password: string) => Promise<void>;
 }
 
+interface ResetPasswordFormData {
+  password: string;
+  confirmPassword: string;
+}
+
+const getStrengthLabel = (score: number) => {
+  switch (score) {
+    case 0:
+      return "Very Weak";
+    case 1:
+      return "Weak";
+    case 2:
+      return "Fair";
+    case 3:
+      return "Good";
+    case 4:
+      return "Strong";
+    default:
+      return "";
+  }
+};
+
+const getStrengthColor = (score: number) => {
+  switch (score) {
+    case 0:
+      return "red";
+    case 1:
+      return "orangered";
+    case 2:
+      return "orange";
+    case 3:
+      return "yellowgreen";
+    case 4:
+      return "green";
+    default:
+      return "gray";
+  }
+};
+
 function ResetPasswordForm({ onSubmit }: ResetPasswordFormProps) {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [passwordScore, setPasswordScore] = useState(0);
-  const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
-    []
-  );
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setError,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = useForm<ResetPasswordFormData>();
 
-  useEffect(() => {
-    const result = zxcvbn(password);
-    setPasswordScore(result.score);
-    setPasswordFeedbackList(getPasswordFeedback(password));
-  }, [password]);
+  const password = useWatch({ control, name: "password", defaultValue: "" });
+  const passwordScore = password ? zxcvbn(password).score : 0;
+  const passwordFeedbackList = getPasswordFeedback(password);
 
-  const getStrengthLabel = (score: number) => {
-    switch (score) {
-      case 0:
-        return "Very Weak";
-      case 1:
-        return "Weak";
-      case 2:
-        return "Fair";
-      case 3:
-        return "Good";
-      case 4:
-        return "Strong";
-      default:
-        return "";
-    }
-  };
-
-  const getStrengthColor = (score: number) => {
-    switch (score) {
-      case 0:
-        return "red";
-      case 1:
-        return "orangered";
-      case 2:
-        return "orange";
-      case 3:
-        return "yellowgreen";
-      case 4:
-        return "green";
-      default:
-        return "gray";
-    }
-  };
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setMessage("");
-    setError("");
-
-    if (!password.trim() || !confirmPassword.trim()) {
-      setError("Please fill in all fields.");
+  const onFormSubmit = async (data: ResetPasswordFormData) => {
+    if (data.password !== data.confirmPassword) {
+      setError("confirmPassword", { message: "Passwords do not match." });
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    if (!isStrongPassword(password)) {
-      setError("Please fix your password according to the criteria below.");
+    if (!isStrongPassword(data.password)) {
+      setError("password", {
+        message: "Please fix your password according to the criteria below.",
+      });
       return;
     }
 
     try {
-      setLoading(true);
-      await onSubmit(password.trim());
-      setMessage("Password reset successfully!");
-      setPassword("");
-      setConfirmPassword("");
+      await onSubmit(data.password.trim());
+      reset();
     } catch (err: any) {
-      setError(err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
+      setError("root", { message: err.message || "Something went wrong." });
     }
-  }
+  };
 
   return (
     <div className="reset-password-container d-flex justify-content-center align-items-center">
       <form
         className="card reset-password-card shadow-sm d-flex flex-column"
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onFormSubmit)}
       >
         <h3 className="mb-4 text-center">Reset Password</h3>
         <input
           type="password"
-          className="form-control mb-2"
+          className={`form-control mb-2 ${errors.password ? "is-invalid" : ""}`}
           placeholder="New Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
+          disabled={isSubmitting}
+          {...register("password", { required: "Password is required." })}
         />
+        {errors.password && (
+          <div className="invalid-feedback d-block mb-2">
+            {errors.password.message}
+          </div>
+        )}
         {password && (
           <div className="password-feedback mb-3">
             <div style={{ color: getStrengthColor(passwordScore) }}>
@@ -123,24 +117,32 @@ function ResetPasswordForm({ onSubmit }: ResetPasswordFormProps) {
             )}
           </div>
         )}
-
         <input
           type="password"
-          className="form-control mb-3"
+          className={`form-control mb-3 ${errors.confirmPassword ? "is-invalid" : ""}`}
           placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          disabled={loading}
+          disabled={isSubmitting}
+          {...register("confirmPassword", {
+            required: "Please confirm your password.",
+          })}
         />
-        {message && <p className="text-success mt-2">{message}</p>}
-        {error && <p className="text-danger mt-2">{error}</p>}
-
+        {errors.confirmPassword && (
+          <div className="invalid-feedback d-block mb-2">
+            {errors.confirmPassword.message}
+          </div>
+        )}
+        {isSubmitSuccessful && !errors.root && (
+          <p className="text-success mt-2">Password reset successfully!</p>
+        )}
+        {errors.root && (
+          <p className="text-danger mt-2">{errors.root.message}</p>
+        )}
         <button
           type="submit"
           className="btn btn-primary w-100 mt-3"
-          disabled={loading}
+          disabled={isSubmitting}
         >
-          {loading ? "Resetting..." : "Reset Password"}
+          {isSubmitting ? "Resetting..." : "Reset Password"}
         </button>
       </form>
     </div>

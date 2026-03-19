@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { Navbar } from "react-bootstrap";
 import { FaBell, FaMoon } from "react-icons/fa";
 import { FiSun } from "react-icons/fi";
@@ -14,6 +15,10 @@ import "./Header.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+
+interface SearchFormData {
+  searchQuery: string;
+}
 
 const Header: React.FC = () => {
   const {
@@ -35,7 +40,6 @@ const Header: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<{
     events: SearchType[];
     users: SearchType[];
@@ -44,6 +48,12 @@ const Header: React.FC = () => {
   const searchBarRef = useRef<HTMLDivElement>(null);
 
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
+
+  const { register, handleSubmit, watch, reset } = useForm<SearchFormData>({
+    defaultValues: { searchQuery: "" },
+  });
+
+  const searchQuery = watch("searchQuery");
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["notifications"],
@@ -238,10 +248,9 @@ const Header: React.FC = () => {
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search/results?q=${searchQuery.trim()}`);
+  const onSearchSubmit = (data: SearchFormData) => {
+    if (data.searchQuery.trim()) {
+      navigate(`/search/results?q=${data.searchQuery.trim()}`);
       setSuggestions({ events: [], users: [] });
     }
   };
@@ -254,7 +263,7 @@ const Header: React.FC = () => {
     if (type === "event") navigate(`/event/${id}`);
     else if (type === "user" && username) navigate(`/user/${username}`);
     setSuggestions({ events: [], users: [] });
-    setSearchQuery("");
+    reset();
   };
 
   const formatEventDate = (dateString: string) => {
@@ -294,15 +303,14 @@ const Header: React.FC = () => {
           </div>
           <div className="search-bar-container" ref={searchBarRef}>
             <form
-              onSubmit={handleSearchSubmit}
+              onSubmit={handleSubmit(onSearchSubmit)}
               className="position-relative d-flex me-4"
             >
               <input
                 type="search"
                 className="form-control me-2"
                 placeholder="Search events or users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                {...register("searchQuery")}
               />
               <button type="submit" className="btn btn-outline-primary">
                 Search

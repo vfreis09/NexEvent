@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
 import zxcvbn from "zxcvbn";
@@ -14,6 +15,19 @@ interface Tag {
   name: string;
 }
 
+interface AccountFormData {
+  username: string;
+  email: string;
+  bio: string;
+  contact: string;
+}
+
+interface PasswordFormData {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 const DEFAULT_AVATAR_URL = "/images/default-avatar.png";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -24,20 +38,7 @@ const EditUser: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-  const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordScore, setPasswordScore] = useState(0);
-  const [passwordFeedbackList, setPasswordFeedbackList] = useState<string[]>(
-    [],
-  );
-
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [digestFrequency, setDigestFrequency] = useState("daily");
@@ -46,24 +47,46 @@ const EditUser: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    register: registerAccount,
+    handleSubmit: handleAccountSubmit,
+    setValue: setAccountValue,
+    formState: { errors: accountErrors, isSubmitting: isAccountSubmitting },
+  } = useForm<AccountFormData>();
+
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    reset: resetPassword,
+    setError: setPasswordError,
+    control: passwordControl,
+    formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting },
+  } = useForm<PasswordFormData>();
+
+  const newPassword = useWatch({
+    control: passwordControl,
+    name: "newPassword",
+    defaultValue: "",
+  });
+  const passwordScore = newPassword ? zxcvbn(newPassword).score : 0;
+  const passwordFeedbackList = getPasswordFeedback(newPassword);
+
   useEffect(() => {
     if (user) {
-      setEmail(user.email || "");
-      setUsername(user.username || "");
-      setBio(user.bio || "");
-      setContact(user.contact || "");
+      setAccountValue("email", user.email || "");
+      setAccountValue("username", user.username || "");
+      setAccountValue("bio", user.bio || "");
+      setAccountValue("contact", user.contact || "");
       setIsVerified(user.is_verified ?? false);
     }
-  }, [user]);
+  }, [user, setAccountValue]);
 
   useEffect(() => {
     const fetchPrefs = async () => {
       try {
         const [tagsRes, settingsRes] = await Promise.all([
           fetch(`${BASE_URL}/tags`),
-          fetch(`${BASE_URL}/user/settings/all`, {
-            credentials: "include",
-          }),
+          fetch(`${BASE_URL}/user/settings/all`, { credentials: "include" }),
         ]);
         const tagsData = await tagsRes.json();
         const settingsData = await settingsRes.json();
@@ -87,32 +110,45 @@ const EditUser: React.FC = () => {
     fetchPrefs();
   }, []);
 
-  useEffect(() => {
-    if (newPassword) {
-      const result = zxcvbn(newPassword);
-      setPasswordScore(result.score);
-      setPasswordFeedbackList(getPasswordFeedback(newPassword));
-    } else {
-      setPasswordScore(0);
-      setPasswordFeedbackList([]);
-    }
-  }, [newPassword]);
-
-  const handleUserUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onAccountSubmit = async (data: AccountFormData) => {
     try {
       const response = await fetch(`${BASE_URL}/user/${user?.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, username, bio, contact }),
+        body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error();
       const updatedUser = await response.json();
       setUser({ ...user, ...updatedUser });
       showNotification("Profile updated!", "Success", "success");
-    } catch (error) {
+    } catch {
       showNotification("Update failed.", "Error", "danger");
+    }
+  };
+
+  const onPasswordSubmit = async (data: PasswordFormData) => {
+    if (data.newPassword !== data.confirmPassword) {
+      setPasswordError("confirmPassword", {
+        message: "Passwords do not match.",
+      });
+      return;
+    }
+    try {
+      const response = await fetch(`${BASE_URL}/user/change-password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          oldPassword: data.oldPassword,
+          newPassword: data.newPassword,
+        }),
+      });
+      if (!response.ok) throw new Error();
+      showNotification("Password changed!", "Success", "success");
+      resetPassword();
+    } catch {
+      showNotification("Password change failed.", "Error", "danger");
     }
   };
 
@@ -130,33 +166,10 @@ const EditUser: React.FC = () => {
       });
       showNotification("Interests updated!", "Success", "success");
       await loadUser();
-    } catch (error) {
+    } catch {
       showNotification("Failed to save.", "Error", "danger");
     } finally {
       setSavingPrefs(false);
-    }
-  };
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      showNotification("Passwords do not match.", "Error", "danger");
-      return;
-    }
-    try {
-      const response = await fetch(`${BASE_URL}/user/change-password`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ oldPassword, newPassword }),
-      });
-      if (!response.ok) throw new Error();
-      showNotification("Password changed!", "Success", "success");
-      setOldPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      showNotification("Password change failed.", "Error", "danger");
     }
   };
 
@@ -173,16 +186,11 @@ const EditUser: React.FC = () => {
           onClose={hideToast}
         />
       )}
-
       <div
-        className={`container edit-user-container pb-5 ${
-          theme === "dark" ? "dark-mode" : ""
-        }`}
+        className={`container edit-user-container pb-5 ${theme === "dark" ? "dark-mode" : ""}`}
       >
         <div
-          className={`alert ${
-            isVerified ? "alert-success-soft" : "alert-danger-soft"
-          } mt-4 d-flex justify-content-between align-items-center`}
+          className={`alert ${isVerified ? "alert-success-soft" : "alert-danger-soft"} mt-4 d-flex justify-content-between align-items-center`}
         >
           <span>{isVerified ? "Email Verified" : "Email Not Verified"}</span>
         </div>
@@ -262,40 +270,53 @@ const EditUser: React.FC = () => {
             </>
           )}
         </div>
-        <form onSubmit={handleUserUpdate} className="card p-4 shadow-sm mb-4">
+        <form
+          onSubmit={handleAccountSubmit(onAccountSubmit)}
+          className="card p-4 shadow-sm mb-4"
+        >
           <h4 className="mb-3">Account Details</h4>
           <div className="row g-3">
             <div className="col-md-6">
               <label className="form-label">Username</label>
               <input
                 type="text"
-                className="form-control"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                className={`form-control ${accountErrors.username ? "is-invalid" : ""}`}
+                {...registerAccount("username")}
               />
+              {accountErrors.username && (
+                <div className="invalid-feedback">
+                  {accountErrors.username.message}
+                </div>
+              )}
             </div>
             <div className="col-md-6">
               <label className="form-label">Email</label>
               <input
                 type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                className={`form-control ${accountErrors.email ? "is-invalid" : ""}`}
+                {...registerAccount("email", { required: "Email is required" })}
               />
+              {accountErrors.email && (
+                <div className="invalid-feedback">
+                  {accountErrors.email.message}
+                </div>
+              )}
             </div>
             <div className="col-12">
               <label className="form-label">Bio</label>
               <textarea
                 className="form-control"
                 rows={2}
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                {...registerAccount("bio")}
               />
             </div>
           </div>
-          <button type="submit" className="btn btn-primary w-100 mt-4">
-            Update Profile Info
+          <button
+            type="submit"
+            className="btn btn-primary w-100 mt-4"
+            disabled={isAccountSubmitting}
+          >
+            {isAccountSubmitting ? "Updating..." : "Update Profile Info"}
           </button>
         </form>
         <div className="card p-4 shadow-sm mb-4">
@@ -313,24 +334,45 @@ const EditUser: React.FC = () => {
             </label>
           </div>
         </div>
-        <form onSubmit={handleChangePassword} className="card p-4 shadow-sm">
+        <form
+          onSubmit={handlePasswordSubmit(onPasswordSubmit)}
+          className="card p-4 shadow-sm"
+        >
           <h4 className="mb-3">Security</h4>
+          <div className="mb-3">
+            <label className="form-label">Old Password</label>
+            <input
+              type="password"
+              className={`form-control ${passwordErrors.oldPassword ? "is-invalid" : ""}`}
+              {...registerPassword("oldPassword", {
+                required: "Old password is required",
+              })}
+            />
+            {passwordErrors.oldPassword && (
+              <div className="invalid-feedback">
+                {passwordErrors.oldPassword.message}
+              </div>
+            )}
+          </div>
           <div className="mb-3">
             <label className="form-label">New Password</label>
             <input
               type="password"
-              className="form-control"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
+              className={`form-control ${passwordErrors.newPassword ? "is-invalid" : ""}`}
+              {...registerPassword("newPassword", {
+                required: "New password is required",
+              })}
             />
+            {passwordErrors.newPassword && (
+              <div className="invalid-feedback">
+                {passwordErrors.newPassword.message}
+              </div>
+            )}
             {newPassword && (
               <div className="mt-2">
                 <div className="progress" style={{ height: "5px" }}>
                   <div
-                    className={`progress-bar bg-${
-                      passwordScore < 3 ? "danger" : "success"
-                    }`}
+                    className={`progress-bar bg-${passwordScore < 3 ? "danger" : "success"}`}
                     style={{ width: `${(passwordScore + 1) * 20}%` }}
                   ></div>
                 </div>
@@ -342,8 +384,27 @@ const EditUser: React.FC = () => {
               </div>
             )}
           </div>
-          <button type="submit" className="btn btn-secondary w-100">
-            Update Password
+          <div className="mb-3">
+            <label className="form-label">Confirm Password</label>
+            <input
+              type="password"
+              className={`form-control ${passwordErrors.confirmPassword ? "is-invalid" : ""}`}
+              {...registerPassword("confirmPassword", {
+                required: "Please confirm your password",
+              })}
+            />
+            {passwordErrors.confirmPassword && (
+              <div className="invalid-feedback">
+                {passwordErrors.confirmPassword.message}
+              </div>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="btn btn-secondary w-100"
+            disabled={isPasswordSubmitting}
+          >
+            {isPasswordSubmitting ? "Updating..." : "Update Password"}
           </button>
         </form>
       </div>

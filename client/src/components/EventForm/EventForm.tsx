@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useForm, useWatch } from "react-hook-form";
 import Map from "../Map/Map";
 import Places from "../Places/Places";
 import { useMapContext } from "../../context/MapProvider";
@@ -18,6 +19,13 @@ interface Tag {
   name: string;
 }
 
+interface EventFormData {
+  title: string;
+  description: string;
+  eventDateTime: string;
+  maxAttendees: string;
+}
+
 type LatLngLiteral = google.maps.LatLngLiteral;
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -25,20 +33,12 @@ const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const isTimeInPast = (dateTimeString: string): boolean => {
   if (!dateTimeString) return false;
-
-  const selectedTime = new Date(dateTimeString).getTime();
-  const now = new Date().getTime();
-
-  return selectedTime < now - 60000;
+  return new Date(dateTimeString).getTime() < new Date().getTime() - 60000;
 };
 
 const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [eventDateTime, setEventDateTime] = useState("");
   const [location, setLocation] = useState<LatLngLiteral | null>(null);
   const [address, setAddress] = useState<string>("");
-  const [maxAttendees, setMaxAttendees] = useState<number | string>("");
   const [isEventExpired, setIsEventExpired] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
@@ -48,26 +48,24 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const { id } = useParams<{ id: string }>();
   const { isLoaded } = useMapContext();
   const { showNotification } = useToast();
-
   const eventId = id ? parseInt(id) : null;
-
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const hasTimeError = useMemo(() => {
-    if (!isEditing || (isEditing && !isEventExpired)) {
-      return isTimeInPast(eventDateTime);
-    }
-    return false;
-  }, [eventDateTime, isEditing, isEventExpired]);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<EventFormData>();
 
-  const isFormInvalid = useMemo(() => {
-    const hasRequiredFields =
-      title.trim() !== "" &&
-      description.trim() !== "" &&
-      eventDateTime.trim() !== "" &&
-      location !== null;
-    return !hasRequiredFields || hasTimeError;
-  }, [title, description, eventDateTime, location, hasTimeError]);
+  const eventDateTime = useWatch({
+    control,
+    name: "eventDateTime",
+    defaultValue: "",
+  });
+  const hasTimeError = !isEventExpired && isTimeInPast(eventDateTime);
+  const isFormInvalid = hasTimeError || !location;
 
   useEffect(() => {
     fetch(`${BASE_URL}/tags`)
@@ -86,11 +84,9 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           if (!response.ok) throw new Error("Failed to fetch event details");
 
           const data = await response.json();
-
           const eventDate = new Date(data.event_datetime);
-          const now = new Date();
 
-          if (eventDate < now) {
+          if (eventDate < new Date()) {
             setIsEventExpired(true);
             showNotification(
               "This event has passed. Date/Location editing is disabled.",
@@ -100,25 +96,24 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
           }
 
           const localDate = toZonedTime(eventDate, timeZone);
-          setTitle(data.title);
-          setDescription(data.description);
-          setEventDateTime(format(localDate, "yyyy-MM-dd'T'HH:mm"));
+          setValue("title", data.title);
+          setValue("description", data.description);
+          setValue("eventDateTime", format(localDate, "yyyy-MM-dd'T'HH:mm"));
+          setValue("maxAttendees", data.max_attendees ?? "");
           setLocation({
             lat: data.location?.y ?? 37.7749,
             lng: data.location?.x ?? -122.4194,
           });
           setAddress(data.address ?? "");
-          setMaxAttendees(data.max_attendees ?? "");
           setSelectedTagIds((data.tags ?? []).map((t: Tag) => t.id));
           setVisibility(data.visibility ?? "public");
         } catch (error) {
-          console.error("Error fetching event:", error);
           showNotification("Failed to load event details.", "Error", "danger");
         }
       };
       fetchEvent();
     }
-  }, [isEditing, eventId, timeZone, showNotification]);
+  }, [isEditing, eventId, timeZone, showNotification, setValue]);
 
   const toggleTag = (tagId: number) => {
     setSelectedTagIds((prev) =>
@@ -128,10 +123,13 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: EventFormData) => {
+    if (!location) {
+      showNotification("Please select a location.", "Warning", "warning");
+      return;
+    }
 
-    if (isFormInvalid) {
+    if (hasTimeError) {
       showNotification(
         "Please correct the form errors before submitting.",
         "Warning",
@@ -144,16 +142,12 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
       const url = `${BASE_URL}/events/${isEditing ? `${eventId}` : ""}`;
       const method = isEditing ? "PUT" : "POST";
 
-      const latitude = location?.lat ?? null;
-      const longitude = location?.lng ?? null;
       const locationPoint =
-        latitude && longitude ? `${longitude} ${latitude}` : null;
+        location.lat && location.lng ? `${location.lng} ${location.lat}` : null;
 
-      let finalEventDateTime = eventDateTime;
-
+      let finalEventDateTime = data.eventDateTime;
       if (!isEditing || !isEventExpired) {
-        const localDate = new Date(eventDateTime);
-        const utcDate = toZonedTime(localDate, timeZone);
+        const utcDate = toZonedTime(new Date(data.eventDateTime), timeZone);
         finalEventDateTime = utcDate.toISOString();
       }
 
@@ -162,11 +156,11 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          title,
-          description,
+          title: data.title,
+          description: data.description,
           eventDateTime: finalEventDateTime,
           location: locationPoint,
-          max_attendees: maxAttendees,
+          max_attendees: data.maxAttendees,
           address,
           tagIds: selectedTagIds,
           visibility,
@@ -215,38 +209,44 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="container mt-4 mb-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="container mt-4 mb-5">
         <div className="card p-4 shadow-sm">
           <h2 className="mb-4">{isEditing ? "Edit Event" : "Create Event"}</h2>
           <div className="mb-3">
             <label className="form-label">Title:</label>
             <input
               type="text"
-              className="form-control"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
+              className={`form-control ${errors.title ? "is-invalid" : ""}`}
+              {...register("title", { required: "Title is required" })}
             />
+            {errors.title && (
+              <div className="invalid-feedback">{errors.title.message}</div>
+            )}
           </div>
           <div className="mb-3">
             <label className="form-label">Description:</label>
             <textarea
-              className="form-control"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              className={`form-control ${errors.description ? "is-invalid" : ""}`}
               rows={4}
-              required
+              {...register("description", {
+                required: "Description is required",
+              })}
             />
+            {errors.description && (
+              <div className="invalid-feedback">
+                {errors.description.message}
+              </div>
+            )}
           </div>
           <div className="mb-3">
             <label className="form-label">Event Date and Time:</label>
             <input
               type="datetime-local"
               className={`form-control ${hasTimeError ? "is-invalid" : ""}`}
-              value={eventDateTime}
-              onChange={(e) => setEventDateTime(e.target.value)}
-              required
               disabled={isEditing && isEventExpired}
+              {...register("eventDateTime", {
+                required: "Date and time is required",
+              })}
             />
             {hasTimeError && (
               <div className="invalid-feedback d-block">
@@ -264,8 +264,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             <input
               type="number"
               className="form-control"
-              value={maxAttendees}
-              onChange={(e) => setMaxAttendees(e.target.value)}
+              {...register("maxAttendees")}
             />
           </div>
           <div className="mb-3">
@@ -331,9 +330,15 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isFormInvalid}
+              disabled={isFormInvalid || isSubmitting}
             >
-              {isEditing ? "Update Event" : "Create Event"}
+              {isSubmitting
+                ? isEditing
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditing
+                  ? "Update Event"
+                  : "Create Event"}
             </button>
           </div>
         </div>

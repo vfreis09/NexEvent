@@ -1,75 +1,75 @@
-import { useState } from "react";
-import { useTheme } from "../../context/ThemeContext"; // 👈 ADDED
+import { useForm } from "react-hook-form";
+import { useTheme } from "../../context/ThemeContext";
 import "./ForgotPasswordForm.css";
 
 interface ForgotPasswordFormProps {
   onSubmit: (email: string) => Promise<void>;
 }
 
-function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+interface ForgotPasswordFormData {
+  email: string;
+}
 
+function ForgotPasswordForm({ onSubmit }: ForgotPasswordFormProps) {
   useTheme();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setMessage("");
-    setError("");
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = useForm<ForgotPasswordFormData>();
 
-    if (!email.trim()) {
-      setError("Please enter your email.");
-      return;
-    }
-
+  const onFormSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      setLoading(true);
-      await onSubmit(email.trim());
-      setMessage("If this email exists, a reset link has been sent.");
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+      await onSubmit(data.email.trim());
+    } catch {
+      setError("root", { message: "Something went wrong. Please try again." });
     }
-  }
+  };
 
   return (
     <div className="forgot-password-container">
-      <form onSubmit={handleSubmit} className="forgot-password-card shadow-sm">
+      <form
+        onSubmit={handleSubmit(onFormSubmit)}
+        className="forgot-password-card shadow-sm"
+      >
         <h3 className="text-center">Forgot Password</h3>
         <p className="forgot-instructions">
           Enter the email address associated with your account and we'll send
           you a link to reset your password.
         </p>
-
         <input
           type="email"
-          className="form-control mb-3"
+          className={`form-control mb-3 ${errors.email ? "is-invalid" : ""}`}
           placeholder="Email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
+          disabled={isSubmitting}
+          {...register("email", { required: "Please enter your email." })}
         />
-        {message && (
-          <div className="alert alert-success py-2 small">{message}</div>
+        {errors.email && (
+          <div className="alert alert-danger py-2 small">
+            {errors.email.message}
+          </div>
         )}
-        {error && <div className="alert alert-danger py-2 small">{error}</div>}
-
+        {isSubmitSuccessful && !errors.root && (
+          <div className="alert alert-success py-2 small">
+            If this email exists, a reset link has been sent.
+          </div>
+        )}
+        {errors.root && (
+          <div className="alert alert-danger py-2 small">
+            {errors.root.message}
+          </div>
+        )}
         <button
           type="submit"
           className="btn btn-primary w-100"
-          disabled={loading}
+          disabled={isSubmitting}
         >
-          {loading ? "Sending link..." : "Send Reset Link"}
+          {isSubmitting ? "Sending link..." : "Send Reset Link"}
         </button>
         <div className="text-center mt-4">
-          <a
-            href="/login"
-            className="text-decoration-none small"
-            style={{ color: "inherit", opacity: 0.7 }}
-          >
+          <a href="/login" className="text-decoration-none small back-to-login">
             Back to Login
           </a>
         </div>
