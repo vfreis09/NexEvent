@@ -168,12 +168,20 @@
   pointer-events: none;
 }
 
+.event-card-footer {
+  margin-top: 15px;
+  font-size: 0.95rem;
+  color: #444;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .event-card-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 10px;
-  flex-basis: 100%;
+  justify-content: flex-end;
 }
 
 .event-tag {
@@ -190,6 +198,10 @@
   background-color: #2a1f3d;
   color: #c49eff;
   border-color: #4a3566;
+}
+
+.dark-mode .event-card-footer {
+  color: #ccc;
 }
 
 .dark-mode .event-card {

@@ -111,19 +111,30 @@ const EventList: React.FC<EventListProps> = ({
               )}
             </div>
             <div className="event-card-footer">
-              <strong>Status:</strong>{" "}
-              {event.status === "canceled"
-                ? "Canceled"
-                : eventIsExpired && isPast
-                  ? "Completed"
-                  : event.max_attendees !== null &&
-                      event.number_of_attendees >= event.max_attendees
-                    ? "Full"
-                    : isCompact
-                      ? "Upcoming"
-                      : eventIsExpired
-                        ? "Expired"
-                        : "Active"}
+              <span>
+                <strong>Status:</strong>{" "}
+                {event.status === "canceled"
+                  ? "Canceled"
+                  : eventIsExpired && isPast
+                    ? "Completed"
+                    : event.max_attendees !== null &&
+                        event.number_of_attendees >= event.max_attendees
+                      ? "Full"
+                      : isCompact
+                        ? "Upcoming"
+                        : eventIsExpired
+                          ? "Expired"
+                          : "Active"}
+              </span>
+              {event.tags && event.tags.length > 0 && (
+                <div className="event-card-tags">
+                  {event.tags.map((tag) => (
+                    <span key={tag.id} className="event-tag">
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             {isVerified &&
               user?.role !== "banned" &&
