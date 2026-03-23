@@ -226,6 +226,30 @@
   gap: 10px;
 }
 
+.event-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  flex-basis: 100%;
+}
+
+.event-tag {
+  background-color: #f0e8ff;
+  color: #5a2d82;
+  border: 1px solid #d4b8f0;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.dark-mode .event-tag {
+  background-color: #2a1f3d;
+  color: #c49eff;
+  border-color: #4a3566;
+}
+
 @media (max-width: 768px) {
   .event-container,
   .invitations-container,

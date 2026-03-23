@@ -1,3 +1,8 @@
+export interface Tag {
+  id: number;
+  name: string;
+}
+
 export interface AuthorData {
   id: number;
   username: string;
@@ -22,4 +27,5 @@ export interface EventData {
   created_at: string;
   author_username: string;
   author?: AuthorData;
+  tags?: Tag[];
 }

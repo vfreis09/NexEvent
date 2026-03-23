@@ -74,6 +74,18 @@ const Event: React.FC<EventProps> = ({
           <strong>Status</strong>
           <span>{event.status}</span>
         </div>
+        {event.tags && event.tags.length > 0 && (
+          <div className="event-info-row">
+            <strong>Tags</strong>
+            <div className="event-detail-tags">
+              {event.tags.map((tag) => (
+                <span key={tag.id} className="event-tag">
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       {isVerified && isOwner && user?.role !== "banned" && (
         <div className="event-owner-actions">

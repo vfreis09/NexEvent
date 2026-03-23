@@ -100,6 +100,15 @@ const EventList: React.FC<EventListProps> = ({
                 {event.description.slice(0, isCompact ? 50 : 100)}
                 {isCompact && "..."}
               </div>
+              {event.tags && event.tags.length > 0 && (
+                <div className="event-card-tags">
+                  {event.tags.map((tag) => (
+                    <span key={tag.id} className="event-tag">
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="event-card-footer">
               <strong>Status:</strong>{" "}
