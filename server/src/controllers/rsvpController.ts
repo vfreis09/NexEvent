@@ -224,12 +224,18 @@ const getEventsRsvpedByUser = async (req: Request, res: Response) => {
       queryParams,
     );
 
-    await Promise.all(
-      eventsResult.rows.map((event: any) => updateEventStatus(event.id)),
+    const eventsWithTags = await Promise.all(
+      eventsResult.rows.map(async (event: any) => {
+        const tagsResult = await pool.query(
+          `SELECT t.id, t.name FROM tags t JOIN event_tags et ON t.id = et.tag_id WHERE et.event_id = $1`,
+          [event.id],
+        );
+        return { ...event, tags: tagsResult.rows };
+      }),
     );
 
     res.json({
-      events: eventsResult.rows,
+      events: eventsWithTags,
       pagination: {
         totalEvents,
         totalPages,
