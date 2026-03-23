@@ -65,3 +65,36 @@
   background-color: #3d3d3d !important;
   color: #ffffff !important;
 }
+
+.dark-mode .search-bar-container .form-control {
+  background-color: #2d2d2d !important;
+  color: #ffffff !important;
+  border-color: #444 !important;
+}
+
+.dark-mode .search-bar-container .form-control::placeholder {
+  color: #aaaaaa !important;
+  opacity: 1;
+}
+
+.dark-mode .suggestions-dropdown {
+  background-color: #252525 !important;
+  border: 1px solid #444 !important;
+  color: #eee !important;
+}
+
+.dark-mode .suggestions-dropdown .loading-text {
+  color: #bbb !important;
+}
+
+.dark-mode .suggestions-dropdown .suggestion-item {
+  color: #eee;
+}
+
+.dark-mode .suggestions-dropdown .suggestion-item:hover {
+  background-color: #3d3d3d !important;
+}
+
+.dark-mode .suggestions-dropdown .text-muted {
+  color: #bbb !important;
+}

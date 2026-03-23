@@ -128,7 +128,7 @@ const SearchBar: React.FC = () => {
           placeholder="Search events or users..."
           {...register("query")}
         />
-        <button type="submit" className="btn btn-outline-success">
+        <button type="submit" className="btn btn-outline-primary">
           Search
         </button>
       </form>
