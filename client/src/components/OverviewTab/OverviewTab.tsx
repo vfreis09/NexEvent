@@ -5,6 +5,7 @@ import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
 import { useTheme } from "../../context/ThemeContext";
+import Loading from "../../components/Loading/Loading";
 import "./OverviewTab.css";
 
 const MAX_EVENTS_TO_SHOW = 3;
@@ -62,7 +63,7 @@ const OverviewTab = () => {
   };
 
   if (loadingCreated || loadingRsvp)
-    return <p className="overview-loading-message">Loading summary...</p>;
+    return <Loading variant="page" text="Loading summary..." />;
 
   return (
     <div className="overview-tab-view">

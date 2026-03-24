@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm, useWatch } from "react-hook-form";
 import { SearchType } from "../../types/SearchType";
 import { useTheme } from "../../context/ThemeContext";
+import Loading from "../../components/Loading/Loading";
 import "./SearchBar.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -135,8 +136,8 @@ const SearchBar: React.FC = () => {
       {(hasSuggestions || (loading && query.length >= 2)) && (
         <div className="suggestions-dropdown search-dropdown-base shadow rounded mt-1 p-2">
           {loading && (
-            <div className="p-1 text-center small border-bottom mb-1 loading-text">
-              Loading...
+            <div className="p-1 border-bottom mb-1 d-flex justify-content-center">
+              <Loading variant="spinner" />
             </div>
           )}
           {suggestions.events.length > 0 && (

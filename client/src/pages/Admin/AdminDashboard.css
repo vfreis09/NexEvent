@@ -13,7 +13,9 @@
 .stat-card {
   text-align: center;
   border-radius: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   padding: 20px;
   background-color: #ffffff;
 }
@@ -61,13 +63,6 @@
 
 .rsvps-card {
   border-top: 5px solid #6f42c1;
-}
-
-.dashboard-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px;
 }
 
 .dashboard-alert {

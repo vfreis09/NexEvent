@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Container, Table, Alert, Form, Spinner } from "react-bootstrap";
+import { Container, Table, Alert, Form } from "react-bootstrap";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateUserRole } from "../../services/adminApi";
 import { User as AppUser } from "../../types/User";
@@ -8,6 +8,7 @@ import AppToast from "../../components/ToastComponent/ToastComponent";
 import { useTheme } from "../../context/ThemeContext";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
+import Loading from "../../components/Loading/Loading";
 import "./ManageUsers.css";
 
 interface AdminUser extends AppUser {
@@ -80,12 +81,7 @@ const ManageUsers: React.FC = () => {
     }
   };
 
-  if (isLoading)
-    return (
-      <div className="manage-loading">
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
+  if (isLoading) return <Loading variant="page" text="Loading users..." />;
 
   return (
     <>

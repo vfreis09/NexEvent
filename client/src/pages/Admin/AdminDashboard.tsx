@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
+import { Container, Row, Col, Card, Alert } from "react-bootstrap";
 import { FaUsers, FaCalendarAlt, FaClipboardList } from "react-icons/fa";
 import { getStats } from "../../services/adminApi";
 import { useTheme } from "../../context/ThemeContext";
+import Loading from "../../components/Loading/Loading";
 import "./AdminDashboard.css";
 
 interface Stats {
@@ -30,12 +31,7 @@ const AdminDashboard: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading)
-    return (
-      <div className="dashboard-loading">
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
+  if (loading) return <Loading variant="page" text="Loading dashboard..." />;
 
   if (error)
     return (

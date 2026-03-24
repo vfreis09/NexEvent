@@ -1,0 +1,128 @@
+.loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner__ring {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid var(--color-border);
+  border-top-color: var(--color-link);
+  animation: loading-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-inline__text {
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+  opacity: 0.75;
+}
+
+.loading-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 4rem 1rem;
+  width: 100%;
+}
+
+.loading-page .loading-spinner__ring {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+}
+
+.loading-page__text {
+  margin: 0;
+  font-size: 0.925rem;
+  color: var(--color-text-primary);
+  opacity: 0.6;
+}
+
+.loading-skeleton-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.loading-skeleton-card {
+  background-color: var(--color-background-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton-line {
+  border-radius: 4px;
+  animation: loading-shimmer 1.4s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-background-primary) 50%,
+    var(--color-border) 75%
+  );
+  background-size: 800px 100%;
+}
+
+.skeleton-title {
+  height: 18px;
+  width: 55%;
+}
+.skeleton-subtitle {
+  height: 13px;
+  width: 35%;
+  opacity: 0.7;
+}
+.skeleton-body {
+  height: 13px;
+  width: 90%;
+}
+.skeleton-body--short {
+  width: 70%;
+}
+
+.skeleton-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.skeleton-tag {
+  height: 22px;
+  width: 64px;
+  border-radius: 20px;
+}
+.skeleton-btn {
+  height: 32px;
+  width: 90px;
+  border-radius: 6px;
+  margin-left: auto;
+}

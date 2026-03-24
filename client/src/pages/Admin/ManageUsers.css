@@ -30,13 +30,6 @@
   color: #dc3545;
 }
 
-.manage-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px;
-}
-
 .dark-mode {
   background-color: #121212;
 }

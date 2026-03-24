@@ -38,13 +38,6 @@
   margin: 2px 0;
 }
 
-.events-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px;
-}
-
 .manage-events .pagination-container {
   margin-bottom: 50px;
 }

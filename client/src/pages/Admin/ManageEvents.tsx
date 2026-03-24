@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Container, Table, Button, Alert, Spinner } from "react-bootstrap";
+import { Container, Table, Button, Alert } from "react-bootstrap";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EventType } from "../../types/EventType";
 import { useToast } from "../../hooks/useToast";
@@ -7,6 +7,7 @@ import AppToast from "../../components/ToastComponent/ToastComponent";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
+import Loading from "../../components/Loading/Loading";
 import "./ManageEvents.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -84,12 +85,7 @@ const ManageEvents: React.FC = () => {
     }
   };
 
-  if (isLoading)
-    return (
-      <div className="events-loading">
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
+  if (isLoading) return <Loading variant="page" text="Loading events..." />;
 
   return (
     <>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "../../context/UserContext";
+import Loading from "../Loading/Loading";
 
 interface Props {
   inputRef: React.RefObject<any>;
@@ -94,8 +95,7 @@ const ProfilePictureUploader: React.FC<Props> = ({
       />
       {loading && (
         <div className="mt-2">
-          <span className="spinner-border spinner-border-sm text-primary me-2"></span>
-          <small className="text-muted">Uploading...</small>
+          <Loading variant="spinner" text="Uploading..." />
         </div>
       )}
     </>

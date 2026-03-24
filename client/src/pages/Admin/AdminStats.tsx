@@ -15,6 +15,7 @@ import {
 import { getStats } from "../../services/adminApi";
 import { Stats, StatusData } from "../../types/StatsTypes";
 import { useTheme } from "../../context/ThemeContext";
+import Loading from "../../components/Loading/Loading";
 import "./AdminStats.css";
 
 const COLORS = ["#0088FE", "#FF8042", "#00C49F"];
@@ -44,7 +45,7 @@ const AdminStats: React.FC = () => {
   };
   const darkTooltipLabelStyle = { color: "#f0f0f0" };
 
-  if (loading) return <p className="info-text">Loading stats...</p>;
+  if (loading) return <Loading variant="page" text="Loading stats..." />;
   if (error) return <p className="error-text">Error: {error}</p>;
 
   const pieData =

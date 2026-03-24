@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from "react";
 import { useLoadScript, Libraries } from "@react-google-maps/api";
+import Loading from "../components/Loading/Loading";
 
 const MapContext = createContext<any>(null);
 
@@ -23,7 +24,7 @@ const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
 
   return (
     <MapContext.Provider value={{ isLoaded, loadError }}>
-      {isLoaded ? children : <div>Loading...</div>}
+      {isLoaded ? children : <Loading variant="page" text="Loading map..." />}
     </MapContext.Provider>
   );
 };

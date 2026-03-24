@@ -8,6 +8,7 @@ import AppToast from "../../components/ToastComponent/ToastComponent";
 import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
 import { useState } from "react";
+import Loading from "../../components/Loading/Loading";
 import "./Home.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -98,7 +99,7 @@ function HomePage() {
       )}
       <div className="home-page">
         {loading ? (
-          <div>Loading events...</div>
+          <Loading variant="skeleton" count={3} />
         ) : (
           <>
             <h2>Upcoming Events</h2>

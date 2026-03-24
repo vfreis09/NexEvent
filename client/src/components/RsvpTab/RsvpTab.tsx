@@ -7,6 +7,7 @@ import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
+import Loading from "../../components/Loading/Loading";
 import "./RsvpTab.css";
 
 const EventsPerPage = 10;
@@ -54,7 +55,7 @@ const RsvpTab = () => {
     <div className="rsvps-tab-view">
       <h3>Upcoming RSVPs</h3>
       {loadingUpcoming ? (
-        <p className="loading-text">Loading upcoming RSVPs...</p>
+        <Loading variant="spinner" text="Loading upcoming RSVPs..." />
       ) : upcomingRsvps.length > 0 ? (
         <>
           <EventList

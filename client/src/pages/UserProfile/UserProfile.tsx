@@ -4,6 +4,7 @@ import { useUser } from "../../context/UserContext";
 import UserProfileCard from "../../components/UserProfileCard/UserProfileCard";
 import { PublicUser } from "../../types/PublicUser";
 import { useTheme } from "../../context/ThemeContext";
+import Loading from "../../components/Loading/Loading";
 import "./UserProfilePage.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -32,8 +33,7 @@ const UserProfilePage = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  if (isLoading)
-    return <p className="profile-loading-message">Loading profile...</p>;
+  if (isLoading) return <Loading variant="page" text="Loading profile..." />;
 
   if (error || !profileUser)
     return <p className="profile-error-message">User not found</p>;

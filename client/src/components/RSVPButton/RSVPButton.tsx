@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
 import { useTheme } from "../../context/ThemeContext";
+import Loading from "../../components/Loading/Loading";
 import "./RSVP.css";
 
 type RSVPProps = {
@@ -103,7 +104,7 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
       )}
       <div className="rsvp-container">
         {loading ? (
-          <p>Loading RSVP status...</p>
+          <Loading variant="spinner" text="Loading RSVP status..." />
         ) : !userId ? (
           <p>Please log in to RSVP for this event.</p>
         ) : (

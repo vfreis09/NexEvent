@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useTheme } from "../../context/ThemeContext";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
+import Loading from "../../components/Loading/Loading";
 import "./SearchResults.css";
 
 interface Pagination {
@@ -77,8 +78,8 @@ const SearchResults: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mt-5 search-loading">
-        Loading search results for "{query}"...
+      <div className="container mt-5">
+        <Loading variant="page" text={`Searching for "${query}"...`} />
       </div>
     );
   }

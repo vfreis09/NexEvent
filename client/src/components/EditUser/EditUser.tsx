@@ -7,7 +7,8 @@ import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
 import AppToast from "../ToastComponent/ToastComponent";
 import ProfilePictureUploader from "../ProfilePictureUploader/ProfilePictureUploader";
-import { Badge, Form, Spinner } from "react-bootstrap";
+import { Badge, Form } from "react-bootstrap";
+import Loading from "../../components/Loading/Loading";
 import "./EditUser.css";
 
 interface Tag {
@@ -219,7 +220,7 @@ const EditUser: React.FC = () => {
         <div className="card p-4 shadow-sm mb-4">
           <h4 className="mb-3">Interests</h4>
           {loadingPrefs ? (
-            <Spinner animation="border" size="sm" />
+            <Loading variant="spinner" text="Loading preferences..." />
           ) : (
             <>
               <Form.Group className="mb-4">
@@ -265,7 +266,7 @@ const EditUser: React.FC = () => {
                 disabled={savingPrefs}
                 className="btn btn-primary w-100"
               >
-                {savingPrefs ? <Spinner size="sm" /> : "Save Preferences"}
+                {savingPrefs ? "Saving..." : "Save Preferences"}
               </button>
             </>
           )}

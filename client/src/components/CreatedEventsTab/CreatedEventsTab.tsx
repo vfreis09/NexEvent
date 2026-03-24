@@ -6,6 +6,7 @@ import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
+import Loading from "../../components/Loading/Loading";
 import "./CreatedEventsTab.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -77,7 +78,7 @@ const CreatedEventsTab = () => {
     <div className="created-events-tab-view">
       <h3>Upcoming Created Events</h3>
       {loadingUpcoming ? (
-        <p className="loading-text">Loading upcoming events...</p>
+        <Loading variant="spinner" text="Loading upcoming events..." />
       ) : upcomingEvents.length > 0 ? (
         <>
           <EventList
@@ -96,10 +97,9 @@ const CreatedEventsTab = () => {
           This user has no upcoming created events.
         </p>
       )}
-
       <h3 className="past-events-header">Past & Canceled History</h3>
       {loadingPast ? (
-        <p className="loading-text">Loading history...</p>
+        <Loading variant="spinner" text="Loading history..." />
       ) : pastEvents.length > 0 ? (
         <>
           <EventList
