@@ -11,6 +11,7 @@ import { EventData } from "../../types/EventData";
 import Toast from "react-bootstrap/Toast";
 import ToastContainer from "react-bootstrap/ToastContainer";
 import { useState } from "react";
+import Loading from "../../components/Loading/Loading";
 import "./EventDetails.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -84,7 +85,7 @@ function EventDetails() {
   }
 
   if (isLoading) {
-    return <p className="event-detail-error">Loading event...</p>;
+    return <Loading variant="page" text="Loading event..." />;
   }
 
   if (error || !event) {
