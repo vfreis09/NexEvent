@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBell } from "react-icons/fa";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -129,6 +129,19 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(e.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="notification-wrapper" ref={notificationRef}>
