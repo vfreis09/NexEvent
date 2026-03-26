@@ -39,6 +39,8 @@ body {
     color 0.3s;
   line-height: 1.6;
   padding-top: 73px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .text-center {
@@ -98,10 +100,4 @@ h6 {
   background-color: var(--color-alert-danger-bg) !important;
   color: var(--color-alert-danger-text) !important;
   border-color: var(--color-alert-danger-bg) !important;
-}
-
-html,
-body {
-  max-width: 100%;
-  overflow-x: hidden;
 }
