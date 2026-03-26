@@ -35,7 +35,7 @@ const Header: React.FC = () => {
           onClose={hideToast}
         />
       )}
-      <Navbar sticky="top" expand="lg" className="custom-navbar">
+      <Navbar expand="lg" className="custom-navbar">
         <div className="header-wrapper">
           <div className="header-left">
             <Link to="/" className="logo-text">

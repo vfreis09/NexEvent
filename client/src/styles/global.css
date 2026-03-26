@@ -34,8 +34,11 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--color-background-primary);
   color: var(--color-text-primary);
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
   line-height: 1.6;
+  padding-top: 73px;
 }
 
 .text-center {
