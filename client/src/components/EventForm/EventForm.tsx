@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useWatch } from "react-hook-form";
 import Map from "../Map/Map";
@@ -43,6 +44,8 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [visibility, setVisibility] = useState<"public" | "private">("public");
+
+  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -175,6 +178,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         );
       }
 
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
       navigate("/", {
         state: {
           successMessage: isEditing
