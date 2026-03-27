@@ -17,10 +17,10 @@ const getUsers = async (req: Request, res: Response) => {
     const totalPages = Math.ceil(totalItems / limit);
 
     const result = await pool.query(
-      `SELECT id, email, username, role, created_at, is_verified, visibility
-       FROM users 
-       ORDER BY created_at DESC
-       LIMIT $1 OFFSET $2`,
+      `SELECT id, email, username, role, created_at, is_verified
+        FROM users 
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2`,
       [limit, offset],
     );
 
