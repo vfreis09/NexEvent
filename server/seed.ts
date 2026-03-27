@@ -31,6 +31,117 @@ const pool = new Pool({
 const NUM_USERS = 50;
 const NUM_EVENTS = 100;
 
+const REAL_LOCATIONS = [
+  // USA
+  { city: "New York, NY", lat: 40.7128, lng: -74.006, country: "USA" },
+  { city: "Los Angeles, CA", lat: 34.0522, lng: -118.2437, country: "USA" },
+  { city: "Chicago, IL", lat: 41.8781, lng: -87.6298, country: "USA" },
+  { city: "Houston, TX", lat: 29.7604, lng: -95.3698, country: "USA" },
+  { city: "Phoenix, AZ", lat: 33.4484, lng: -112.074, country: "USA" },
+  { city: "San Francisco, CA", lat: 37.7749, lng: -122.4194, country: "USA" },
+  { city: "Miami, FL", lat: 25.7617, lng: -80.1918, country: "USA" },
+  { city: "Seattle, WA", lat: 47.6062, lng: -122.3321, country: "USA" },
+  { city: "Boston, MA", lat: 42.3601, lng: -71.0589, country: "USA" },
+  { city: "Austin, TX", lat: 30.2672, lng: -97.7431, country: "USA" },
+
+  // Europe
+  { city: "London, UK", lat: 51.5074, lng: -0.1278, country: "UK" },
+  { city: "Paris, France", lat: 48.8566, lng: 2.3522, country: "France" },
+  { city: "Berlin, Germany", lat: 52.52, lng: 13.405, country: "Germany" },
+  { city: "Madrid, Spain", lat: 40.4168, lng: -3.7038, country: "Spain" },
+  { city: "Rome, Italy", lat: 41.9028, lng: 12.4964, country: "Italy" },
+  {
+    city: "Amsterdam, Netherlands",
+    lat: 52.3676,
+    lng: 4.9041,
+    country: "Netherlands",
+  },
+  { city: "Barcelona, Spain", lat: 41.3851, lng: 2.1734, country: "Spain" },
+  { city: "Vienna, Austria", lat: 48.2082, lng: 16.3738, country: "Austria" },
+
+  // Asia
+  { city: "Tokyo, Japan", lat: 35.6762, lng: 139.6503, country: "Japan" },
+  { city: "Singapore", lat: 1.3521, lng: 103.8198, country: "Singapore" },
+  { city: "Hong Kong", lat: 22.3193, lng: 114.1694, country: "Hong Kong" },
+  {
+    city: "Seoul, South Korea",
+    lat: 37.5665,
+    lng: 126.978,
+    country: "South Korea",
+  },
+  { city: "Dubai, UAE", lat: 25.2048, lng: 55.2708, country: "UAE" },
+  {
+    city: "Bangkok, Thailand",
+    lat: 13.7563,
+    lng: 100.5018,
+    country: "Thailand",
+  },
+
+  // Oceania
+  {
+    city: "Sydney, Australia",
+    lat: -33.8688,
+    lng: 151.2093,
+    country: "Australia",
+  },
+  {
+    city: "Melbourne, Australia",
+    lat: -37.8136,
+    lng: 144.9631,
+    country: "Australia",
+  },
+  {
+    city: "Auckland, New Zealand",
+    lat: -36.8485,
+    lng: 174.7633,
+    country: "New Zealand",
+  },
+
+  // South America
+  {
+    city: "São Paulo, Brazil",
+    lat: -23.5505,
+    lng: -46.6333,
+    country: "Brazil",
+  },
+  {
+    city: "Rio de Janeiro, Brazil",
+    lat: -22.9068,
+    lng: -43.1729,
+    country: "Brazil",
+  },
+  {
+    city: "Buenos Aires, Argentina",
+    lat: -34.6037,
+    lng: -58.3816,
+    country: "Argentina",
+  },
+  { city: "Lima, Peru", lat: -12.0464, lng: -77.0428, country: "Peru" },
+
+  // Canada
+  { city: "Toronto, Canada", lat: 43.6532, lng: -79.3832, country: "Canada" },
+  {
+    city: "Vancouver, Canada",
+    lat: 49.2827,
+    lng: -123.1207,
+    country: "Canada",
+  },
+  { city: "Montreal, Canada", lat: 45.5017, lng: -73.5673, country: "Canada" },
+];
+
+const getRandomLocationNearCity = () => {
+  const baseLocation = faker.helpers.arrayElement(REAL_LOCATIONS);
+
+  const latOffset = (Math.random() - 0.5) * 0.02;
+  const lngOffset = (Math.random() - 0.5) * 0.02;
+
+  return {
+    lat: baseLocation.lat + latOffset,
+    lng: baseLocation.lng + lngOffset,
+    city: baseLocation.city,
+  };
+};
+
 const seedDatabase = async () => {
   console.log(`--- Connection Check ---`);
   console.log(`Target DB: ${process.env.DATABASE_URL?.split("@")[1]}`);
@@ -121,6 +232,9 @@ const seedDatabase = async () => {
       const isPast = faker.datatype.boolean(0.2);
       const date = isPast ? faker.date.recent() : faker.date.future();
 
+      const location = getRandomLocationNearCity();
+      const streetAddress = faker.location.streetAddress();
+
       const res = await client.query(
         `
         INSERT INTO events (title, description, event_datetime, max_attendees, location, address, author_id, status)
@@ -130,8 +244,8 @@ const seedDatabase = async () => {
           faker.lorem.paragraph(),
           date,
           faker.number.int({ min: 10, max: 100 }),
-          `(${faker.location.longitude()}, ${faker.location.latitude()})`,
-          faker.location.streetAddress(),
+          `(${location.lng}, ${location.lat})`,
+          `${streetAddress}, ${location.city}`,
           authorId,
           isPast ? "expired" : "active",
         ],
