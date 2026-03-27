@@ -38,13 +38,10 @@ function HomePage() {
 
   useEffect(() => {
     const state = location.state as { successMessage?: string } | null;
+
     if (state?.successMessage) {
-      showNotification(
-        "Success! Your event is live and ready for RSVPs.",
-        "Success",
-        "success",
-        "white",
-      );
+      showNotification(state.successMessage, "Success", "success", "white");
+
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [location.state, showNotification]);

@@ -1,38 +1,14 @@
-import { useState, useCallback } from "react";
-
-interface ToastInfo {
-  message: string;
-  header: string;
-  bg: string;
-  textColor?: string;
-}
+import { useContext } from "react";
+import { ToastContext } from "../context/ToastContext";
 
 export const useToast = () => {
-  const [showToast, setShowToast] = useState(false);
-  const [toastInfo, setToastInfo] = useState<ToastInfo | null>(null);
+  const context = useContext(ToastContext);
 
-  const showNotification = useCallback(
-    (
-      message: string,
-      header: string,
-      bg: string,
-      textColor: string = "white"
-    ) => {
-      setToastInfo({ message, header, bg, textColor });
-      setShowToast(true);
-    },
-    []
-  );
+  // This safety check ensures you don't try to use toasts
+  // in a part of the app not wrapped by the Provider.
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider");
+  }
 
-  const hideToast = useCallback(() => {
-    setShowToast(false);
-    setToastInfo(null);
-  }, []);
-
-  return {
-    showToast,
-    toastInfo,
-    showNotification,
-    hideToast,
-  };
+  return context;
 };

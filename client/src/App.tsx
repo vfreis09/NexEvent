@@ -26,67 +26,70 @@ import ManageEvents from "./pages/Admin/ManageEvents";
 import AdminStats from "./pages/Admin/AdminStats";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import SearchResults from "./pages/SearchResults/SearchResults";
+import { ToastProvider } from "./context/ToastContext";
 
 const App: React.FC = () => {
   return (
     <ThemeProvider>
       <UserProvider>
-        <Header />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/search/results" element={<SearchResults />} />
-          <Route
-            element={
-              <>
-                <RequireVerifiedUser />
-              </>
-            }
-          >
-            <Route element={<ProtectedRoute requireVerified blockBanned />}>
-              <Route
-                path="/create"
-                element={
-                  <MapProvider>
-                    <CreateEvent />
-                  </MapProvider>
-                }
-              />
-              <Route
-                path="/edit/:id"
-                element={
-                  <MapProvider>
-                    <EditEvent />
-                  </MapProvider>
-                }
-              />
-              <Route path="/settings" element={<Settings />} />
+        <ToastProvider>
+          <Header />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/search/results" element={<SearchResults />} />
+            <Route
+              element={
+                <>
+                  <RequireVerifiedUser />
+                </>
+              }
+            >
+              <Route element={<ProtectedRoute requireVerified blockBanned />}>
+                <Route
+                  path="/create"
+                  element={
+                    <MapProvider>
+                      <CreateEvent />
+                    </MapProvider>
+                  }
+                />
+                <Route
+                  path="/edit/:id"
+                  element={
+                    <MapProvider>
+                      <EditEvent />
+                    </MapProvider>
+                  }
+                />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
             </Route>
-          </Route>
-          <Route
-            path="/event/:id"
-            element={
-              <MapProvider>
-                <EventDetails />
-              </MapProvider>
-            }
-          />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/user/:username" element={<UserProfile />}>
-            <Route index element={<OverviewTab />} />
-            <Route path="events" element={<CreatedEventsTab />} />
-            <Route path="rsvps" element={<RsvpTab />} />
-          </Route>
-          <Route element={<RequireAdmin />}>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<ManageUsers />} />
-            <Route path="/admin/events" element={<ManageEvents />} />
-            <Route path="/admin/stats" element={<AdminStats />} />
-          </Route>
-        </Routes>
+            <Route
+              path="/event/:id"
+              element={
+                <MapProvider>
+                  <EventDetails />
+                </MapProvider>
+              }
+            />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/user/:username" element={<UserProfile />}>
+              <Route index element={<OverviewTab />} />
+              <Route path="events" element={<CreatedEventsTab />} />
+              <Route path="rsvps" element={<RsvpTab />} />
+            </Route>
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<ManageUsers />} />
+              <Route path="/admin/events" element={<ManageEvents />} />
+              <Route path="/admin/stats" element={<AdminStats />} />
+            </Route>
+          </Routes>
+        </ToastProvider>
       </UserProvider>
     </ThemeProvider>
   );
