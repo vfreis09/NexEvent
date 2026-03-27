@@ -58,35 +58,41 @@ const LoginForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="login-form">
-      <h1>Login</h1>
+      <h1 className="text-center mb-4">Login</h1>
       {errors.root && (
-        <div className="error-message">{errors.root.message}</div>
+        <div className="error-message mb-3">{errors.root.message}</div>
       )}
-      <div>
+      <div className="mb-3">
         <input
           placeholder="Email"
           type="email"
+          className={`form-control ${errors.email ? "is-invalid" : ""}`}
           {...register("email", { required: "Email is required" })}
         />
         {errors.email && (
-          <span className="error-message">{errors.email.message}</span>
+          <div className="invalid-feedback">{errors.email.message}</div>
         )}
       </div>
-      <div>
+      <div className="mb-3">
         <input
           placeholder="Password"
           type="password"
+          className={`form-control ${errors.password ? "is-invalid" : ""}`}
           {...register("password", { required: "Password is required" })}
         />
         {errors.password && (
-          <span className="error-message">{errors.password.message}</span>
+          <div className="invalid-feedback">{errors.password.message}</div>
         )}
       </div>
-      <button type="submit" disabled={isSubmitting}>
+      <button
+        type="submit"
+        className="btn btn-primary w-100"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? "Logging in..." : "Login"}
       </button>
       <GoogleAuthButton />
-      <div className="links-container">
+      <div className="links-container mt-3 text-center">
         <Link to="/forgot-password">Forgot your password?</Link>
         <p>
           First time using the app? <Link to="/signup">Signup</Link>
