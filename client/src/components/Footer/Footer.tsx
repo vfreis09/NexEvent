@@ -15,7 +15,6 @@ const Footer: React.FC = () => {
           <Link to="/" className="footer-logo">
             NexEvent
           </Link>
-          <p>Seamless event management for everyone.</p>
         </div>
         <div className="footer-section links">
           <h4>Navigation</h4>
@@ -48,7 +47,11 @@ const Footer: React.FC = () => {
             >
               <FaLinkedin />
             </a>
-            <a href="#" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://vfreis09.github.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <FaGlobe />
             </a>
           </div>

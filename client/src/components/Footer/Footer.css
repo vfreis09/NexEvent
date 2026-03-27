@@ -22,6 +22,12 @@
   text-decoration: none;
 }
 
+.footer-logo:hover {
+  text-decoration: none !important;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
 .footer-section h4 {
   font-size: 1.1rem;
   margin-bottom: 15px;
