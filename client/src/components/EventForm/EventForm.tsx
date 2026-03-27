@@ -8,6 +8,7 @@ import { useMapContext } from "../../context/MapProvider";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { useToast } from "../../hooks/useToast";
+import AppToast from "../ToastComponent/ToastComponent";
 import { Badge } from "react-bootstrap";
 import "./EventForm.css";
 
@@ -46,11 +47,10 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [visibility, setVisibility] = useState<"public" | "private">("public");
 
   const queryClient = useQueryClient();
-
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { isLoaded } = useMapContext();
-  const { showNotification } = useToast();
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
   const eventId = id ? parseInt(id) : null;
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -213,6 +213,16 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
   return (
     <>
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+          onClose={hideToast}
+        />
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="container mt-4 mb-5">
         <div className="card p-4 shadow-sm">
           <h2 className="mb-4">{isEditing ? "Edit Event" : "Create Event"}</h2>

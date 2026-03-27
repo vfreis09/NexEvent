@@ -8,9 +8,8 @@ import { useMapContext } from "../../context/MapProvider";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
 import { EventData } from "../../types/EventData";
-import Toast from "react-bootstrap/Toast";
-import ToastContainer from "react-bootstrap/ToastContainer";
-import { useState } from "react";
+import { useToast } from "../../hooks/useToast";
+import AppToast from "../../components/ToastComponent/ToastComponent";
 import Loading from "../../components/Loading/Loading";
 import "./EventDetails.css";
 
@@ -35,19 +34,8 @@ function EventDetails() {
   const { id } = useParams<{ id: string }>();
   const eventId = parseInt(id ?? "");
   const { isLoaded } = useMapContext();
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
   useTheme();
-
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastHeader, setToastHeader] = useState("");
-  const [toastBg, setToastBg] = useState("success");
-
-  const showNotification = (message: string, header: string, bg: string) => {
-    setToastMessage(message);
-    setToastHeader(header);
-    setToastBg(bg);
-    setShowToast(true);
-  };
 
   const {
     data: event,
@@ -62,7 +50,6 @@ function EventDetails() {
       });
       if (!eventRes.ok) throw new Error("Event not found");
       const fetchedEvent = await eventRes.json();
-
       const pictureBase64 = await fetchProfilePicture(
         fetchedEvent.author_username,
       );
@@ -80,17 +67,11 @@ function EventDetails() {
     staleTime: 1000 * 60 * 5,
   });
 
-  if (isNaN(eventId)) {
+  if (isNaN(eventId))
     return <p className="event-detail-error">Invalid event ID</p>;
-  }
-
-  if (isLoading) {
-    return <Loading variant="page" text="Loading event..." />;
-  }
-
-  if (error || !event) {
+  if (isLoading) return <Loading variant="page" text="Loading event..." />;
+  if (error || !event)
     return <p className="event-detail-error">Event not found.</p>;
-  }
 
   const handleCancel = async (eventId: number) => {
     try {
@@ -113,25 +94,10 @@ function EventDetails() {
 
   return (
     <>
-      <ToastContainer
-        position="top-end"
-        className="p-3"
-        style={{ zIndex: 1050 }}
-      >
-        <Toast
-          show={showToast}
-          onClose={() => setShowToast(false)}
-          bg={toastBg}
-          delay={3000}
-          autohide
-        >
-          <Toast.Header>
-            <strong className="me-auto">{toastHeader}</strong>
-          </Toast.Header>
-          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
-        </Toast>
-      </ToastContainer>
-      <>
+      {showToast && toastInfo && (
+        <AppToast show={showToast} onClose={hideToast} {...toastInfo} />
+      )}
+      <div className="event-details-view">
         {event.author && (
           <Event
             event={event}
@@ -161,7 +127,7 @@ function EventDetails() {
             />
           )}
         <Map location={location} isLoaded={isLoaded} />
-      </>
+      </div>
     </>
   );
 }

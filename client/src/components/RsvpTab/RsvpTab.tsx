@@ -5,6 +5,7 @@ import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
+import AppToast from "../ToastComponent/ToastComponent";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
 import Loading from "../../components/Loading/Loading";
@@ -17,8 +18,8 @@ const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 const RsvpTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
   const [upcPage, setUpcPage] = useState(1);
-  const { showNotification } = useToast();
   const queryClient = useQueryClient();
+  const { showToast, toastInfo, showNotification, hideToast } = useToast();
 
   const { data, isLoading: loadingUpcoming } = useQuery<PaginatedResponse>({
     queryKey: ["rsvp-tab", profileUser.username, upcPage],
@@ -53,6 +54,16 @@ const RsvpTab = () => {
 
   return (
     <div className="rsvps-tab-view">
+      {showToast && toastInfo && (
+        <AppToast
+          show={showToast}
+          onClose={hideToast}
+          message={toastInfo.message}
+          header={toastInfo.header}
+          bg={toastInfo.bg}
+          textColor={toastInfo.textColor}
+        />
+      )}
       <h3>Upcoming RSVPs</h3>
       {loadingUpcoming ? (
         <Loading variant="spinner" text="Loading upcoming RSVPs..." />

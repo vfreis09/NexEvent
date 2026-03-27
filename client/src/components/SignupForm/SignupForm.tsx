@@ -99,20 +99,17 @@ const SignupForm: React.FC = () => {
 
       await loadUser();
 
-      showNotification(
-        "Account created! Please check your email to verify your account.",
-        "Success",
-        "success",
-      );
+      showNotification("Account created! Redirecting...", "Success", "success");
 
       setTimeout(() => {
         navigate("/", {
+          replace: true,
           state: {
             successMessage:
               "Account created! Please check your email to verify your account.",
           },
         });
-      }, 2000);
+      }, 1500);
     } catch (error: any) {
       setError("root", { message: error.message || "Signup failed" });
     }
