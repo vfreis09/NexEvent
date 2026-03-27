@@ -43,8 +43,15 @@ const InviteManager: React.FC<InviteManagerProps> = ({
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, reset, control, setValue } =
-    useForm<InviteFormData>();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { isSubmitting },
+  } = useForm<InviteFormData>();
+
   const identifier = useWatch({
     control,
     name: "identifier",
@@ -149,38 +156,40 @@ const InviteManager: React.FC<InviteManagerProps> = ({
       ref={dropdownRef}
     >
       <h3>Invitations</h3>
+      // Inside your return block:
       {!isInviteDisabled && (
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="invite-form position-relative"
-        >
-          <input
-            type="text"
-            placeholder="Type a username..."
-            autoComplete="off"
-            {...register("identifier", { required: true })}
-          />
-          {showDropdown && (
-            <div className="invite-suggestions shadow rounded border">
-              {loadingSuggestions && (
-                <div className="p-2">
-                  <Loading variant="spinner" />
-                </div>
-              )}
-              <ul className="list-unstyled mb-0">
-                {suggestions.map((user) => (
-                  <li
-                    key={user.id}
-                    className="p-2 suggestion-item"
-                    onClick={() => handleSelectUser(user.username)}
-                  >
-                    {user.username}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <button type="submit">Send</button>
+        <form onSubmit={handleSubmit(onSubmit)} className="invite-form">
+          <div className="input-container">
+            <input
+              type="text"
+              placeholder="Type a username..."
+              autoComplete="off"
+              {...register("identifier", { required: true })}
+            />
+            {showDropdown && (
+              <div className="invite-suggestions shadow rounded">
+                {loadingSuggestions && (
+                  <div className="p-2 text-center">
+                    <Loading variant="spinner" />
+                  </div>
+                )}
+                <ul className="list-unstyled mb-0">
+                  {suggestions.map((user) => (
+                    <li
+                      key={user.id}
+                      className="suggestion-item"
+                      onClick={() => handleSelectUser(user.username)}
+                    >
+                      {user.username}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Sending..." : "Send"}
+          </button>
         </form>
       )}
       <div className="invite-list mt-4">
