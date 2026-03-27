@@ -156,7 +156,6 @@ const InviteManager: React.FC<InviteManagerProps> = ({
       ref={dropdownRef}
     >
       <h3>Invitations</h3>
-      // Inside your return block:
       {!isInviteDisabled && (
         <form onSubmit={handleSubmit(onSubmit)} className="invite-form">
           <div className="input-container">

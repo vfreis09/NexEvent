@@ -1,6 +1,7 @@
 .input-container {
   position: relative;
   flex: 1;
+  display: flex;
 }
 
 .invite-suggestions {
@@ -64,11 +65,13 @@
 }
 
 .invite-form input {
-  flex: 1;
-  padding: 8px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 0.95rem;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
 }
 
 .invite-form button {
