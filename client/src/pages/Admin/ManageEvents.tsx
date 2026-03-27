@@ -3,7 +3,6 @@ import { Container, Table, Button, Alert } from "react-bootstrap";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EventType } from "../../types/EventType";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../../components/ToastComponent/ToastComponent";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
@@ -19,7 +18,7 @@ const ManageEvents: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 10;
   const queryClient = useQueryClient();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
 
   useTheme();
 
@@ -89,16 +88,6 @@ const ManageEvents: React.FC = () => {
 
   return (
     <>
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
-          onClose={hideToast}
-        />
-      )}
       <Container className="manage-events">
         <h1 className="page-title">Manage Events</h1>
         {error && <Alert variant="danger">{(error as Error).message}</Alert>}

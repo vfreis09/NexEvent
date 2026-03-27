@@ -6,7 +6,6 @@ import { useUser } from "../../context/UserContext";
 import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
 import { useTheme } from "../../context/ThemeContext";
-import AppToast from "../ToastComponent/ToastComponent";
 import GoogleAuthButton from "../GoogleAuthButton/GoogleAuthButton";
 import "./SignupForm.css";
 
@@ -57,7 +56,7 @@ const getStrengthColor = (score: number) => {
 const SignupForm: React.FC = () => {
   const navigate = useNavigate();
   const { loadUser, isLoggedIn } = useUser();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
   useTheme();
 
   const {
@@ -117,16 +116,6 @@ const SignupForm: React.FC = () => {
 
   return (
     <>
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
-          onClose={hideToast}
-        />
-      )}
       <form onSubmit={handleSubmit(onSubmit)} className="signup-form">
         <h1 className="text-center mb-4">Register</h1>
 

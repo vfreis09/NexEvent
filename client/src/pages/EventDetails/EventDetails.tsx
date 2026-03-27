@@ -9,7 +9,6 @@ import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
 import { EventData } from "../../types/EventData";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../../components/ToastComponent/ToastComponent";
 import Loading from "../../components/Loading/Loading";
 import "./EventDetails.css";
 
@@ -34,7 +33,7 @@ function EventDetails() {
   const { id } = useParams<{ id: string }>();
   const eventId = parseInt(id ?? "");
   const { isLoaded } = useMapContext();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
   useTheme();
 
   const {
@@ -94,9 +93,6 @@ function EventDetails() {
 
   return (
     <>
-      {showToast && toastInfo && (
-        <AppToast show={showToast} onClose={hideToast} {...toastInfo} />
-      )}
       <div className="event-details-view">
         {event.author && (
           <Event

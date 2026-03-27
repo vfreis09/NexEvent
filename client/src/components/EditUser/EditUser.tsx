@@ -5,7 +5,6 @@ import { useTheme } from "../../context/ThemeContext";
 import zxcvbn from "zxcvbn";
 import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../ToastComponent/ToastComponent";
 import ProfilePictureUploader from "../ProfilePictureUploader/ProfilePictureUploader";
 import { Badge, Form } from "react-bootstrap";
 import Loading from "../../components/Loading/Loading";
@@ -37,7 +36,7 @@ const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 const EditUser: React.FC = () => {
   const { user, setUser, loadUser } = useUser();
   const { theme, toggleTheme } = useTheme();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
 
   const [isVerified, setIsVerified] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -178,15 +177,6 @@ const EditUser: React.FC = () => {
 
   return (
     <>
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          onClose={hideToast}
-        />
-      )}
       <div
         className={`container edit-user-container pb-5 ${theme === "dark" ? "dark-mode" : ""}`}
       >

@@ -4,7 +4,6 @@ import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../../components/ToastComponent/ToastComponent";
 import { useTheme } from "../../context/ThemeContext";
 import Loading from "../../components/Loading/Loading";
 import "./OverviewTab.css";
@@ -15,7 +14,7 @@ const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const OverviewTab = () => {
   const { profileUser } = useOutletContext<{ profileUser: PublicUser }>();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
   const queryClient = useQueryClient();
   useTheme();
 
@@ -68,16 +67,6 @@ const OverviewTab = () => {
 
   return (
     <div className="overview-tab-view">
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          onClose={hideToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
-        />
-      )}
       <div className="overview-section">
         <h4 className="overview-header">Your Next Created Events</h4>
         {createdEvents.length > 0 ? (

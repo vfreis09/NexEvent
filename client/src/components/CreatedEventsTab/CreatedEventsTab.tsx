@@ -5,7 +5,6 @@ import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../../components/ToastComponent/ToastComponent";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import Loading from "../../components/Loading/Loading";
 import "./CreatedEventsTab.css";
@@ -38,7 +37,7 @@ const CreatedEventsTab = () => {
   const [upcPage, setUpcPage] = useState(1);
   const [pastPage, setPastPage] = useState(1);
   const queryClient = useQueryClient();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
 
   const { data: upcomingData, isLoading: loadingUpcoming } = useQuery({
     queryKey: ["created-events", profileUser.username, "upcoming", upcPage],
@@ -77,16 +76,6 @@ const CreatedEventsTab = () => {
 
   return (
     <div className="created-events-tab-view">
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          onClose={hideToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
-        />
-      )}
       <h3>Upcoming Created Events</h3>
       {loadingUpcoming ? (
         <Loading variant="spinner" text="Loading upcoming events..." />

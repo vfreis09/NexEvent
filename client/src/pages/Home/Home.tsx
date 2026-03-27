@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../../components/ToastComponent/ToastComponent";
 import { PaginatedResponse } from "../../types/PaginationTypes";
 import { useTheme } from "../../context/ThemeContext";
 import { useState } from "react";
@@ -32,7 +31,7 @@ function HomePage() {
 
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
 
   useTheme();
 
@@ -84,16 +83,6 @@ function HomePage() {
 
   return (
     <>
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
-          onClose={hideToast}
-        />
-      )}
       <div className="home-page">
         {loading ? (
           <Loading variant="skeleton" count={3} />

@@ -1,7 +1,6 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../ToastComponent/ToastComponent";
 import { useTheme } from "../../context/ThemeContext";
 import Loading from "../../components/Loading/Loading";
 import "./RSVP.css";
@@ -16,7 +15,7 @@ const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
 
 const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
   const queryClient = useQueryClient();
   useTheme();
 
@@ -92,16 +91,6 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
 
   return (
     <>
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
-          onClose={hideToast}
-        />
-      )}
       <div className="rsvp-container">
         {loading ? (
           <Loading variant="spinner" text="Loading RSVP status..." />

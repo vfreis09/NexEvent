@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateUserRole } from "../../services/adminApi";
 import { User as AppUser } from "../../types/User";
 import { useToast } from "../../hooks/useToast";
-import AppToast from "../../components/ToastComponent/ToastComponent";
 import { useTheme } from "../../context/ThemeContext";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
@@ -32,7 +31,7 @@ const ManageUsers: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 20;
   const queryClient = useQueryClient();
-  const { showToast, toastInfo, showNotification, hideToast } = useToast();
+  const { showNotification } = useToast();
 
   useTheme();
 
@@ -85,16 +84,6 @@ const ManageUsers: React.FC = () => {
 
   return (
     <>
-      {showToast && toastInfo && (
-        <AppToast
-          show={showToast}
-          message={toastInfo.message}
-          header={toastInfo.header}
-          bg={toastInfo.bg}
-          textColor={toastInfo.textColor}
-          onClose={hideToast}
-        />
-      )}
       <Container className="manage-users">
         <h1 className="page-title">Manage Users</h1>
 
