@@ -1,3 +1,35 @@
+.input-container {
+  position: relative;
+  flex: 1;
+}
+
+.invite-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.suggestion-item {
+  cursor: pointer;
+  padding: 10px;
+  list-style: none;
+  transition: background-color 0.2s;
+  color: #333;
+}
+
+.suggestion-item:hover {
+  background-color: #f0f0f0;
+}
+
 .invite-manager {
   margin: 32px auto;
   padding: 20px;
@@ -149,4 +181,18 @@
 
 .dark-mode .invite-empty {
   color: #999;
+}
+
+.dark-mode .invite-suggestions {
+  background-color: #333;
+  border-color: #555;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .suggestion-item {
+  color: #f0f0f0;
+}
+
+.dark-mode .suggestion-item:hover {
+  background-color: #444;
 }
