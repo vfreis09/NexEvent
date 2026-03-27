@@ -41,6 +41,7 @@ body {
   padding-top: 73px;
   max-width: 100%;
   overflow-x: hidden;
+  padding-top: 85px;
 }
 
 .text-center {
@@ -100,4 +101,10 @@ h6 {
   background-color: var(--color-alert-danger-bg) !important;
   color: var(--color-alert-danger-text) !important;
   border-color: var(--color-alert-danger-bg) !important;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-top: 220px;
+  }
 }
