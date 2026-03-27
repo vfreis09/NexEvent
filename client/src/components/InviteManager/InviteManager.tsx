@@ -1,9 +1,16 @@
-import React from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Invite } from "../../types/Invite";
 import { useTheme } from "../../context/ThemeContext";
+import { useToast } from "../../hooks/useToast";
+import Loading from "../../components/Loading/Loading";
 import "./InviteManager.css";
+
+interface UserSuggestion {
+  id: number;
+  username: string;
+}
 
 interface InviteManagerProps {
   eventId: number;
@@ -28,15 +35,98 @@ const InviteManager: React.FC<InviteManagerProps> = ({
   currentAttendees,
 }) => {
   const queryClient = useQueryClient();
-  useTheme();
+  const { showNotification } = useToast();
+  const { theme } = useTheme();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setError,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
-  } = useForm<InviteFormData>();
+  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { register, handleSubmit, reset, control, setValue } =
+    useForm<InviteFormData>();
+  const identifier = useWatch({
+    control,
+    name: "identifier",
+    defaultValue: "",
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    if (identifier.length < 2) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/search?q=${identifier}`, {
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const users = (
+            Array.isArray(data.users) ? data.users : data.users?.results || []
+          ) as UserSuggestion[];
+          setSuggestions(users);
+          setShowDropdown(users.length > 0);
+        }
+      } catch (err: any) {
+        if (err.name !== "AbortError") console.error(err);
+      } finally {
+        if (!controller.signal.aborted) setLoadingSuggestions(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [identifier]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectUser = (username: string) => {
+    setValue("identifier", username);
+    setShowDropdown(false);
+  };
+
+  const onSubmit = async (data: InviteFormData) => {
+    try {
+      const res = await fetch(`${BASE_URL}/events/${eventId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ identifier: data.identifier }),
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.message || "Failed to send invite");
+
+      reset();
+      queryClient.invalidateQueries({ queryKey: ["invites", eventId] });
+      showNotification(
+        `Invite sent to ${data.identifier}!`,
+        "Success",
+        "success",
+      );
+    } catch (err: any) {
+      showNotification(err.message, "Error", "danger");
+    }
+  };
 
   const isInviteDisabled =
     status === "canceled" ||
@@ -49,78 +139,59 @@ const InviteManager: React.FC<InviteManagerProps> = ({
       const res = await fetch(`${BASE_URL}/events/${eventId}/invites`, {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to fetch invites");
       return res.json();
     },
-    staleTime: 1000 * 60 * 5,
   });
 
-  const onSubmit = async (data: InviteFormData) => {
-    try {
-      const res = await fetch(`${BASE_URL}/events/${eventId}/invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ identifier: data.identifier }),
-      });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.message || "Failed to send invite");
-      reset();
-      queryClient.invalidateQueries({ queryKey: ["invites", eventId] });
-    } catch (err: any) {
-      setError("root", { message: err.message || "An error occurred." });
-    }
-  };
-
-  const disabledReason =
-    status === "canceled"
-      ? "canceled"
-      : new Date(eventDateTime) < new Date()
-        ? "expired"
-        : "full";
-
   return (
-    <div className="invite-manager">
-      <div className="invite-header">
-        <h3>Invitations</h3>
-        {isInviteDisabled && (
-          <p className="invite-disabled-text">
-            Inviting is disabled — this event is {disabledReason}.
-          </p>
-        )}
-      </div>
+    <div
+      className={`invite-manager ${theme === "dark" ? "dark-mode" : ""}`}
+      ref={dropdownRef}
+    >
+      <h3>Invitations</h3>
       {!isInviteDisabled && (
-        <form onSubmit={handleSubmit(onSubmit)} className="invite-form">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="invite-form position-relative"
+        >
           <input
             type="text"
-            placeholder="Username or email"
+            placeholder="Type a username..."
+            autoComplete="off"
             {...register("identifier", { required: true })}
           />
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Inviting..." : "Send"}
-          </button>
-          {isSubmitSuccessful && !errors.root && (
-            <p className="invite-message">User invited successfully!</p>
+          {showDropdown && (
+            <div className="invite-suggestions shadow rounded border">
+              {loadingSuggestions && (
+                <div className="p-2">
+                  <Loading variant="spinner" />
+                </div>
+              )}
+              <ul className="list-unstyled mb-0">
+                {suggestions.map((user) => (
+                  <li
+                    key={user.id}
+                    className="p-2 suggestion-item"
+                    onClick={() => handleSelectUser(user.username)}
+                  >
+                    {user.username}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
-          {errors.root && (
-            <p className="invite-message">{errors.root.message}</p>
-          )}
+          <button type="submit">Send</button>
         </form>
       )}
-      <div className="invite-list">
+      <div className="invite-list mt-4">
         <h4>Current Invites</h4>
-        {invites.length === 0 ? (
-          <p className="invite-empty">No invites sent yet.</p>
-        ) : (
-          <ul>
-            {invites.map((invite) => (
-              <li key={invite.id}>
-                <strong>{invite.username}</strong> – {invite.status} (
-                {new Date(invite.created_at).toLocaleString()})
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul>
+          {invites.map((invite) => (
+            <li key={invite.id}>
+              <strong>{invite.username}</strong> – {invite.status}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
