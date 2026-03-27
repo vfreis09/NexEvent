@@ -85,7 +85,6 @@ const EventList: React.FC<EventListProps> = ({
                   />
                 </Link>
                 <span className="posted-by-text">
-                  Posted by:{" "}
                   <Link
                     to={`/user/${event.author_username}`}
                     className="author-link"
