@@ -22,6 +22,8 @@ interface EventListProps {
   onPageChange?: (page: number) => void;
 }
 
+const defaultAvatar = "/images/default-avatar.png";
+
 const EventList: React.FC<EventListProps> = ({
   events,
   onEventUpdate,
@@ -50,34 +52,51 @@ const EventList: React.FC<EventListProps> = ({
   };
 
   return (
-    <div>
+    <div className="event-list-wrapper">
       {events.map((event) => {
         const isOwner = user && event.author_id === user.id;
         const eventIsExpired = new Date(event.event_datetime) < new Date();
         const isPrivate = event.visibility === "private";
-        let cardClass = "event-card";
 
-        if (isPast) {
-          cardClass += " past-event-card";
-        } else if (isCompact) {
-          cardClass += " compact-event-card";
-        }
+        // Base64 handling for the avatar
+        const imageSrc = event.author?.profile_picture_base64
+          ? event.author.profile_picture_base64
+          : defaultAvatar;
+
+        let cardClass = "event-card";
+        if (isPast) cardClass += " past-event-card";
+        else if (isCompact) cardClass += " compact-event-card";
 
         return (
           <div key={event.id} className={cardClass}>
             <div className="event-card-header">
-              <span>
-                Posted by:{" "}
+              <div className="event-card-author-wrapper">
                 <Link
                   to={`/user/${event.author_username}`}
-                  className="author-link"
+                  className="author-avatar-link"
                 >
-                  {event.author_username}
+                  <img
+                    src={imageSrc}
+                    alt={event.author_username}
+                    className="author-avatar-img"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = defaultAvatar;
+                    }}
+                  />
                 </Link>
-              </span>
+                <span className="posted-by-text">
+                  Posted by:{" "}
+                  <Link
+                    to={`/user/${event.author_username}`}
+                    className="author-link"
+                  >
+                    {event.author_username}
+                  </Link>
+                </span>
+              </div>
               {isPrivate && <span className="private-badge">🔒 Private</span>}
             </div>
-            <div className="event-card-header">
+            <div className="event-card-title-section">
               <Link to={`/event/${event.id}`} className="event-title-link">
                 <h3>{event.title}</h3>
               </Link>
@@ -98,7 +117,10 @@ const EventList: React.FC<EventListProps> = ({
               )}
               <div className="event-card-description">
                 {event.description.slice(0, isCompact ? 50 : 100)}
-                {isCompact && "..."}
+                {(isCompact && event.description.length > 50) ||
+                event.description.length > 100
+                  ? "..."
+                  : ""}
               </div>
             </div>
             <div className="event-card-footer">
