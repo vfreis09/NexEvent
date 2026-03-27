@@ -162,60 +162,65 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             )}
           </div>
           {notifications.length > 0 ? (
-            notifications.map((note) => {
-              const isInvite =
-                note.invite_id !== undefined &&
-                note.invite_status?.toLowerCase() === "pending";
-              return (
-                <div
-                  key={note.id}
-                  className={`notification-item ${note.is_read ? "read" : "unread"}`}
-                >
-                  <p
-                    className="mb-2"
-                    onClick={async () => {
-                      await markNotificationRead(note.id);
-                      setShowNotifications(false);
-                      navigate(`/event/${note.event_id}`);
-                    }}
+            <div className="notification-list">
+              {notifications.map((note) => {
+                const isInvite =
+                  note.invite_id !== undefined &&
+                  note.invite_status?.toLowerCase() === "pending";
+                return (
+                  <div
+                    key={note.id}
+                    className={`notification-item ${note.is_read ? "read" : "unread"}`}
                   >
-                    {note.message}
-                  </p>
-                  {isInvite && (
-                    <div className="d-flex gap-2">
-                      <button
-                        onClick={() =>
-                          respondToInvite(
-                            note.invite_id!,
-                            note.id,
-                            note.event_id,
-                            "accepted",
-                          )
-                        }
-                        className="nav-button invite-accept-btn"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() =>
-                          respondToInvite(
-                            note.invite_id!,
-                            note.id,
-                            note.event_id,
-                            "declined",
-                          )
-                        }
-                        className="nav-button invite-reject-btn"
-                      >
-                        Reject
-                      </button>
+                    <div
+                      className="notification-clickable-area"
+                      onClick={async () => {
+                        await markNotificationRead(note.id);
+                        setShowNotifications(false);
+                        navigate(`/event/${note.event_id}`);
+                      }}
+                    >
+                      <p className="notification-text">{note.message}</p>
                     </div>
-                  )}
-                </div>
-              );
-            })
+
+                    {isInvite && (
+                      <div className="notification-actions d-flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            respondToInvite(
+                              note.invite_id!,
+                              note.id,
+                              note.event_id,
+                              "accepted",
+                            );
+                          }}
+                          className="invite-accept-btn"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            respondToInvite(
+                              note.invite_id!,
+                              note.id,
+                              note.event_id,
+                              "declined",
+                            );
+                          }}
+                          className="invite-reject-btn"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <div className="notification-item">No notifications</div>
+            <div className="notification-item empty">No notifications</div>
           )}
         </div>
       )}
