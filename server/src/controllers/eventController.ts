@@ -105,13 +105,14 @@ const getEvents = async (req: Request, res: Response) => {
   const now = new Date().toISOString();
   const requestingUserId = (req as any).user?.id ?? null;
 
+  // Using "e" alias for events
   let whereClause = `e.status != 'canceled' AND (
     e.visibility = 'public' 
-    OR e.author_id = $3::integer
+    OR e.author_id = $1::integer
     OR EXISTS (
       SELECT 1 FROM invites i 
       WHERE i.event_id = e.id 
-      AND i.invited_user_id = $3::integer 
+      AND i.invited_user_id = $1::integer 
       AND i.status = 'accepted'
     )
   )`;
@@ -129,7 +130,7 @@ const getEvents = async (req: Request, res: Response) => {
   try {
     const countResult = await pool.query(
       `SELECT COUNT(*) FROM events e WHERE ${whereClause}`,
-      [limit, offset, requestingUserId],
+      [requestingUserId],
     );
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
@@ -150,7 +151,7 @@ const getEvents = async (req: Request, res: Response) => {
        JOIN users u ON e.author_id = u.id
        LEFT JOIN event_tags et ON e.id = et.event_id
        LEFT JOIN tags t ON et.tag_id = t.id
-       WHERE ${whereClause}
+       WHERE ${whereClause.replace(/\$1/g, "$3")} 
        GROUP BY e.id, u.username
        ${orderByClause}
        LIMIT $1 OFFSET $2`,
