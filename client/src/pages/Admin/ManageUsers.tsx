@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Table, Alert, Form } from "react-bootstrap";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateUserRole } from "../../services/adminApi";
@@ -28,19 +28,37 @@ const API_URL = rawUrl
   : "http://localhost:3000/api/admin";
 
 const ManageUsers: React.FC = () => {
+  const [displaySearch, setDisplaySearch] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 20;
   const queryClient = useQueryClient();
   const { showNotification } = useToast();
-
   const { theme } = useTheme();
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const timer = setTimeout(() => {
+      setActiveSearch(displaySearch);
+      setCurrentPage(1);
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [displaySearch]);
+
   const { data, isLoading, error } = useQuery<PaginatedUsersResponse>({
-    queryKey: ["admin-users", currentPage],
-    queryFn: async () => {
+    queryKey: ["admin-users", currentPage, activeSearch],
+    queryFn: async ({ signal }) => {
       const res = await fetch(
-        `${API_URL}/users?page=${currentPage}&limit=${usersPerPage}`,
-        { credentials: "include" },
+        `${API_URL}/users?page=${currentPage}&limit=${usersPerPage}&search=${activeSearch}`,
+        {
+          credentials: "include",
+          signal,
+        },
       );
       if (!res.ok) throw new Error("Failed to fetch users");
       return res.json();
@@ -83,73 +101,77 @@ const ManageUsers: React.FC = () => {
   if (isLoading) return <Loading variant="page" text="Loading users..." />;
 
   return (
-    <>
-      <Container className="manage-users">
-        <h1 className="page-title">Manage Users</h1>
+    <Container className="manage-users">
+      <h1 className="page-title">Manage Users</h1>
+      {error && <Alert variant="danger">{(error as Error).message}</Alert>}
+      <Form.Control
+        type="text"
+        placeholder="Search users by email or username..."
+        className="mb-4 shadow-sm search-bar"
+        value={displaySearch}
+        onChange={(e) => setDisplaySearch(e.target.value)}
+      />
 
-        {error && <Alert variant="danger">{(error as Error).message}</Alert>}
-
-        {users.length === 0 && !isLoading && !error ? (
-          <Alert variant="info">No users found to manage.</Alert>
-        ) : (
-          <>
-            <Table
-              striped
-              bordered
-              hover
-              responsive
-              variant={theme === "dark" ? "dark" : undefined}
-              className="user-table shadow-sm"
-            >
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Username</th>
-                  <th>Role</th>
-                  <th>Created At</th>
-                  <th>Change Role</th>
+      {users.length === 0 && !isLoading && !error ? (
+        <Alert variant="info">No users found to manage.</Alert>
+      ) : (
+        <>
+          <Table
+            striped
+            bordered
+            hover
+            responsive
+            variant={theme === "dark" ? "dark" : undefined}
+            className="user-table shadow-sm"
+          >
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Created At</th>
+                <th>Change Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.email}</td>
+                  <td>{u.username}</td>
+                  <td className={`role-text ${u.role}`}>{u.role}</td>
+                  <td>{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <Form.Select
+                      value={u.role}
+                      onChange={(e) =>
+                        handleRoleChange(
+                          u.id,
+                          u.username,
+                          e.target.value as "user" | "admin" | "banned",
+                        )
+                      }
+                      size="sm"
+                      className="border-secondary"
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                      <option value="banned">Banned</option>
+                    </Form.Select>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id}>
-                    <td>{u.email}</td>
-                    <td>{u.username}</td>
-                    <td className={`role-text ${u.role}`}>{u.role}</td>
-                    <td>{new Date(u.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <Form.Select
-                        value={u.role}
-                        onChange={(e) =>
-                          handleRoleChange(
-                            u.id,
-                            u.username,
-                            e.target.value as "user" | "admin" | "banned",
-                          )
-                        }
-                        size="sm"
-                        className="border-secondary"
-                      >
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                        <option value="banned">Banned</option>
-                      </Form.Select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-            <div className="mb-5">
-              <PaginationControls
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          </>
-        )}
-      </Container>
-    </>
+              ))}
+            </tbody>
+          </Table>
+          <div className="mb-5">
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        </>
+      )}
+    </Container>
   );
 };
 

@@ -5,36 +5,33 @@ import { processDigestQueue } from "../jobs/digestProcessor";
 const getUsers = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
+  const search = (req.query.search as string) || "";
   const offset = (page - 1) * limit;
 
-  if (limit <= 0 || page <= 0) {
-    return res.status(400).json({ message: "Invalid page or limit value." });
-  }
-
   try {
-    const countResult = await pool.query(`SELECT COUNT(*) FROM users`);
+    const searchQuery = `%${search}%`;
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM users WHERE email ILIKE $1 OR username ILIKE $1`,
+      [searchQuery],
+    );
+
     const totalItems = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalItems / limit);
 
     const result = await pool.query(
       `SELECT id, email, username, role, created_at, is_verified
-        FROM users 
-        ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2`,
-      [limit, offset],
+       FROM users 
+       WHERE email ILIKE $3 OR username ILIKE $3
+       ORDER BY created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset, searchQuery],
     );
 
     res.json({
       users: result.rows,
-      pagination: {
-        totalItems,
-        totalPages,
-        currentPage: page,
-        limit: limit,
-      },
+      pagination: { totalItems, totalPages, currentPage: page, limit },
     });
   } catch (err) {
-    console.error("Error fetching paginated users:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -104,37 +101,34 @@ const getStats = async (req: Request, res: Response) => {
 const getEvents = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
+  const search = (req.query.search as string) || "";
   const offset = (page - 1) * limit;
 
-  if (limit <= 0 || page <= 0) {
-    return res.status(400).json({ message: "Invalid page or limit value." });
-  }
-
   try {
-    const countResult = await pool.query(`SELECT COUNT(*) FROM events`);
+    const searchQuery = `%${search}%`;
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM events WHERE title ILIKE $1 OR address ILIKE $1`,
+      [searchQuery],
+    );
+
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
 
     const result = await pool.query(
-      `SELECT e.id, e.title, e.description, e.event_datetime, e.location, e.status, e.created_at, u.username AS author_username
+      `SELECT e.id, e.title, e.description, e.event_datetime, e.address, e.status, e.created_at, u.username AS author_username
        FROM events e
        JOIN users u ON e.author_id = u.id
+       WHERE e.title ILIKE $3 OR e.address ILIKE $3
        ORDER BY e.created_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, offset],
+      [limit, offset, searchQuery],
     );
 
     res.json({
       events: result.rows,
-      pagination: {
-        totalEvents,
-        totalPages,
-        currentPage: page,
-        limit: limit,
-      },
+      pagination: { totalEvents, totalPages, currentPage: page, limit },
     });
   } catch (err) {
-    console.error("Error fetching paginated events:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
