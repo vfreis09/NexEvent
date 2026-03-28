@@ -33,7 +33,7 @@ const ManageUsers: React.FC = () => {
   const queryClient = useQueryClient();
   const { showNotification } = useToast();
 
-  useTheme();
+  const { theme } = useTheme();
 
   const { data, isLoading, error } = useQuery<PaginatedUsersResponse>({
     queryKey: ["admin-users", currentPage],
@@ -98,7 +98,7 @@ const ManageUsers: React.FC = () => {
               bordered
               hover
               responsive
-              variant="dark"
+              variant={theme === "dark" ? "dark" : undefined}
               className="user-table shadow-sm"
             >
               <thead>
@@ -128,7 +128,7 @@ const ManageUsers: React.FC = () => {
                           )
                         }
                         size="sm"
-                        className="text-white bg-dark border-secondary"
+                        className="border-secondary"
                       >
                         <option value="user">User</option>
                         <option value="admin">Admin</option>

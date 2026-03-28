@@ -20,7 +20,7 @@ const ManageEvents: React.FC = () => {
   const queryClient = useQueryClient();
   const { showNotification } = useToast();
 
-  useTheme();
+  const { theme } = useTheme();
 
   const { data, isLoading, error } = useQuery<PaginatedResponse>({
     queryKey: ["admin-events", currentPage],
@@ -100,7 +100,7 @@ const ManageEvents: React.FC = () => {
               bordered
               hover
               responsive
-              variant="dark"
+              variant={theme === "dark" ? "dark" : undefined}
               className="events-table shadow-sm"
             >
               <thead>
