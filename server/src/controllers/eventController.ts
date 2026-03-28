@@ -105,56 +105,60 @@ const getEvents = async (req: Request, res: Response) => {
   const now = new Date().toISOString();
   const requestingUserId = (req as any).user?.id ?? null;
 
-  let whereClause = `events.status != 'canceled' AND (
-  events.visibility = 'public' 
-  OR events.author_id = $3::integer
-  OR EXISTS (
-    SELECT 1 FROM invites i 
-    WHERE i.event_id = events.id 
-    AND i.invited_user_id = $3::integer 
-    AND i.status = 'accepted'
-  )
-)`;
-  let orderByClause = `ORDER BY events.event_datetime DESC, events.created_at DESC`;
+  let whereClause = `e.status != 'canceled' AND (
+    e.visibility = 'public' 
+    OR e.author_id = $3::integer
+    OR EXISTS (
+      SELECT 1 FROM invites i 
+      WHERE i.event_id = e.id 
+      AND i.invited_user_id = $3::integer 
+      AND i.status = 'accepted'
+    )
+  )`;
+
+  let orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
 
   if (filterType === "upcoming") {
-    whereClause += ` AND events.event_datetime >= '${now}'`;
-    orderByClause = `ORDER BY events.event_datetime ASC, events.created_at DESC`;
+    whereClause += ` AND e.event_datetime >= '${now}'`;
+    orderByClause = `ORDER BY e.event_datetime ASC, e.created_at DESC`;
   } else if (filterType === "past") {
-    whereClause += ` AND events.event_datetime < '${now}'`;
-    orderByClause = `ORDER BY events.event_datetime DESC, events.created_at DESC`;
+    whereClause += ` AND e.event_datetime < '${now}'`;
+    orderByClause = `ORDER BY e.event_datetime DESC, e.created_at DESC`;
   }
 
   try {
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM events WHERE ${whereClause.replace(/\$3::integer/g, "$1::integer")}`,
-      [requestingUserId],
+      `SELECT COUNT(*) FROM events e WHERE ${whereClause}`,
+      [limit, offset, requestingUserId],
     );
     const totalEvents = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalEvents / limit);
 
     const eventsResult = await pool.query(
-      `SELECT events.*, users.username AS author_username
-   FROM events
-   JOIN users ON events.author_id = users.id
-   WHERE ${whereClause}
-   ${orderByClause}
-   LIMIT $1 OFFSET $2`,
+      `SELECT 
+         e.id, e.title, e.description, e.event_datetime, e.number_of_attendees, 
+         e.max_attendees, e.location, e.address, e.author_id, e.status, 
+         e.visibility, e.created_at,
+         u.username AS author_username,
+         COALESCE(
+           JSON_AGG(
+             JSON_BUILD_OBJECT('id', t.id, 'name', t.name)
+           ) FILTER (WHERE t.id IS NOT NULL), 
+           '[]'
+         ) AS tags
+       FROM events e
+       JOIN users u ON e.author_id = u.id
+       LEFT JOIN event_tags et ON e.id = et.event_id
+       LEFT JOIN tags t ON et.tag_id = t.id
+       WHERE ${whereClause}
+       GROUP BY e.id, u.username
+       ${orderByClause}
+       LIMIT $1 OFFSET $2`,
       [limit, offset, requestingUserId],
     );
 
-    const eventsWithTags = await Promise.all(
-      eventsResult.rows.map(async (event: any) => {
-        const tagsResult = await pool.query(
-          `SELECT t.id, t.name FROM tags t JOIN event_tags et ON t.id = et.tag_id WHERE et.event_id = $1`,
-          [event.id],
-        );
-        return { ...event, tags: tagsResult.rows };
-      }),
-    );
-
     res.json({
-      events: eventsWithTags,
+      events: eventsResult.rows,
       pagination: { totalEvents, totalPages, currentPage: page, limit },
     });
   } catch (error) {
