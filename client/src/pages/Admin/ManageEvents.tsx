@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Container, Table, Button, Alert, Form } from "react-bootstrap";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EventType } from "../../types/EventType";
 import { useToast } from "../../hooks/useToast";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
-import { useTheme } from "../../context/ThemeContext";
 import Loading from "../../components/Loading/Loading";
-import "./ManageEvents.css";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const API_URL = rawUrl
-  ? `https://${rawUrl}/api/admin`
+  ? `${rawUrl}/api/admin`
   : "http://localhost:3000/api/admin";
+
+const statusStyles: Record<string, string> = {
+  active: "text-primary font-medium",
+  full: "text-accent-foreground font-medium",
+  expired: "text-muted-foreground",
+  canceled: "text-destructive font-medium",
+};
 
 const ManageEvents: React.FC = () => {
   const [displaySearch, setDisplaySearch] = useState("");
@@ -21,7 +28,6 @@ const ManageEvents: React.FC = () => {
   const eventsPerPage = 10;
   const queryClient = useQueryClient();
   const { showNotification } = useToast();
-  const { theme } = useTheme();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -105,72 +111,108 @@ const ManageEvents: React.FC = () => {
   if (isLoading) return <Loading variant="page" text="Loading events..." />;
 
   return (
-    <Container className="manage-events">
-      <h1 className="page-title">Manage Events</h1>
-      {error && <Alert variant="danger">{(error as Error).message}</Alert>}
-      <Form.Control
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="mb-6 text-2xl font-medium text-foreground">
+        Manage events
+      </h1>
+
+      {error && (
+        <div className="mb-4 rounded border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {(error as Error).message}
+        </div>
+      )}
+
+      <Input
         type="text"
         placeholder="Search events by title or address..."
-        className="mb-4 shadow-sm search-bar"
+        className="mb-4"
         value={displaySearch}
         onChange={(e) => setDisplaySearch(e.target.value)}
       />
+
       {events.length === 0 && !isLoading && !error ? (
-        <Alert variant="info">No events found to manage.</Alert>
+        <div className="rounded border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
+          No events found to manage.
+        </div>
       ) : (
         <>
-          <Table
-            striped
-            bordered
-            hover
-            responsive
-            variant={theme === "dark" ? "dark" : undefined}
-            className="events-table shadow-sm"
-          >
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Address</th>
-                <th>Date & Time</th>
-                <th>Author</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((event) => (
-                <tr key={event.id}>
-                  <td>{event.title}</td>
-                  <td>{event.description}</td>
-                  <td>{event.address}</td>
-                  <td>{new Date(event.event_datetime).toLocaleString()}</td>
-                  <td>{event.author_username}</td>
-                  <td className={`status-text ${event.status}`}>
-                    {event.status}
-                  </td>
-                  <td className="actions-col">
-                    <Button
-                      variant="warning"
-                      size="sm"
-                      onClick={() => handleCancel(event.id, event.title)}
-                      disabled={event.status === "canceled"}
-                    >
-                      Cancel
-                    </Button>{" "}
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleDelete(event.id, event.title)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
+          <div className="overflow-x-auto rounded border border-border">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted">
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
+                    Title
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
+                    Description
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
+                    Address
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
+                    Date &amp; time
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
+                    Author
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-foreground">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-          <div className="mb-5">
+              </thead>
+              <tbody>
+                {events.map((event) => (
+                  <tr
+                    key={event.id}
+                    className="border-b border-border last:border-0"
+                  >
+                    <td className="px-4 py-3 text-foreground">
+                      {event.title}
+                    </td>
+                    <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
+                      {event.description}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {event.address}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {new Date(event.event_datetime).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-foreground">
+                      {event.author_username}
+                    </td>
+                    <td className={cn("px-4 py-3", statusStyles[event.status])}>
+                      {event.status}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancel(event.id, event.title)}
+                          disabled={event.status === "canceled"}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(event.id, event.title)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mb-12 mt-6">
             <PaginationControls
               currentPage={currentPage}
               totalPages={totalPages}
@@ -179,7 +221,7 @@ const ManageEvents: React.FC = () => {
           </div>
         </>
       )}
-    </Container>
+    </div>
   );
 };
 

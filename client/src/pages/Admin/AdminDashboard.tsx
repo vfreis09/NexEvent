@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Container, Row, Col, Card, Alert } from "react-bootstrap";
-import { FaUsers, FaCalendarAlt, FaClipboardList } from "react-icons/fa";
+import { Users, Calendar, ClipboardList } from "lucide-react";
 import { getStats } from "../../services/adminApi";
-import { useTheme } from "../../context/ThemeContext";
 import Loading from "../../components/Loading/Loading";
-import "./AdminDashboard.css";
 
 interface Stats {
   totals: {
@@ -22,8 +19,6 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useTheme();
-
   useEffect(() => {
     getStats()
       .then(setStats)
@@ -35,59 +30,63 @@ const AdminDashboard: React.FC = () => {
 
   if (error)
     return (
-      <Alert variant="danger" className="dashboard-alert">
-        {error}
-      </Alert>
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="rounded border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      </div>
     );
 
   return (
-    <Container className="admin-dashboard">
-      <h1 className="dashboard-title">Admin Dashboard</h1>
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <h1 className="mb-6 text-2xl font-medium text-foreground">
+        Admin dashboard
+      </h1>
 
       {stats && (
-        <Row className="mb-5">
-          <Col md={4}>
-            <Card className="stat-card users-card shadow-sm">
-              <Card.Body>
-                <FaUsers className="stat-icon users-icon" />
-                <Card.Title>Total Users</Card.Title>
-                <div className="stat-value">{stats.totals.total_users}</div>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={4}>
-            <Card className="stat-card events-card shadow-sm">
-              <Card.Body>
-                <FaCalendarAlt className="stat-icon events-icon" />
-                <Card.Title>Total Events</Card.Title>
-                <div className="stat-value">{stats.totals.total_events}</div>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={4}>
-            <Card className="stat-card rsvps-card shadow-sm">
-              <Card.Body>
-                <FaClipboardList className="stat-icon rsvps-icon" />
-                <Card.Title>Total RSVPs</Card.Title>
-                <div className="stat-value">{stats.totals.total_rsvps}</div>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded border border-border bg-card p-6">
+            <Users className="mb-3 text-primary" size={24} />
+            <p className="text-sm text-muted-foreground">Total users</p>
+            <div className="mt-1 font-mono text-3xl text-card-foreground">
+              {stats.totals.total_users}
+            </div>
+          </div>
+          <div className="rounded border border-border bg-card p-6">
+            <Calendar className="mb-3 text-primary" size={24} />
+            <p className="text-sm text-muted-foreground">Total events</p>
+            <div className="mt-1 font-mono text-3xl text-card-foreground">
+              {stats.totals.total_events}
+            </div>
+          </div>
+          <div className="rounded border border-border bg-card p-6">
+            <ClipboardList className="mb-3 text-primary" size={24} />
+            <p className="text-sm text-muted-foreground">Total RSVPs</p>
+            <div className="mt-1 font-mono text-3xl text-card-foreground">
+              {stats.totals.total_rsvps}
+            </div>
+          </div>
+        </div>
       )}
 
-      <div className="dashboard-nav">
-        <Link to="/admin/users" className="btn btn-lg btn-primary">
-          Manage Users
+      <div className="flex flex-wrap gap-3">
+        <Link to="/admin/users">
+          <button className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            Manage users
+          </button>
         </Link>
-        <Link to="/admin/events" className="btn btn-lg btn-success">
-          Manage Events
+        <Link to="/admin/events">
+          <button className="rounded bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80">
+            Manage events
+          </button>
         </Link>
-        <Link to="/admin/stats" className="btn btn-lg btn-teal">
-          View Stats
+        <Link to="/admin/stats">
+          <button className="rounded border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">
+            View stats
+          </button>
         </Link>
       </div>
-    </Container>
+    </div>
   );
 };
 

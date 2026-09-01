@@ -1,7 +1,6 @@
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-
 const API_URL = rawUrl
-  ? `https://${rawUrl}/api/admin`
+  ? `${rawUrl}/api/admin`
   : "http://localhost:3000/api/admin";
 
 export async function getUsers() {

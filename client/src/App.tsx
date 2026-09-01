@@ -34,10 +34,10 @@ const App: React.FC = () => {
     <ThemeProvider>
       <UserProvider>
         <ToastProvider>
-          <div className="app-container">
+          <div className="app-container w-full max-w-full overflow-x-hidden min-h-screen flex flex-col">
             <Header />
 
-            <main className="main-content">
+            <main className="main-content flex-1 w-full max-w-full overflow-x-hidden">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/signup" element={<SignupPage />} />

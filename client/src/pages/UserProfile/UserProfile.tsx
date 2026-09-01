@@ -8,7 +8,7 @@ import Loading from "../../components/Loading/Loading";
 import "./UserProfilePage.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 const UserProfilePage = () => {
   const { username } = useParams<{ username: string }>();

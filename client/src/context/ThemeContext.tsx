@@ -18,10 +18,23 @@ const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 const applyThemeToDOM = (themeToApply: Theme) => {
   const root = document.documentElement;
-  if (themeToApply === "dark") {
-    root.classList.add("dark-mode");
+
+  const updateClasses = () => {
+    if (themeToApply === "dark") {
+      root.classList.add("dark-mode", "dark");
+    } else {
+      root.classList.remove("dark-mode", "dark");
+    }
+  };
+
+  // Use View Transitions API if supported for a smooth cross-fade
+  if (document.startViewTransition) {
+    document.startViewTransition(() => {
+      updateClasses();
+    });
   } else {
-    root.classList.remove("dark-mode");
+    // Fallback for older browsers
+    updateClasses();
   }
 };
 

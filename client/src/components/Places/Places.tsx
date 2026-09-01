@@ -3,7 +3,7 @@ import usePlacesAutocomplete, {
   getLatLng,
 } from "use-places-autocomplete";
 import { useState } from "react";
-import { Form, Dropdown } from "react-bootstrap";
+import { Input } from "@/components/ui/input";
 
 interface PlacesProps {
   setPosition: (position: google.maps.LatLngLiteral, address: string) => void;
@@ -25,16 +25,14 @@ const Places = ({ setPosition, isDisabled = false }: PlacesProps) => {
     setValue(address, false);
     clearSuggestions();
     setShowSuggestions(false);
-
     const results = await getGeocode({ address });
     const { lat, lng } = await getLatLng(results[0]);
-
     setPosition({ lat, lng }, results[0].formatted_address);
   };
 
   return (
-    <div>
-      <Form.Control
+    <div className="relative">
+      <Input
         type="text"
         value={value}
         onChange={(e) => {
@@ -45,18 +43,19 @@ const Places = ({ setPosition, isDisabled = false }: PlacesProps) => {
         placeholder="Search a location"
       />
       {showSuggestions && status === "OK" && !isDisabled && (
-        <Dropdown show>
-          <Dropdown.Menu style={{ width: "100%" }}>
-            {data.map(({ place_id, description }) => (
-              <Dropdown.Item
-                key={place_id}
+        <ul className="absolute z-10 mt-1 w-full rounded border border-border bg-popover shadow-lg">
+          {data.map(({ place_id, description }) => (
+            <li key={place_id}>
+              <button
+                type="button"
                 onClick={() => handleSelect(description)}
+                className="w-full px-3 py-2 text-left text-sm text-popover-foreground hover:bg-muted"
               >
                 {description}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

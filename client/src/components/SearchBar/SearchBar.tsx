@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, useWatch } from "react-hook-form";
+import { Search } from "lucide-react";
 import { SearchType } from "../../types/SearchType";
-import { useTheme } from "../../context/ThemeContext";
 import Loading from "../../components/Loading/Loading";
-import "./SearchBar.css";
+import { Input } from "@/components/ui/input";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 interface SearchFormData {
   query: string;
@@ -19,7 +19,6 @@ const SearchBar: React.FC = () => {
     users: SearchType[];
   }>({ events: [], users: [] });
   const [loading, setLoading] = useState(false);
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -107,7 +106,6 @@ const SearchBar: React.FC = () => {
     return new Date(dateString).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
-      year: "numeric",
     });
   };
 
@@ -115,63 +113,64 @@ const SearchBar: React.FC = () => {
     suggestions.events.length > 0 || suggestions.users.length > 0;
 
   return (
-    <div
-      className={`search-bar-container ${theme === "dark" ? "dark-mode" : ""}`}
-      ref={searchRef}
-    >
-      <form
-        onSubmit={handleSubmit(onSearchSubmit)}
-        className="d-flex position-relative"
-      >
-        <input
-          type="search"
-          className="form-control me-2"
+    <div className="relative w-full" ref={searchRef}>
+      <form onSubmit={handleSubmit(onSearchSubmit)} className="relative flex items-center w-full">
+        <Search size={16} className="absolute left-3.5 text-muted-foreground pointer-events-none z-10" />
+        
+        <Input
+          type="text"
           placeholder="Search events or users..."
           {...register("query")}
+          className="w-full !pl-11 pr-4 !h-11 border-border bg-muted/30 text-foreground !text-sm focus-visible:ring-2 focus-visible:ring-primary placeholder:text-muted-foreground !rounded-lg font-mono transition-colors"
         />
-        <button type="submit" className="btn btn-outline-primary">
-          Search
-        </button>
+        <button type="submit" className="hidden">Search</button>
       </form>
+
       {(hasSuggestions || (loading && query.length >= 2)) && (
-        <div className="suggestions-dropdown search-dropdown-base shadow rounded mt-1 p-2">
+        <div className="absolute top-full left-0 z-50 mt-2 w-full rounded-lg border border-border bg-card p-2 shadow-xl max-h-80 overflow-y-auto">
           {loading && (
-            <div className="p-1 border-bottom mb-1 d-flex justify-content-center">
+            <div className="mb-2 flex justify-center py-2 border-b border-border/50">
               <Loading variant="spinner" />
             </div>
           )}
+
           {suggestions.events.length > 0 && (
             <div className="mb-2">
-              <h6 className="suggestion-category">Events</h6>
-              <ul className="list-unstyled mb-0">
+              <h6 className="mb-1 px-2 py-1 text-[10px] font-mono tracking-wider text-muted-foreground uppercase">
+                // Events
+              </h6>
+              <ul className="space-y-0.5 p-0 m-0 list-none">
                 {suggestions.events.map((item) => (
                   <li
                     key={`event-${item.id}`}
                     onClick={() => handleSuggestionClick("event", item.id)}
-                    className="suggestion-item p-1 suggestion-item-base"
+                    className="cursor-pointer rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center justify-between gap-2 transition-colors"
                   >
-                    <strong>{item.title}</strong>
-                    <small className="text-muted ms-2 suggestion-date">
-                      ({formatEventDate(item.event_datetime!)})
-                    </small>
+                    <span className="font-medium truncate">{item.title}</span>
+                    <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                      {formatEventDate(item.event_datetime!)}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
+
           {suggestions.users.length > 0 && (
             <div>
-              <h6 className="suggestion-category">Users</h6>
-              <ul className="list-unstyled mb-0">
+              <h6 className="mb-1 px-2 py-1 text-[10px] font-mono tracking-wider text-muted-foreground uppercase">
+                // Users
+              </h6>
+              <ul className="space-y-0.5 p-0 m-0 list-none">
                 {suggestions.users.map((item) => (
                   <li
                     key={`user-${item.id}`}
                     onClick={() =>
                       handleSuggestionClick("user", item.id, item.username)
                     }
-                    className="suggestion-item p-1 suggestion-item-base"
+                    className="cursor-pointer rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted/50 transition-colors font-mono"
                   >
-                    {item.username}
+                    @{item.username}
                   </li>
                 ))}
               </ul>

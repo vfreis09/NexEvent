@@ -1,27 +1,51 @@
-@import "bootstrap/dist/css/bootstrap.min.css";
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/jetbrains-mono";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --color-text-primary: #212529;
-  --color-text-secondary: #343a40;
-  --color-background-primary: #f8f9fa;
-  --color-background-secondary: #ffffff;
-  --color-border: #cccccc;
-  --color-link: #0d6efd;
-  --color-scrollbar-thumb: #ced4da;
-  --color-alert-danger-bg: #f8d7da;
-  --color-alert-danger-text: #721c24;
+  --background: #F5F6F3;
+  --foreground: #1C1B22;
+  --card: #FFFFFF;
+  --card-foreground: #1C1B22;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1B22;
+  --primary: #4B4ACF;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EDEAFB;
+  --secondary-foreground: #3C3489;
+  --muted: #EDECE6;
+  --muted-foreground: #6F6E66;
+  --accent: #FAECE7;
+  --accent-foreground: #712B13;
+  --destructive: #E24B4A;
+  --border: #DEDDD6;
+  --input: #DEDDD6;
+  --ring: #4B4ACF;
+  --radius: 0.5rem; /* Slightly increased for smoother card/button curves */
 }
 
-.dark-mode {
-  --color-text-primary: #e0e0e0;
-  --color-text-secondary: #f8f9fa;
-  --color-background-primary: #121212;
-  --color-background-secondary: #1e1e1e;
-  --color-border: #444444;
-  --color-link: #9bbffb;
-  --color-scrollbar-thumb: #495057;
-  --color-alert-danger-bg: #58151c;
-  --color-alert-danger-text: #f1b0b7;
+.dark {
+  --background: #17161C;
+  --foreground: #EDEDF0;
+  --card-foreground: #EDEDF0;
+  --popover: #26242F;
+  --card: #26242F; 
+  --popover-foreground: #EDEDF0;
+  --primary: #7C79FF;
+  --primary-foreground: #17161C;
+  --secondary: #2A2440;
+  --secondary-foreground: #CECBF6;
+  --muted: #232229;
+  --muted-foreground: #9E9DA8;
+  --accent: #3A2620;
+  --accent-foreground: #F5C4B3;
+  --destructive: #F09595;
+  --border: #2A2933;
+  --input: #2A2933;
+  --ring: #7C79FF;
 }
 
 * {
@@ -30,91 +54,69 @@
   box-sizing: border-box;
 }
 
+html,
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--color-background-primary);
-  color: var(--color-text-primary);
-  transition:
-    background-color 0.3s,
-    color 0.3s;
-  line-height: 1.6;
-  padding-top: 73px;
-  max-width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
-  padding-top: 85px;
 }
 
-.text-center {
-  text-align: center;
+body {
+  transition: background-color 0.2s ease, color 0.2s ease;
+  min-height: 100vh;
+  padding-top: 80px; /* Aligns with our header h-20 height */
 }
 
-.mt-1 {
-  margin-top: 0.25rem;
-}
-.mt-2 {
-  margin-top: 0.5rem;
-}
-.mt-3 {
-  margin-top: 1rem;
-}
-
-.container {
-  max-width: 1140px;
-  margin: 0 auto;
-  padding: 0 1rem;
+@media (max-width: 639px) {
+  body {
+    padding-top: 64px; /* Matches mobile header h-16 height */
+  }
 }
 
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-scrollbar-thumb);
+  background-color: var(--border);
   border-radius: 4px;
 }
 
-a {
-  text-decoration: none;
-  color: var(--color-link);
-}
-a:hover {
-  text-decoration: underline;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
-
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.main-content {
-  flex: 1;
+@theme inline {
+  --font-heading: var(--font-mono);
+  --font-mono: 'JetBrains Mono Variable', monospace;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
 }
 
-.dark-mode .card,
-.dark-mode .form-control {
-  background-color: var(--color-background-secondary);
-  color: var(--color-text-primary);
-  border-color: var(--color-border);
-}
-
-.dark-mode .alert-danger {
-  background-color: var(--color-alert-danger-bg) !important;
-  color: var(--color-alert-danger-text) !important;
-  border-color: var(--color-alert-danger-bg) !important;
-}
-
-@media (max-width: 768px) {
+@layer base {
+  * {
+    @apply border-border/60 outline-ring/50;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
   body {
-    padding-top: 220px;
+    @apply bg-background text-foreground font-mono antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground font-bold;
   }
 }

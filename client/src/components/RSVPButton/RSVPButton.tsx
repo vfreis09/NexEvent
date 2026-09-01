@@ -12,7 +12,7 @@ type RSVPProps = {
 };
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
   const { showNotification } = useToast();

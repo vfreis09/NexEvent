@@ -6,9 +6,20 @@ import zxcvbn from "zxcvbn";
 import { getPasswordFeedback } from "../../utils/password";
 import { useToast } from "../../hooks/useToast";
 import ProfilePictureUploader from "../ProfilePictureUploader/ProfilePictureUploader";
-import { Badge, Form } from "react-bootstrap";
 import Loading from "../../components/Loading/Loading";
-import "./EditUser.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Tag {
   id: number;
@@ -31,7 +42,7 @@ interface PasswordFormData {
 const DEFAULT_AVATAR_URL = "/images/default-avatar.png";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 const EditUser: React.FC = () => {
   const { user, setUser, loadUser } = useUser();
@@ -176,68 +187,81 @@ const EditUser: React.FC = () => {
   if (!user) return null;
 
   return (
-    <>
+    <div className="mx-auto max-w-3xl px-4 pb-16">
       <div
-        className={`container edit-user-container pb-5 ${theme === "dark" ? "dark-mode" : ""}`}
+        className={`mt-6 flex items-center justify-between rounded px-4 py-3 text-sm font-medium ${
+          isVerified
+            ? "bg-primary/10 text-primary"
+            : "bg-destructive/10 text-destructive"
+        }`}
       >
-        <div
-          className={`alert ${isVerified ? "alert-success-soft" : "alert-danger-soft"} mt-4 d-flex justify-content-between align-items-center`}
-        >
-          <span>{isVerified ? "Email Verified" : "Email Not Verified"}</span>
-        </div>
-        <div className="card p-4 shadow-sm mb-4 text-center">
-          <h4 className="mb-4">Profile Picture</h4>
-          <div className="avatar-edit-wrapper">
-            <div
-              className="avatar-edit-container"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <img
-                src={user.profile_picture_base64 || DEFAULT_AVATAR_URL}
-                className="rounded-circle avatar-main-img"
-                alt="Profile"
-              />
-              <div className="avatar-overlay">
-                <span>Change Photo</span>
-              </div>
-            </div>
-            <ProfilePictureUploader
-              inputRef={fileInputRef}
-              showNotification={showNotification}
+        <span>{isVerified ? "Email verified" : "Email not verified"}</span>
+      </div>
+
+      <div className="mt-4 rounded border border-border bg-card p-6 text-center">
+        <h4 className="mb-4 text-base font-medium text-card-foreground">
+          Profile picture
+        </h4>
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="group relative size-24 cursor-pointer overflow-hidden rounded-full"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <img
+              src={user.profile_picture_base64 || DEFAULT_AVATAR_URL}
+              className="size-full object-cover"
+              alt="Profile"
             />
+            <div className="absolute inset-0 flex items-center justify-center bg-foreground/50 text-xs font-medium text-background opacity-0 transition-opacity group-hover:opacity-100">
+              Change photo
+            </div>
           </div>
+          <ProfilePictureUploader
+            inputRef={fileInputRef}
+            showNotification={showNotification}
+          />
         </div>
-        <div className="card p-4 shadow-sm mb-4">
-          <h4 className="mb-3">Interests</h4>
-          {loadingPrefs ? (
-            <Loading variant="spinner" text="Loading preferences..." />
-          ) : (
-            <>
-              <Form.Group className="mb-4">
-                <Form.Label className="fw-bold">
-                  Email Digest Frequency
-                </Form.Label>
-                <Form.Select
-                  className="w-50"
-                  value={digestFrequency}
-                  onChange={(e) => setDigestFrequency(e.target.value)}
-                >
-                  <option value="daily">Daily Recap</option>
-                  <option value="weekly">Weekly Roundup</option>
-                  <option value="never">Unsubscribe</option>
-                </Form.Select>
-              </Form.Group>
-              <div className="mb-4">
-                <Form.Label className="fw-bold d-block">
-                  Interest Tags
-                </Form.Label>
-                <div className="d-flex flex-wrap gap-2">
-                  {availableTags.map((tag) => (
+      </div>
+
+      <div className="mt-4 rounded border border-border bg-card p-6">
+        <h4 className="mb-3 text-base font-medium text-card-foreground">
+          Interests
+        </h4>
+        {loadingPrefs ? (
+          <Loading variant="spinner" text="Loading preferences..." />
+        ) : (
+          <>
+            <div className="mb-6">
+              <Label className="mb-2 block font-medium">
+                Email digest frequency
+              </Label>
+              <Select
+                value={digestFrequency}
+                onValueChange={(value) => {
+                  if (value) setDigestFrequency(value);
+                }}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily recap</SelectItem>
+                  <SelectItem value="weekly">Weekly roundup</SelectItem>
+                  <SelectItem value="never">Unsubscribe</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="mb-6">
+              <Label className="mb-2 block font-medium">Interest tags</Label>
+              <div className="flex flex-wrap gap-2">
+                {availableTags.map((tag) => {
+                  const selected = selectedTagIds.includes(tag.id);
+                  return (
                     <Badge
                       key={tag.id}
-                      pill
-                      bg={selectedTagIds.includes(tag.id) ? "primary" : "light"}
-                      className="tag-pill"
+                      variant={selected ? "default" : "outline"}
+                      className="cursor-pointer rounded-full"
                       onClick={() =>
                         setSelectedTagIds((prev) =>
                           prev.includes(tag.id)
@@ -248,158 +272,182 @@ const EditUser: React.FC = () => {
                     >
                       {tag.name}
                     </Badge>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-              <button
-                onClick={handleSavePreferences}
-                disabled={savingPrefs}
-                className="btn btn-primary w-100"
-              >
-                {savingPrefs ? "Saving..." : "Save Preferences"}
-              </button>
-            </>
+            </div>
+
+            <Button
+              onClick={handleSavePreferences}
+              disabled={savingPrefs}
+              className="w-full"
+            >
+              {savingPrefs ? "Saving..." : "Save preferences"}
+            </Button>
+          </>
+        )}
+      </div>
+
+      <form
+        onSubmit={handleAccountSubmit(onAccountSubmit)}
+        className="mt-4 rounded border border-border bg-card p-6"
+      >
+        <h4 className="mb-3 text-base font-medium text-card-foreground">
+          Account details
+        </h4>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <Label htmlFor="username" className="mb-1.5 block">
+              Username
+            </Label>
+            <Input
+              id="username"
+              aria-invalid={!!accountErrors.username}
+              {...registerAccount("username")}
+            />
+            {accountErrors.username && (
+              <p className="mt-1 text-xs text-destructive">
+                {accountErrors.username.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="email" className="mb-1.5 block">
+              Email
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              aria-invalid={!!accountErrors.email}
+              {...registerAccount("email", { required: "Email is required" })}
+            />
+            {accountErrors.email && (
+              <p className="mt-1 text-xs text-destructive">
+                {accountErrors.email.message}
+              </p>
+            )}
+          </div>
+          <div className="md:col-span-2">
+            <Label htmlFor="bio" className="mb-1.5 block">
+              Bio
+            </Label>
+            <Textarea id="bio" rows={2} {...registerAccount("bio")} />
+          </div>
+        </div>
+        <Button
+          type="submit"
+          className="mt-6 w-full"
+          disabled={isAccountSubmitting}
+        >
+          {isAccountSubmitting ? "Updating..." : "Update profile info"}
+        </Button>
+      </form>
+
+      <div className="mt-4 rounded border border-border bg-card p-6">
+        <h4 className="mb-3 text-base font-medium text-card-foreground">
+          Appearance
+        </h4>
+        <div className="flex items-center gap-3">
+          <Switch
+            id="theme-switch"
+            checked={theme === "dark"}
+            onCheckedChange={toggleTheme}
+          />
+          <Label htmlFor="theme-switch">Dark mode</Label>
+        </div>
+      </div>
+
+      <form
+        onSubmit={handlePasswordSubmit(onPasswordSubmit)}
+        className="mt-4 rounded border border-border bg-card p-6"
+      >
+        <h4 className="mb-3 text-base font-medium text-card-foreground">
+          Security
+        </h4>
+        <div className="mb-4">
+          <Label htmlFor="oldPassword" className="mb-1.5 block">
+            Old password
+          </Label>
+          <Input
+            id="oldPassword"
+            type="password"
+            aria-invalid={!!passwordErrors.oldPassword}
+            {...registerPassword("oldPassword", {
+              required: "Old password is required",
+            })}
+          />
+          {passwordErrors.oldPassword && (
+            <p className="mt-1 text-xs text-destructive">
+              {passwordErrors.oldPassword.message}
+            </p>
           )}
         </div>
-        <form
-          onSubmit={handleAccountSubmit(onAccountSubmit)}
-          className="card p-4 shadow-sm mb-4"
-        >
-          <h4 className="mb-3">Account Details</h4>
-          <div className="row g-3">
-            <div className="col-md-6">
-              <label className="form-label">Username</label>
-              <input
-                type="text"
-                className={`form-control ${accountErrors.username ? "is-invalid" : ""}`}
-                {...registerAccount("username")}
-              />
-              {accountErrors.username && (
-                <div className="invalid-feedback">
-                  {accountErrors.username.message}
-                </div>
-              )}
+
+        <div className="mb-4">
+          <Label htmlFor="newPassword" className="mb-1.5 block">
+            New password
+          </Label>
+          <Input
+            id="newPassword"
+            type="password"
+            aria-invalid={!!passwordErrors.newPassword}
+            {...registerPassword("newPassword", {
+              required: "New password is required",
+            })}
+          />
+          {passwordErrors.newPassword && (
+            <p className="mt-1 text-xs text-destructive">
+              {passwordErrors.newPassword.message}
+            </p>
+          )}
+          {newPassword && (
+            <div className="mt-2">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={`h-full transition-all ${
+                    passwordScore < 3 ? "bg-destructive" : "bg-primary"
+                  }`}
+                  style={{ width: `${(passwordScore + 1) * 20}%` }}
+                />
+              </div>
+              <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                {passwordFeedbackList.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
             </div>
-            <div className="col-md-6">
-              <label className="form-label">Email</label>
-              <input
-                type="email"
-                className={`form-control ${accountErrors.email ? "is-invalid" : ""}`}
-                {...registerAccount("email", { required: "Email is required" })}
-              />
-              {accountErrors.email && (
-                <div className="invalid-feedback">
-                  {accountErrors.email.message}
-                </div>
-              )}
-            </div>
-            <div className="col-12">
-              <label className="form-label">Bio</label>
-              <textarea
-                className="form-control"
-                rows={2}
-                {...registerAccount("bio")}
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="btn btn-primary w-100 mt-4"
-            disabled={isAccountSubmitting}
-          >
-            {isAccountSubmitting ? "Updating..." : "Update Profile Info"}
-          </button>
-        </form>
-        <div className="card p-4 shadow-sm mb-4">
-          <h4 className="mb-3">Appearance</h4>
-          <div className="form-check form-switch">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="themeSwitch"
-              checked={theme === "dark"}
-              onChange={toggleTheme}
-            />
-            <label className="form-check-label" htmlFor="themeSwitch">
-              Dark Mode
-            </label>
-          </div>
+          )}
         </div>
-        <form
-          onSubmit={handlePasswordSubmit(onPasswordSubmit)}
-          className="card p-4 shadow-sm"
+
+        <div className="mb-6">
+          <Label htmlFor="confirmPassword" className="mb-1.5 block">
+            Confirm password
+          </Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            aria-invalid={!!passwordErrors.confirmPassword}
+            {...registerPassword("confirmPassword", {
+              required: "Please confirm your password",
+            })}
+          />
+          {passwordErrors.confirmPassword && (
+            <p className="mt-1 text-xs text-destructive">
+              {passwordErrors.confirmPassword.message}
+            </p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          variant="secondary"
+          className="w-full"
+          disabled={isPasswordSubmitting}
         >
-          <h4 className="mb-3">Security</h4>
-          <div className="mb-3">
-            <label className="form-label">Old Password</label>
-            <input
-              type="password"
-              className={`form-control ${passwordErrors.oldPassword ? "is-invalid" : ""}`}
-              {...registerPassword("oldPassword", {
-                required: "Old password is required",
-              })}
-            />
-            {passwordErrors.oldPassword && (
-              <div className="invalid-feedback">
-                {passwordErrors.oldPassword.message}
-              </div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">New Password</label>
-            <input
-              type="password"
-              className={`form-control ${passwordErrors.newPassword ? "is-invalid" : ""}`}
-              {...registerPassword("newPassword", {
-                required: "New password is required",
-              })}
-            />
-            {passwordErrors.newPassword && (
-              <div className="invalid-feedback">
-                {passwordErrors.newPassword.message}
-              </div>
-            )}
-            {newPassword && (
-              <div className="mt-2">
-                <div className="progress" style={{ height: "5px" }}>
-                  <div
-                    className={`progress-bar bg-${passwordScore < 3 ? "danger" : "success"}`}
-                    style={{ width: `${(passwordScore + 1) * 20}%` }}
-                  ></div>
-                </div>
-                <ul className="small text-muted mt-2">
-                  {passwordFeedbackList.map((f, i) => (
-                    <li key={i}>{f}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Confirm Password</label>
-            <input
-              type="password"
-              className={`form-control ${passwordErrors.confirmPassword ? "is-invalid" : ""}`}
-              {...registerPassword("confirmPassword", {
-                required: "Please confirm your password",
-              })}
-            />
-            {passwordErrors.confirmPassword && (
-              <div className="invalid-feedback">
-                {passwordErrors.confirmPassword.message}
-              </div>
-            )}
-          </div>
-          <button
-            type="submit"
-            className="btn btn-secondary w-100"
-            disabled={isPasswordSubmitting}
-          >
-            {isPasswordSubmitting ? "Updating..." : "Update Password"}
-          </button>
-        </form>
-      </div>
-    </>
+          {isPasswordSubmitting ? "Updating..." : "Update password"}
+        </Button>
+      </form>
+    </div>
   );
 };
 

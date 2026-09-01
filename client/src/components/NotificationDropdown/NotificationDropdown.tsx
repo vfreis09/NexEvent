@@ -1,25 +1,30 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaBell } from "react-icons/fa";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell } from "lucide-react";
 import { Notification } from "../../types/Notification";
 import { useToast } from "../../hooks/useToast";
-import "./NotificationDropdown.css";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from "@/components/ui/dropdown-menu";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 interface NotificationDropdownProps {
   isLoggedIn: boolean;
   userId?: number;
+  label?: string; // when set, renders a full-width trigger with label (mobile drawer)
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   isLoggedIn,
   userId,
+  label,
 }) => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showNotification } = useToast();
@@ -123,108 +128,118 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     }
   };
 
-  const toggleNotifications = () => {
-    setShowNotifications((prev) => !prev);
-    if (!showNotifications) {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    }
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(e.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div className="notification-wrapper" ref={notificationRef}>
-      <button className="nav-button bell-button" onClick={toggleNotifications}>
-        <FaBell />
+    <DropdownMenu
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      }}
+    >
+      <DropdownMenuTrigger
+        className={
+          label
+            ? "relative bg-transparent border-none cursor-pointer w-full h-11 rounded-lg flex items-center justify-center gap-2 font-mono text-xs font-bold tracking-wider uppercase outline-none"
+            : "relative bg-transparent border-none cursor-pointer w-10 h-10 rounded-md flex items-center justify-center hover:bg-[#f0f0f0] dark:hover:bg-[#2a2a2a] outline-none"
+        }
+      >
+        <Bell size={20} />
+        {label && <span>{label}</span>}
         {notifications.some((n) => !n.is_read) && (
-          <span className="notification-badge-dot"></span>
+          <span
+            className={
+              label
+                ? "absolute top-2 right-6 w-2 h-2 rounded-full bg-red-500"
+                : "absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"
+            }
+          />
         )}
-      </button>
-      {showNotifications && (
-        <div className="notification-dropdown">
-          <div className="notification-header-actions">
-            <h6 className="m-0">Notifications</h6>
-            {notifications.length > 0 && (
-              <button onClick={markAllRead} className="mark-all-btn">
-                Mark all read
-              </button>
-            )}
-          </div>
-          {notifications.length > 0 ? (
-            <div className="notification-list">
-              {notifications.map((note) => {
-                const isInvite =
-                  note.invite_id !== undefined &&
-                  note.invite_status?.toLowerCase() === "pending";
-                return (
-                  <div
-                    key={note.id}
-                    className={`notification-item ${note.is_read ? "read" : "unread"}`}
-                  >
-                    <div
-                      className="notification-clickable-area"
-                      onClick={async () => {
-                        await markNotificationRead(note.id);
-                        setShowNotifications(false);
-                        navigate(`/event/${note.event_id}`);
-                      }}
-                    >
-                      <p className="notification-text">{note.message}</p>
-                    </div>
+      </DropdownMenuTrigger>
 
-                    {isInvite && (
-                      <div className="notification-actions d-flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            respondToInvite(
-                              note.invite_id!,
-                              note.id,
-                              note.event_id,
-                              "accepted",
-                            );
-                          }}
-                          className="invite-accept-btn"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            respondToInvite(
-                              note.invite_id!,
-                              note.id,
-                              note.event_id,
-                              "declined",
-                            );
-                          }}
-                          className="invite-reject-btn"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="notification-item empty">No notifications</div>
+      <DropdownMenuContent
+        align="center"
+        sideOffset={12}
+        className="w-[calc(100vw-2rem)] sm:w-[340px] !p-0"
+      >
+        <div className="flex items-center justify-between !px-4 !py-3 border-b border-border">
+          <h6 className="m-0 font-semibold text-sm">Notifications</h6>
+          {notifications.length > 0 && (
+            <button
+              onClick={markAllRead}
+              className="bg-transparent border-none text-xs font-medium text-primary hover:underline cursor-pointer"
+            >
+              Mark all read
+            </button>
           )}
         </div>
-      )}
-    </div>
+
+        {notifications.length > 0 ? (
+          <div className="max-h-[320px] overflow-y-auto !p-2">
+            {notifications.map((note) => {
+              const isInvite =
+                note.invite_id !== undefined &&
+                note.invite_status?.toLowerCase() === "pending";
+              return (
+                <div
+                  key={note.id}
+                  className={`rounded-lg !px-4 !py-3 ${
+                    note.is_read ? "" : "bg-secondary"
+                  }`}
+                >
+                  <div
+                    className="cursor-pointer"
+                    onClick={async () => {
+                      await markNotificationRead(note.id);
+                      setOpen(false);
+                      navigate(`/event/${note.event_id}`);
+                    }}
+                  >
+                    <p className="m-0 text-sm">{note.message}</p>
+                  </div>
+
+                  {isInvite && (
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          respondToInvite(
+                            note.invite_id!,
+                            note.id,
+                            note.event_id,
+                            "accepted",
+                          );
+                        }}
+                        className="px-3 py-1 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700 cursor-pointer"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          respondToInvite(
+                            note.invite_id!,
+                            note.id,
+                            note.event_id,
+                            "declined",
+                          );
+                        }}
+                        className="px-3 py-1 text-xs font-medium rounded-md bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="!px-4 !py-6 text-center text-sm text-muted-foreground">
+            No notifications
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

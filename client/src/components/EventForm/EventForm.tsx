@@ -2,14 +2,19 @@ import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useWatch } from "react-hook-form";
+import { Globe, Lock } from "lucide-react";
 import Map from "../Map/Map";
 import Places from "../Places/Places";
 import { useMapContext } from "../../context/MapProvider";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { useToast } from "../../hooks/useToast";
-import { Badge } from "react-bootstrap";
-import "./EventForm.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface EventFormProps {
   isEditing: boolean;
@@ -30,7 +35,7 @@ interface EventFormData {
 type LatLngLiteral = google.maps.LatLngLiteral;
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 const isTimeInPast = (dateTimeString: string): boolean => {
   if (!dateTimeString) return false;
@@ -211,142 +216,178 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   if (!isLoaded) return <div>Loading...</div>;
 
   return (
-    <>
-      <form onSubmit={handleSubmit(onSubmit)} className="container mt-4 mb-5">
-        <div className="card p-4 shadow-sm">
-          <h2 className="mb-4">{isEditing ? "Edit Event" : "Create Event"}</h2>
-          <div className="mb-3">
-            <label className="form-label">Title:</label>
-            <input
-              type="text"
-              className={`form-control ${errors.title ? "is-invalid" : ""}`}
-              {...register("title", { required: "Title is required" })}
-            />
-            {errors.title && (
-              <div className="invalid-feedback">{errors.title.message}</div>
-            )}
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="mx-auto mb-16 mt-4 max-w-2xl px-4"
+    >
+      <div className="rounded border border-border bg-card p-6">
+        <h2 className="mb-6 text-xl font-medium text-card-foreground">
+          {isEditing ? "Edit event" : "Create event"}
+        </h2>
+
+        <div className="mb-4">
+          <Label htmlFor="title" className="mb-1.5 block">
+            Title
+          </Label>
+          <Input
+            id="title"
+            aria-invalid={!!errors.title}
+            {...register("title", { required: "Title is required" })}
+          />
+          {errors.title && (
+            <p className="mt-1 text-xs text-destructive">
+              {errors.title.message}
+            </p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <Label htmlFor="description" className="mb-1.5 block">
+            Description
+          </Label>
+          <Textarea
+            id="description"
+            rows={4}
+            aria-invalid={!!errors.description}
+            {...register("description", {
+              required: "Description is required",
+            })}
+          />
+          {errors.description && (
+            <p className="mt-1 text-xs text-destructive">
+              {errors.description.message}
+            </p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <Label htmlFor="eventDateTime" className="mb-1.5 block">
+            Event date and time
+          </Label>
+          <Input
+            id="eventDateTime"
+            type="datetime-local"
+            disabled={isEditing && isEventExpired}
+            aria-invalid={hasTimeError}
+            {...register("eventDateTime", {
+              required: "Date and time is required",
+            })}
+          />
+          {hasTimeError && (
+            <p className="mt-1 text-xs text-destructive">
+              Event time must be in the future.
+            </p>
+          )}
+          {isEditing && isEventExpired && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              The date and time of a past event cannot be changed.
+            </p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <Label htmlFor="maxAttendees" className="mb-1.5 block">
+            Max attendees
+          </Label>
+          <Input id="maxAttendees" type="number" {...register("maxAttendees")} />
+        </div>
+
+        <div className="mb-4">
+          <Label className="mb-1.5 block">Visibility</Label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setVisibility("public")}
+              className={cn(
+                "flex flex-1 flex-col items-start gap-1 rounded border p-3 text-left transition-colors",
+                visibility === "public"
+                  ? "border-primary bg-secondary"
+                  : "border-border hover:bg-muted",
+              )}
+            >
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <Globe size={14} /> Public
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Anyone can see this event
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibility("private")}
+              className={cn(
+                "flex flex-1 flex-col items-start gap-1 rounded border p-3 text-left transition-colors",
+                visibility === "private"
+                  ? "border-primary bg-secondary"
+                  : "border-border hover:bg-muted",
+              )}
+            >
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <Lock size={14} /> Private
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Only you can see this event
+              </span>
+            </button>
           </div>
-          <div className="mb-3">
-            <label className="form-label">Description:</label>
-            <textarea
-              className={`form-control ${errors.description ? "is-invalid" : ""}`}
-              rows={4}
-              {...register("description", {
-                required: "Description is required",
-              })}
-            />
-            {errors.description && (
-              <div className="invalid-feedback">
-                {errors.description.message}
-              </div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Event Date and Time:</label>
-            <input
-              type="datetime-local"
-              className={`form-control ${hasTimeError ? "is-invalid" : ""}`}
-              disabled={isEditing && isEventExpired}
-              {...register("eventDateTime", {
-                required: "Date and time is required",
-              })}
-            />
-            {hasTimeError && (
-              <div className="invalid-feedback d-block">
-                Error: Event time must be in the future.
-              </div>
-            )}
-            {isEditing && isEventExpired && (
-              <small className="text-danger">
-                The date and time of a past event cannot be changed.
-              </small>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Max Attendees:</label>
-            <input
-              type="number"
-              className="form-control"
-              {...register("maxAttendees")}
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Visibility:</label>
-            <div className="d-flex gap-3">
-              <div
-                className={`visibility-option ${visibility === "public" ? "selected" : ""}`}
-                onClick={() => setVisibility("public")}
-              >
-                <span>🌐 Public</span>
-                <small>Anyone can see this event</small>
-              </div>
-              <div
-                className={`visibility-option ${visibility === "private" ? "selected" : ""}`}
-                onClick={() => setVisibility("private")}
-              >
-                <span>🔒 Private</span>
-                <small>Only you can see this event</small>
-              </div>
-            </div>
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Tags:</label>
-            <div className="d-flex flex-wrap gap-2">
-              {availableTags.map((tag) => (
+        </div>
+
+        <div className="mb-4">
+          <Label className="mb-1.5 block">Tags</Label>
+          <div className="flex flex-wrap gap-2">
+            {availableTags.map((tag) => {
+              const selected = selectedTagIds.includes(tag.id);
+              return (
                 <Badge
                   key={tag.id}
-                  pill
-                  bg={selectedTagIds.includes(tag.id) ? "primary" : "light"}
-                  style={{
-                    cursor: "pointer",
-                    color: selectedTagIds.includes(tag.id) ? "white" : "black",
-                  }}
+                  variant={selected ? "default" : "outline"}
+                  className="cursor-pointer rounded-full"
                   onClick={() => toggleTag(tag.id)}
                 >
                   {tag.name}
                 </Badge>
-              ))}
-            </div>
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Search Location:</label>
-            <div
-              className={`border p-2 rounded ${isEditing && isEventExpired ? "disabled-search" : ""}`}
-            >
-              <Places
-                setPosition={handleLocationChange}
-                isDisabled={isEditing && isEventExpired}
-              />
-            </div>
-            {isEditing && isEventExpired && (
-              <small className="text-danger">
-                The location of a past event cannot be changed.
-              </small>
-            )}
-          </div>
-          <div className="mb-3">
-            <div className="map-container mb-3">
-              <Map location={location} isLoaded={isLoaded} />
-            </div>
-          </div>
-          <div className="text-end">
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isFormInvalid || isSubmitting}
-            >
-              {isSubmitting
-                ? isEditing
-                  ? "Updating..."
-                  : "Creating..."
-                : isEditing
-                  ? "Update Event"
-                  : "Create Event"}
-            </button>
+              );
+            })}
           </div>
         </div>
-      </form>
-    </>
+
+        <div className="mb-4">
+          <Label className="mb-1.5 block">Search location</Label>
+          <div
+            className={cn(
+              "rounded border border-border p-2",
+              isEditing && isEventExpired && "opacity-50",
+            )}
+          >
+            <Places
+              setPosition={handleLocationChange}
+              isDisabled={isEditing && isEventExpired}
+            />
+          </div>
+          {isEditing && isEventExpired && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              The location of a past event cannot be changed.
+            </p>
+          )}
+        </div>
+
+        <div className="mb-4 overflow-hidden rounded border border-border">
+          <Map location={location} isLoaded={isLoaded} />
+        </div>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isFormInvalid || isSubmitting}>
+            {isSubmitting
+              ? isEditing
+                ? "Updating..."
+                : "Creating..."
+              : isEditing
+                ? "Update event"
+                : "Create event"}
+          </Button>
+        </div>
+      </div>
+    </form>
   );
 };
 

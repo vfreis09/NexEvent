@@ -1,21 +1,26 @@
-import React, { useRef, useState, useEffect } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../hooks/useToast";
 import { User } from "../../types/User";
-import "./UserMenu.css";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 interface UserMenuProps {
   user: User;
 }
 
 const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setUser, setIsLoggedIn } = useUser();
@@ -39,46 +44,42 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(e.target as Node)
-      ) {
-        setShowUserMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div className="user-menu-wrapper" ref={userMenuRef}>
-      <button
-        className="nav-button user-menu-button"
-        onClick={() => setShowUserMenu((prev) => !prev)}
+    <DropdownMenu>
+      <DropdownMenuTrigger className="group bg-transparent border-none text-[#333] dark:text-[#f0f0f0] text-base font-medium cursor-pointer w-22! h-10! rounded-md leading-tight hover:bg-[#f0f0f0] dark:hover:bg-[#2a2a2a] flex items-center justify-center gap-1 outline-none">
+        {user.username.split(" ")[0]}
+        <ChevronDown
+          size={14}
+          className="text-muted-foreground transition-transform group-data-popup-open:rotate-180"
+        />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent 
+        align="center" 
+        sideOffset={8} 
+        className="w-[calc(100vw-2rem)] sm:w-[220px]"
       >
-        {user.username}
-      </button>
-      {showUserMenu && (
-        <div className="user-menu-dropdown">
-          <Link to={`/user/${user.username}`} className="user-menu-item">
-            Profile
-          </Link>
-          <Link to="/settings" className="user-menu-item">
-            Settings
-          </Link>
-          {user.role === "admin" && (
-            <Link to="/admin" className="user-menu-item">
-              Admin Dashboard
-            </Link>
-          )}
-          <button onClick={handleLogout} className="user-menu-item logout-item">
-            Logout
-          </button>
-        </div>
-      )}
-    </div>
+        <DropdownMenuItem render={<Link to={`/user/${user.username}`} />}>
+          Profile
+        </DropdownMenuItem>
+
+        <DropdownMenuItem render={<Link to="/settings" />}>
+          Settings
+        </DropdownMenuItem>
+
+        {user.role === "admin" && (
+          <DropdownMenuItem render={<Link to="/admin" />}>
+            Admin Dashboard
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem onClick={handleLogout} variant="destructive">
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

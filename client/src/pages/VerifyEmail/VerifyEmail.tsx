@@ -4,7 +4,7 @@ import { useUser } from "../../context/UserContext";
 import "./VerifyEmail.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
-const BASE_URL = rawUrl ? `https://${rawUrl}/api` : "http://localhost:3000/api";
+const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
 function VerifyEmail() {
   const [searchParams] = useSearchParams();
