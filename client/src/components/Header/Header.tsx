@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Moon, Sun, Menu, X, Search, PlusCircle } from "lucide-react";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -10,6 +10,7 @@ import UserMenu from "../UserMenu/UserMenu";
 import SearchBar from "../SearchBar/SearchBar";
 import { Button } from "@/components/ui/button";
 
+
 const Header: React.FC = () => {
   const { user, isLoggedIn, loadUser, isVerified, hasFetchedUser } = useUser();
   const { theme, toggleTheme } = useTheme();
@@ -17,6 +18,15 @@ const Header: React.FC = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  const location = useLocation();
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     if (isLoggedIn && !user && !hasFetchedUser) {
@@ -55,9 +65,11 @@ const Header: React.FC = () => {
               to="/"
               style={{ marginLeft: "16px" }}
               className="font-mono text-lg font-black tracking-tight text-foreground hover:text-primary transition-colors no-underline truncate min-w-0"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              NexEvent
+              onClick={(e) => {
+                handleLogoClick(e);
+                setMobileMenuOpen(false);
+              }}
+            >NexEvent
             </Link>
           ) : (
             <div style={{ marginLeft: "16px" }} className="flex-1 min-w-0 pr-2">
@@ -196,6 +208,7 @@ const Header: React.FC = () => {
           <div className="flex items-center justify-start">
             <Link
               to="/"
+              onClick={handleLogoClick}
               className="font-mono text-2xl font-black tracking-tight text-foreground hover:text-primary transition-colors no-underline whitespace-nowrap"
             >
               NexEvent
