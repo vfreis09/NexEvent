@@ -34,7 +34,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   }
 
   return (
-    <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+    <div className="mt-8 flex items-center justify-center gap-1 sm:gap-2">
+      {/* Previous Button */}
       <button
         className={buttonBase}
         onClick={() => onPageChange(currentPage - 1)}
@@ -44,24 +45,31 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         &laquo;
       </button>
 
+      {/* First Page Link - Hidden on extra small screens */}
       {startPage > 1 && (
         <>
-          <button className={buttonBase} onClick={() => onPageChange(1)}>
+          <button
+            className={cn(buttonBase, "hidden sm:flex")}
+            onClick={() => onPageChange(1)}
+          >
             1
           </button>
           {startPage > 2 && (
-            <span className="px-1 text-sm text-muted-foreground">...</span>
+            <span className="hidden px-1 text-sm text-muted-foreground sm:inline">
+              ...
+            </span>
           )}
         </>
       )}
 
+      {/* Page Numbers */}
       {pageNumbers.map((page) => (
         <button
           key={page}
           className={cn(
             buttonBase,
             page === currentPage &&
-              "border-primary bg-primary text-primary-foreground hover:bg-primary/90",
+              "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
           )}
           onClick={() => onPageChange(page)}
         >
@@ -69,17 +77,24 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         </button>
       ))}
 
+      {/* Last Page Link - Hidden on extra small screens */}
       {endPage < totalPages && (
         <>
           {endPage < totalPages - 1 && (
-            <span className="px-1 text-sm text-muted-foreground">...</span>
+            <span className="hidden px-1 text-sm text-muted-foreground sm:inline">
+              ...
+            </span>
           )}
-          <button className={buttonBase} onClick={() => onPageChange(totalPages)}>
+          <button
+            className={cn(buttonBase, "hidden sm:flex")}
+            onClick={() => onPageChange(totalPages)}
+          >
             {totalPages}
           </button>
         </>
       )}
 
+      {/* Next Button */}
       <button
         className={buttonBase}
         onClick={() => onPageChange(currentPage + 1)}
