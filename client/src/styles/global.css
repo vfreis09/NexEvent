@@ -21,10 +21,12 @@
   --accent: #FAECE7;
   --accent-foreground: #712B13;
   --destructive: #E24B4A;
+  --success: #1F7A4D;
+  --warning: #D98E1F;
   --border: #DEDDD6;
   --input: #DEDDD6;
   --ring: #4B4ACF;
-  --radius: 0.5rem; /* Slightly increased for smoother card/button curves */
+  --radius: 0.5rem;
 }
 
 .dark {
@@ -32,7 +34,7 @@
   --foreground: #EDEDF0;
   --card-foreground: #EDEDF0;
   --popover: #26242F;
-  --card: #26242F; 
+  --card: #26242F;
   --popover-foreground: #EDEDF0;
   --primary: #7C79FF;
   --primary-foreground: #17161C;
@@ -43,15 +45,11 @@
   --accent: #3A2620;
   --accent-foreground: #F5C4B3;
   --destructive: #F09595;
+  --success: #34A66B;
+  --warning: #E5A438;
   --border: #2A2933;
   --input: #2A2933;
   --ring: #7C79FF;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
 html,
@@ -63,12 +61,12 @@ body {
 body {
   transition: background-color 0.2s ease, color 0.2s ease;
   min-height: 100vh;
-  padding-top: 80px; /* Aligns with our header h-20 height */
+  padding-top: 80px;
 }
 
 @media (max-width: 639px) {
   body {
-    padding-top: 64px; /* Matches mobile header h-16 height */
+    padding-top: 64px;
   }
 }
 
@@ -87,6 +85,8 @@ body {
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);

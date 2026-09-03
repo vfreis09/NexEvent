@@ -5,10 +5,8 @@ import EventList from "../../components/EventList/EventList";
 import { EventData } from "../../types/EventData";
 import { useToast } from "../../hooks/useToast";
 import { PaginatedResponse } from "../../types/PaginationTypes";
-import { useTheme } from "../../context/ThemeContext";
 import { useState } from "react";
 import Loading from "../../components/Loading/Loading";
-import "./Home.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
@@ -32,8 +30,6 @@ function HomePage() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const { showNotification } = useToast();
-
-  useTheme();
 
   useEffect(() => {
     const state = location.state as { successMessage?: string } | null;
@@ -82,46 +78,50 @@ function HomePage() {
   };
 
   return (
-    <>
-      <div className="home-page">
-        {loading ? (
-          <Loading variant="skeleton" count={3} />
-        ) : (
-          <>
-            <h2>Upcoming Events</h2>
-            {upcomingEvents.length > 0 ? (
-              <EventList
-                events={upcomingEvents}
-                onEventUpdate={handleEventUpdate}
-                showNotification={showNotification}
-                currentPage={upcPage}
-                totalPages={upcTotalPages}
-                onPageChange={handleUpcomingPageChange}
-              />
-            ) : (
-              <p className="no-events-message">
-                No upcoming events right now. Check back soon!
-              </p>
-            )}
+    <div className="mx-auto max-w-3xl px-4 pb-20 pt-6">
+      {loading ? (
+        <Loading variant="skeleton" count={3} />
+      ) : (
+        <>
+          <h2 className="mb-8 mt-10 text-center text-3xl font-medium text-foreground">
+            Upcoming events
+          </h2>
+          {upcomingEvents.length > 0 ? (
+            <EventList
+              events={upcomingEvents}
+              onEventUpdate={handleEventUpdate}
+              showNotification={showNotification}
+              currentPage={upcPage}
+              totalPages={upcTotalPages}
+              onPageChange={handleUpcomingPageChange}
+            />
+          ) : (
+            <p className="my-10 text-center text-sm italic text-muted-foreground">
+              No upcoming events right now. Check back soon!
+            </p>
+          )}
 
-            <h2 className="past-events-header">Past Events</h2>
-            {pastEvents.length > 0 ? (
-              <EventList
-                events={pastEvents}
-                onEventUpdate={handleEventUpdate}
-                showNotification={showNotification}
-                isPast={true}
-                currentPage={pastPage}
-                totalPages={pastTotalPages}
-                onPageChange={handlePastPageChange}
-              />
-            ) : (
-              <p className="no-events-message">No past events to display.</p>
-            )}
-          </>
-        )}
-      </div>
-    </>
+          <h2 className="mb-4 mt-20 border-b border-border pb-4 text-center text-2xl font-medium text-muted-foreground">
+            Past events
+          </h2>
+          {pastEvents.length > 0 ? (
+            <EventList
+              events={pastEvents}
+              onEventUpdate={handleEventUpdate}
+              showNotification={showNotification}
+              isPast={true}
+              currentPage={pastPage}
+              totalPages={pastTotalPages}
+              onPageChange={handlePastPageChange}
+            />
+          ) : (
+            <p className="my-10 text-center text-sm italic text-muted-foreground">
+              No past events to display.
+            </p>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

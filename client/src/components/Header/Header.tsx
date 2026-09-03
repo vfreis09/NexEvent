@@ -54,7 +54,7 @@ const Header: React.FC = () => {
             <Link
               to="/"
               style={{ marginLeft: "16px" }}
-              className="font-serif text-lg font-black tracking-tight text-foreground hover:text-primary transition-colors no-underline truncate min-w-0"
+              className="font-mono text-lg font-black tracking-tight text-foreground hover:text-primary transition-colors no-underline truncate min-w-0"
               onClick={() => setMobileMenuOpen(false)}
             >
               NexEvent
@@ -196,7 +196,7 @@ const Header: React.FC = () => {
           <div className="flex items-center justify-start">
             <Link
               to="/"
-              className="font-serif text-2xl font-black tracking-tight text-foreground hover:text-primary transition-colors no-underline whitespace-nowrap"
+              className="font-mono text-2xl font-black tracking-tight text-foreground hover:text-primary transition-colors no-underline whitespace-nowrap"
             >
               NexEvent
             </Link>

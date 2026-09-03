@@ -1,11 +1,14 @@
 import React from "react";
-import "../EventList/EventList.css";
+import { cn } from "@/lib/utils";
 
 interface PaginationControlsProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
 }
+
+const buttonBase =
+  "flex h-10 min-w-10 shrink-0 items-center justify-center rounded border border-border bg-card px-2 font-mono text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50";
 
 const PaginationControls: React.FC<PaginationControlsProps> = ({
   currentPage,
@@ -31,52 +34,57 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   }
 
   return (
-    <div className="pagination-container">
+    <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
       <button
-        className="pagination-button nav-btn"
+        className={buttonBase}
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        aria-label="Previous Page"
+        aria-label="Previous page"
       >
         &laquo;
       </button>
+
       {startPage > 1 && (
         <>
-          <button className="pagination-button" onClick={() => onPageChange(1)}>
+          <button className={buttonBase} onClick={() => onPageChange(1)}>
             1
           </button>
-          {startPage > 2 && <span className="pagination-ellipsis">...</span>}
+          {startPage > 2 && (
+            <span className="px-1 text-sm text-muted-foreground">...</span>
+          )}
         </>
       )}
+
       {pageNumbers.map((page) => (
         <button
           key={page}
-          className={`pagination-button ${
-            page === currentPage ? "active-page" : ""
-          }`}
+          className={cn(
+            buttonBase,
+            page === currentPage &&
+              "border-primary bg-primary text-primary-foreground hover:bg-primary/90",
+          )}
           onClick={() => onPageChange(page)}
         >
           {page}
         </button>
       ))}
+
       {endPage < totalPages && (
         <>
           {endPage < totalPages - 1 && (
-            <span className="pagination-ellipsis">...</span>
+            <span className="px-1 text-sm text-muted-foreground">...</span>
           )}
-          <button
-            className="pagination-button"
-            onClick={() => onPageChange(totalPages)}
-          >
+          <button className={buttonBase} onClick={() => onPageChange(totalPages)}>
             {totalPages}
           </button>
         </>
       )}
+
       <button
-        className="pagination-button nav-btn"
+        className={buttonBase}
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        aria-label="Next Page"
+        aria-label="Next page"
       >
         &raquo;
       </button>
