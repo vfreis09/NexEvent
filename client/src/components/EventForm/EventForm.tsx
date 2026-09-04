@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useWatch } from "react-hook-form";
-import { Globe, Lock } from "lucide-react";
+import { Globe, Lock, MapPin } from "lucide-react";
 import Map from "../Map/Map";
 import Places from "../Places/Places";
 import { useMapContext } from "../../context/MapProvider";
@@ -37,6 +37,9 @@ type LatLngLiteral = google.maps.LatLngLiteral;
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 
+// How many tags to show before collapsing the rest behind "show more"
+const VISIBLE_TAG_COUNT = 8;
+
 const isTimeInPast = (dateTimeString: string): boolean => {
   if (!dateTimeString) return false;
   return new Date(dateTimeString).getTime() < new Date().getTime() - 60000;
@@ -49,6 +52,7 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [visibility, setVisibility] = useState<"public" | "private">("public");
+  const [showAllTags, setShowAllTags] = useState(false);
 
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -129,6 +133,18 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
         : [...prev, tagId],
     );
   };
+
+  // Selected tags float to the top, most recently selected first
+  const sortedTags = useMemo(() => {
+    const selected = [...selectedTagIds]
+      .reverse()
+      .map((id) => availableTags.find((t) => t.id === id))
+      .filter((t): t is Tag => Boolean(t));
+    const unselected = availableTags.filter(
+      (t) => !selectedTagIds.includes(t.id),
+    );
+    return [...selected, ...unselected];
+  }, [availableTags, selectedTagIds]);
 
   const onSubmit = async (data: EventFormData) => {
     if (!location) {
@@ -215,177 +231,248 @@ const EventForm: React.FC<EventFormProps> = ({ isEditing }) => {
 
   if (!isLoaded) return <div>Loading...</div>;
 
+  const visibleTags = showAllTags
+    ? sortedTags
+    : sortedTags.slice(0, VISIBLE_TAG_COUNT);
+  const hiddenTagCount = sortedTags.length - VISIBLE_TAG_COUNT;
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mx-auto mb-16 mt-4 max-w-2xl px-4"
+      className="mx-auto mb-16 mt-4 max-w-5xl px-4"
     >
-      <div className="rounded border border-border bg-card p-6">
-        <h2 className="mb-6 text-xl font-medium text-card-foreground">
+      <div className="mb-6">
+        <h2 className="text-2xl font-medium text-foreground">
           {isEditing ? "Edit event" : "Create event"}
         </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isEditing
+            ? "Update the details below and save your changes"
+            : "Fill in the details below to publish your event"}
+        </p>
+      </div>
 
-        <div className="mb-4">
-          <Label htmlFor="title" className="mb-1.5 block">
-            Title
-          </Label>
-          <Input
-            id="title"
-            aria-invalid={!!errors.title}
-            {...register("title", { required: "Title is required" })}
-          />
-          {errors.title && (
-            <p className="mt-1 text-xs text-destructive">
-              {errors.title.message}
-            </p>
-          )}
-        </div>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr]">
+        {/* LEFT COLUMN */}
+        <div className="flex flex-col gap-5">
+          {/* Basics */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h3 className="mb-4 text-base font-medium text-card-foreground">
+              Basics
+            </h3>
 
-        <div className="mb-4">
-          <Label htmlFor="description" className="mb-1.5 block">
-            Description
-          </Label>
-          <Textarea
-            id="description"
-            rows={4}
-            aria-invalid={!!errors.description}
-            {...register("description", {
-              required: "Description is required",
-            })}
-          />
-          {errors.description && (
-            <p className="mt-1 text-xs text-destructive">
-              {errors.description.message}
-            </p>
-          )}
-        </div>
-
-        <div className="mb-4">
-          <Label htmlFor="eventDateTime" className="mb-1.5 block">
-            Event date and time
-          </Label>
-          <Input
-            id="eventDateTime"
-            type="datetime-local"
-            disabled={isEditing && isEventExpired}
-            aria-invalid={hasTimeError}
-            {...register("eventDateTime", {
-              required: "Date and time is required",
-            })}
-          />
-          {hasTimeError && (
-            <p className="mt-1 text-xs text-destructive">
-              Event time must be in the future.
-            </p>
-          )}
-          {isEditing && isEventExpired && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              The date and time of a past event cannot be changed.
-            </p>
-          )}
-        </div>
-
-        <div className="mb-4">
-          <Label htmlFor="maxAttendees" className="mb-1.5 block">
-            Max attendees
-          </Label>
-          <Input id="maxAttendees" type="number" {...register("maxAttendees")} />
-        </div>
-
-        <div className="mb-4">
-          <Label className="mb-1.5 block">Visibility</Label>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setVisibility("public")}
-              className={cn(
-                "flex flex-1 flex-col items-start gap-1 rounded border p-3 text-left transition-colors",
-                visibility === "public"
-                  ? "border-primary bg-secondary"
-                  : "border-border hover:bg-muted",
+            <div className="mb-4">
+              <Label htmlFor="title" className="mb-1.5 block">
+                Title
+              </Label>
+              <Input
+                id="title"
+                aria-invalid={!!errors.title}
+                {...register("title", { required: "Title is required" })}
+              />
+              {errors.title && (
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.title.message}
+                </p>
               )}
-            >
-              <span className="flex items-center gap-1.5 text-sm font-medium">
-                <Globe size={14} /> Public
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Anyone can see this event
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setVisibility("private")}
-              className={cn(
-                "flex flex-1 flex-col items-start gap-1 rounded border p-3 text-left transition-colors",
-                visibility === "private"
-                  ? "border-primary bg-secondary"
-                  : "border-border hover:bg-muted",
+            </div>
+
+            <div>
+              <Label htmlFor="description" className="mb-1.5 block">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                rows={4}
+                aria-invalid={!!errors.description}
+                {...register("description", {
+                  required: "Description is required",
+                })}
+              />
+              {errors.description && (
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.description.message}
+                </p>
               )}
-            >
-              <span className="flex items-center gap-1.5 text-sm font-medium">
-                <Lock size={14} /> Private
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Only you can see this event
-              </span>
-            </button>
+            </div>
+          </div>
+
+          {/* Schedule and capacity */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h3 className="mb-4 text-base font-medium text-card-foreground">
+              Schedule and capacity
+            </h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="eventDateTime" className="mb-1.5 block">
+                  Event date and time
+                </Label>
+                <Input
+                  id="eventDateTime"
+                  type="datetime-local"
+                  disabled={isEditing && isEventExpired}
+                  aria-invalid={hasTimeError}
+                  {...register("eventDateTime", {
+                    required: "Date and time is required",
+                  })}
+                />
+                {hasTimeError && (
+                  <p className="mt-1 text-xs text-destructive">
+                    Event time must be in the future.
+                  </p>
+                )}
+                {isEditing && isEventExpired && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    The date and time of a past event cannot be changed.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="maxAttendees" className="mb-1.5 block">
+                  Max attendees
+                </Label>
+                <Input
+                  id="maxAttendees"
+                  type="number"
+                  placeholder="No limit"
+                  {...register("maxAttendees")}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="mb-4">
-          <Label className="mb-1.5 block">Tags</Label>
-          <div className="flex flex-wrap gap-2">
-            {availableTags.map((tag) => {
-              const selected = selectedTagIds.includes(tag.id);
-              return (
+        {/* RIGHT COLUMN */}
+        <div className="flex flex-col gap-5">
+          {/* Visibility */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h3 className="mb-4 text-base font-medium text-card-foreground">
+              Visibility
+            </h3>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setVisibility("public")}
+                className={cn(
+                  "flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors",
+                  visibility === "public"
+                    ? "border-primary bg-secondary"
+                    : "border-border hover:bg-muted",
+                )}
+              >
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  <Globe size={14} /> Public
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Anyone can see this event
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisibility("private")}
+                className={cn(
+                  "flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors",
+                  visibility === "private"
+                    ? "border-primary bg-secondary"
+                    : "border-border hover:bg-muted",
+                )}
+              >
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  <Lock size={14} /> Private
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Only you can see this event
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-medium text-card-foreground">
+                Tags
+              </h3>
+              {selectedTagIds.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {selectedTagIds.length} selected
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {visibleTags.map((tag) => {
+                const selected = selectedTagIds.includes(tag.id);
+                return (
+                  <Badge
+                    key={tag.id}
+                    variant={selected ? "default" : "outline"}
+                    className="cursor-pointer rounded-full"
+                    onClick={() => toggleTag(tag.id)}
+                  >
+                    {tag.name}
+                  </Badge>
+                );
+              })}
+              {!showAllTags && hiddenTagCount > 0 && (
                 <Badge
-                  key={tag.id}
-                  variant={selected ? "default" : "outline"}
-                  className="cursor-pointer rounded-full"
-                  onClick={() => toggleTag(tag.id)}
+                  variant="outline"
+                  className="cursor-pointer rounded-full text-muted-foreground"
+                  onClick={() => setShowAllTags(true)}
                 >
-                  {tag.name}
+                  + {hiddenTagCount} more
                 </Badge>
-              );
-            })}
+              )}
+              {showAllTags && sortedTags.length > VISIBLE_TAG_COUNT && (
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer rounded-full text-muted-foreground"
+                  onClick={() => setShowAllTags(false)}
+                >
+                  Show less
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="mb-4">
-          <Label className="mb-1.5 block">Search location</Label>
-          <div
-            className={cn(
-              "rounded border border-border p-2",
-              isEditing && isEventExpired && "opacity-50",
-            )}
-          >
-            <Places
-              setPosition={handleLocationChange}
-              isDisabled={isEditing && isEventExpired}
-            />
-          </div>
-          {isEditing && isEventExpired && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              The location of a past event cannot be changed.
-            </p>
+      {/* Location — full width, spans both columns */}
+      <div className="mt-5 rounded-xl border border-border bg-card p-5">
+        <h3 className="mb-4 flex items-center gap-1.5 text-base font-medium text-card-foreground">
+          <MapPin size={16} /> Location
+        </h3>
+        <div
+          className={cn(
+            "mb-3 rounded border border-border p-2",
+            isEditing && isEventExpired && "opacity-50",
           )}
+        >
+          <Places
+            setPosition={handleLocationChange}
+            isDisabled={isEditing && isEventExpired}
+          />
         </div>
-
-        <div className="mb-4 overflow-hidden rounded border border-border">
+        {isEditing && isEventExpired && (
+          <p className="mb-3 text-xs text-muted-foreground">
+            The location of a past event cannot be changed.
+          </p>
+        )}
+        <div className="overflow-hidden rounded border border-border">
           <Map location={location} isLoaded={isLoaded} />
         </div>
+      </div>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isFormInvalid || isSubmitting}>
-            {isSubmitting
-              ? isEditing
-                ? "Updating..."
-                : "Creating..."
-              : isEditing
-                ? "Update event"
-                : "Create event"}
-          </Button>
-        </div>
+      <div className="mt-5 flex justify-end border-t border-border pt-5">
+        <Button type="submit" disabled={isFormInvalid || isSubmitting}>
+          {isSubmitting
+            ? isEditing
+              ? "Updating..."
+              : "Creating..."
+            : isEditing
+              ? "Update event"
+              : "Create event"}
+        </Button>
       </div>
     </form>
   );
