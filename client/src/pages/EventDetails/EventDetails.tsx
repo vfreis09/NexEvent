@@ -10,7 +10,6 @@ import { useTheme } from "../../context/ThemeContext";
 import { EventData } from "../../types/EventData";
 import { useToast } from "../../hooks/useToast";
 import Loading from "../../components/Loading/Loading";
-import "./EventDetails.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
@@ -67,10 +66,18 @@ function EventDetails() {
   });
 
   if (isNaN(eventId))
-    return <p className="event-detail-error">Invalid event ID</p>;
+    return (
+      <p className="mx-auto mt-10 max-w-3xl px-4 text-center text-sm text-destructive">
+        Invalid event ID
+      </p>
+    );
   if (isLoading) return <Loading variant="page" text="Loading event..." />;
   if (error || !event)
-    return <p className="event-detail-error">Event not found.</p>;
+    return (
+      <p className="mx-auto mt-10 max-w-3xl px-4 text-center text-sm text-destructive">
+        Event not found.
+      </p>
+    );
 
   const handleCancel = async (eventId: number) => {
     try {
@@ -92,39 +99,42 @@ function EventDetails() {
   };
 
   return (
-    <>
-      <div className="event-details-view">
-        {event.author && (
-          <Event
-            event={event}
-            onCancel={() => handleCancel(eventId)}
-            hostPicture={event.author.profile_picture_base64}
-            hostUsername={event.author_username}
+    <div className="mx-auto mb-16 mt-4 flex max-w-3xl flex-col gap-5 px-4">
+      {event.author && (
+        <Event
+          event={event}
+          onCancel={() => handleCancel(eventId)}
+          hostPicture={event.author.profile_picture_base64}
+          hostUsername={event.author_username}
+        />
+      )}
+
+      {isVerified &&
+        user?.role !== "banned" &&
+        user?.id === event.author_id && (
+          <InviteManager
+            eventId={event.id}
+            status={event.status}
+            eventDateTime={event.event_datetime}
+            maxAttendees={event.max_attendees}
+            currentAttendees={event.number_of_attendees}
           />
         )}
-        {isVerified &&
-          user?.role !== "banned" &&
-          user?.id === event.author_id && (
-            <InviteManager
-              eventId={event.id}
-              status={event.status}
-              eventDateTime={event.event_datetime}
-              maxAttendees={event.max_attendees}
-              currentAttendees={event.number_of_attendees}
-            />
-          )}
-        {isVerified &&
-          user?.role !== "banned" &&
-          event.status !== "canceled" && (
-            <RSVPButton
-              eventId={event.id}
-              userId={user?.id}
-              status={event.status}
-            />
-          )}
+
+      {isVerified &&
+        user?.role !== "banned" &&
+        event.status !== "canceled" && (
+          <RSVPButton
+            eventId={event.id}
+            userId={user?.id}
+            status={event.status}
+          />
+        )}
+
+      <div className="overflow-hidden rounded-xl border border-border">
         <Map location={location} isLoaded={isLoaded} />
       </div>
-    </>
+    </div>
   );
 }
 

@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../hooks/useToast";
 import { useTheme } from "../../context/ThemeContext";
 import Loading from "../../components/Loading/Loading";
-import "./RSVP.css";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type RSVPProps = {
   eventId: number;
@@ -75,60 +76,70 @@ const RSVPButton: React.FC<RSVPProps> = ({ eventId, userId, status }) => {
 
   if (status === "expired") {
     return (
-      <div className="rsvp-container">
-        <p>This event has expired. You can no longer RSVP.</p>
+      <div className="rounded-xl border border-border bg-card p-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          This event has expired. You can no longer RSVP.
+        </p>
       </div>
     );
   }
 
   if (status === "full") {
     return (
-      <div className="rsvp-container">
-        <p>This event is full. RSVP is closed.</p>
+      <div className="rounded-xl border border-border bg-card p-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          This event is full. RSVP is closed.
+        </p>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="rsvp-container">
-        {loading ? (
-          <Loading variant="spinner" text="Loading RSVP status..." />
-        ) : !userId ? (
-          <p>Please log in to RSVP for this event.</p>
-        ) : (
-          <>
-            <p>Please let us know if you'll be attending:</p>
-            <div className="rsvp-buttons">
-              <button
-                onClick={() => handleRSVP("accepted")}
-                className={
-                  rsvpStatus === "accepted" ? "active accept-btn" : "accept-btn"
-                }
-              >
-                Accept
-              </button>
-              <button
-                onClick={() => handleRSVP("declined")}
-                className={
-                  rsvpStatus === "declined"
-                    ? "active decline-btn"
-                    : "decline-btn"
-                }
-              >
-                Decline
-              </button>
-            </div>
-            {rsvpStatus && (
-              <p>
-                You have {rsvpStatus === "accepted" ? "accepted" : "declined"}{" "}
-                the invitation.
-              </p>
-            )}
-          </>
-        )}
-      </div>
-    </>
+    <div className="rounded-xl border border-border bg-card p-6 text-center">
+      {loading ? (
+        <Loading variant="spinner" text="Loading RSVP status..." />
+      ) : !userId ? (
+        <p className="text-sm text-muted-foreground">
+          Please log in to RSVP for this event.
+        </p>
+      ) : (
+        <>
+          <p className="mb-4 text-sm font-medium text-card-foreground">
+            Please let us know if you'll be attending:
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button
+              onClick={() => handleRSVP("accepted")}
+              className={cn(
+                rsvpStatus === "accepted" &&
+                  "ring-2 ring-primary ring-offset-2 ring-offset-background",
+              )}
+            >
+              Accept
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleRSVP("declined")}
+              className={cn(
+                rsvpStatus === "declined" &&
+                  "ring-2 ring-destructive ring-offset-2 ring-offset-background",
+              )}
+            >
+              Decline
+            </Button>
+          </div>
+          {rsvpStatus && (
+            <p className="mt-4 text-sm text-muted-foreground">
+              You have{" "}
+              <span className="font-medium text-foreground">
+                {rsvpStatus === "accepted" ? "accepted" : "declined"}
+              </span>{" "}
+              the invitation.
+            </p>
+          )}
+        </>
+      )}
+    </div>
   );
 };
 
