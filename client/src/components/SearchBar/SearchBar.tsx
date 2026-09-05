@@ -127,7 +127,7 @@ const SearchBar: React.FC = () => {
       </form>
 
       {(hasSuggestions || (loading && query.length >= 2)) && (
-        <div className="absolute top-full left-0 z-50 mt-2 w-full rounded-lg border border-border bg-card p-2 shadow-xl max-h-80 overflow-y-auto">
+        <div className="fixed inset-x-0 top-16 z-50 mx-4 max-h-80 overflow-y-auto rounded-lg border border-border bg-card p-2 shadow-xl sm:absolute sm:inset-x-auto sm:top-full sm:mx-0 sm:mt-2 sm:w-full">
           {loading && (
             <div className="mb-2 flex justify-center py-2 border-b border-border/50">
               <Loading variant="spinner" />
@@ -135,47 +135,47 @@ const SearchBar: React.FC = () => {
           )}
 
           {suggestions.events.length > 0 && (
-            <div className="mb-2">
-              <h6 className="mb-1 px-2 py-1 text-[10px] font-mono tracking-wider text-muted-foreground uppercase">
-                // Events
-              </h6>
-              <ul className="space-y-0.5 p-0 m-0 list-none">
-                {suggestions.events.map((item) => (
-                  <li
-                    key={`event-${item.id}`}
-                    onClick={() => handleSuggestionClick("event", item.id)}
-                    className="cursor-pointer rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center justify-between gap-2 transition-colors"
-                  >
-                    <span className="font-medium truncate">{item.title}</span>
-                    <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
-                      {formatEventDate(item.event_datetime!)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div className="mb-2">
+            <h6 className="mb-1 px-2 py-1 text-[10px] font-mono tracking-wider text-primary uppercase">
+              Events
+            </h6>
+            <ul className="space-y-0.5 p-0 m-0 list-none">
+              {suggestions.events.map((item) => (
+                <li
+                  key={`event-${item.id}`}
+                  onClick={() => handleSuggestionClick("event", item.id)}
+                  className="cursor-pointer rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center justify-between gap-2 transition-colors"
+                >
+                  <span className="font-medium truncate">{item.title}</span>
+                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                    {formatEventDate(item.event_datetime!)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-          {suggestions.users.length > 0 && (
-            <div>
-              <h6 className="mb-1 px-2 py-1 text-[10px] font-mono tracking-wider text-muted-foreground uppercase">
-                // Users
-              </h6>
-              <ul className="space-y-0.5 p-0 m-0 list-none">
-                {suggestions.users.map((item) => (
-                  <li
-                    key={`user-${item.id}`}
-                    onClick={() =>
-                      handleSuggestionClick("user", item.id, item.username)
-                    }
-                    className="cursor-pointer rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted/50 transition-colors font-mono"
-                  >
-                    @{item.username}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {suggestions.users.length > 0 && (
+          <div>
+            <h6 className="mb-1 px-2 py-1 text-[10px] font-mono tracking-wider text-primary uppercase">
+              Users
+            </h6>
+            <ul className="space-y-0.5 p-0 m-0 list-none">
+              {suggestions.users.map((item) => (
+                <li
+                  key={`user-${item.id}`}
+                  onClick={() =>
+                    handleSuggestionClick("user", item.id, item.username)
+                  }
+                  className="cursor-pointer rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted/50 transition-colors font-mono"
+                >
+                  @{item.username}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         </div>
       )}
     </div>
