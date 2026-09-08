@@ -51,14 +51,6 @@ const EventList: React.FC<EventListProps> = ({
   const { user, isVerified } = useUser();
   const { cancelEvent } = useEventActions(showNotification);
 
-  if (!Array.isArray(events) || events.length === 0) {
-    return (
-      <div className="my-10 text-center text-sm italic text-muted-foreground">
-        No events available. Try again later!
-      </div>
-    );
-  }
-
   const handleCancelClick = async (eventId: number) => {
     await cancelEvent(eventId, (data) => {
       onEventUpdate(data.event);

@@ -8,7 +8,6 @@ import { useToast } from "../../hooks/useToast";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import { PaginatedResponse } from "../../types/PaginationTypes";
 import Loading from "../../components/Loading/Loading";
-import "./RsvpTab.css";
 
 const EventsPerPage = 10;
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -52,8 +51,10 @@ const RsvpTab = () => {
   };
 
   return (
-    <div className="rsvps-tab-view">
-      <h3>Upcoming RSVPs</h3>
+    <div className="flex flex-col">
+      <h3 className="mb-5 text-center text-lg font-bold text-foreground">
+        Upcoming RSVPs
+      </h3>
       {loadingUpcoming ? (
         <Loading variant="spinner" text="Loading upcoming RSVPs..." />
       ) : upcomingRsvps.length > 0 ? (
@@ -63,14 +64,18 @@ const RsvpTab = () => {
             onEventUpdate={handleEventUpdate}
             showNotification={showNotification}
           />
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={upcTotalPages}
-            onPageChange={handleUpcomingPageChange}
-          />
+          <div className="mt-6 flex justify-center">
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={upcTotalPages}
+              onPageChange={handleUpcomingPageChange}
+            />
+          </div>
         </>
       ) : (
-        <p className="no-events-message">This user has no upcoming RSVPs.</p>
+        <p className="rounded-lg border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm italic text-muted-foreground">
+          This user has no upcoming RSVPs.
+        </p>
       )}
     </div>
   );

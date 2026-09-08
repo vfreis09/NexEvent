@@ -7,7 +7,6 @@ import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
 import PaginationControls from "../../components/PaginationControls/PaginationControls";
 import Loading from "../../components/Loading/Loading";
-import "./CreatedEventsTab.css";
 
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
 const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
@@ -75,8 +74,10 @@ const CreatedEventsTab = () => {
   };
 
   return (
-    <div className="created-events-tab-view">
-      <h3>Upcoming Created Events</h3>
+    <div className="flex flex-col">
+      <h3 className="mb-5 text-center text-lg font-bold text-foreground">
+        Upcoming Created Events
+      </h3>
       {loadingUpcoming ? (
         <Loading variant="spinner" text="Loading upcoming events..." />
       ) : upcomingEvents.length > 0 ? (
@@ -86,18 +87,23 @@ const CreatedEventsTab = () => {
             onEventUpdate={handleEventUpdate}
             showNotification={showNotification}
           />
-          <PaginationControls
-            currentPage={upcPage}
-            totalPages={upcTotalPages}
-            onPageChange={handleUpcomingPageChange}
-          />
+          <div className="mt-6 flex justify-center">
+            <PaginationControls
+              currentPage={upcPage}
+              totalPages={upcTotalPages}
+              onPageChange={handleUpcomingPageChange}
+            />
+          </div>
         </>
       ) : (
-        <p className="no-events-message">
+        <p className="rounded-lg border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm italic text-muted-foreground">
           This user has no upcoming created events.
         </p>
       )}
-      <h3 className="past-events-header">Past & Canceled History</h3>
+
+      <h3 className="mb-5 mt-12 border-t border-dashed border-border pt-8 text-center text-lg font-bold text-muted-foreground">
+        Past & Canceled History
+      </h3>
       {loadingPast ? (
         <Loading variant="spinner" text="Loading history..." />
       ) : pastEvents.length > 0 ? (
@@ -108,14 +114,16 @@ const CreatedEventsTab = () => {
             showNotification={showNotification}
             isPast={true}
           />
-          <PaginationControls
-            currentPage={pastPage}
-            totalPages={pastTotalPages}
-            onPageChange={handlePastPageChange}
-          />
+          <div className="mt-6 flex justify-center">
+            <PaginationControls
+              currentPage={pastPage}
+              totalPages={pastTotalPages}
+              onPageChange={handlePastPageChange}
+            />
+          </div>
         </>
       ) : (
-        <p className="no-events-message">
+        <p className="rounded-lg border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm italic text-muted-foreground">
           No past or canceled created events to display.
         </p>
       )}

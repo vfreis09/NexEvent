@@ -6,7 +6,6 @@ import { PublicUser } from "../../types/PublicUser";
 import { useToast } from "../../hooks/useToast";
 import { useTheme } from "../../context/ThemeContext";
 import Loading from "../../components/Loading/Loading";
-import "./OverviewTab.css";
 
 const MAX_EVENTS_TO_SHOW = 3;
 const rawUrl = import.meta.env.VITE_PUBLIC_API_URL;
@@ -66,9 +65,11 @@ const OverviewTab = () => {
     return <Loading variant="page" text="Loading summary..." />;
 
   return (
-    <div className="overview-tab-view">
-      <div className="overview-section">
-        <h4 className="overview-header">Your Next Created Events</h4>
+    <div className="flex flex-col gap-10">
+      <div>
+        <h4 className="mb-4 text-center text-lg font-bold text-foreground">
+          Your Next Created Events
+        </h4>
         {createdEvents.length > 0 ? (
           <EventList
             events={createdEvents}
@@ -77,11 +78,16 @@ const OverviewTab = () => {
             isCompact={true}
           />
         ) : (
-          <p className="no-events-message">No upcoming created events.</p>
+          <p className="rounded-lg border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm italic text-muted-foreground">
+            No upcoming created events.
+          </p>
         )}
       </div>
-      <div className="overview-section">
-        <h4 className="overview-header">Your Next RSVPs</h4>
+
+      <div>
+        <h4 className="mb-4 text-center text-lg font-bold text-foreground">
+          Your Next RSVPs
+        </h4>
         {rsvpedEvents.length > 0 ? (
           <EventList
             events={rsvpedEvents}
@@ -90,14 +96,23 @@ const OverviewTab = () => {
             isCompact={true}
           />
         ) : (
-          <p className="no-events-message">
+          <p className="rounded-lg border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm italic text-muted-foreground">
             No upcoming RSVPs. Go find something fun!
           </p>
         )}
       </div>
-      <div className="overview-footer">
-        <Link to="events">View All Created Events</Link> |
-        <Link to="rsvps">View All RSVPs</Link>
+
+      <div className="flex justify-center gap-2 border-t border-border pt-6 text-sm">
+        <Link
+          to="events"
+          className="font-semibold text-primary hover:underline"
+        >
+          View All Created Events
+        </Link>
+        <span className="text-muted-foreground">|</span>
+        <Link to="rsvps" className="font-semibold text-primary hover:underline">
+          View All RSVPs
+        </Link>
       </div>
     </div>
   );
