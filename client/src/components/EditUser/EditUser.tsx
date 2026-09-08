@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -55,8 +55,11 @@ const EditUser: React.FC = () => {
   const [digestFrequency, setDigestFrequency] = useState("daily");
   const [loadingPrefs, setLoadingPrefs] = useState(true);
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [showAllTags, setShowAllTags] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const VISIBLE_TAG_COUNT = 12;
 
   const {
     register: registerAccount,
@@ -184,10 +187,42 @@ const EditUser: React.FC = () => {
     }
   };
 
+  // Selected tags float to the top, most recently selected first
+  const sortedTags = useMemo(() => {
+    const selected = [...selectedTagIds]
+      .reverse()
+      .map((id) => availableTags.find((t) => t.id === id))
+      .filter((t): t is Tag => Boolean(t));
+    const unselected = availableTags.filter(
+      (t) => !selectedTagIds.includes(t.id),
+    );
+    return [...selected, ...unselected];
+  }, [availableTags, selectedTagIds]);
+
+  const visibleTags = showAllTags
+    ? sortedTags
+    : sortedTags.slice(0, VISIBLE_TAG_COUNT);
+  const hiddenTagCount = sortedTags.length - VISIBLE_TAG_COUNT;
+
   if (!user) return null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16">
+      <div className="mb-6 mt-6 flex items-center gap-3">
+      <div className="size-12 shrink-0 overflow-hidden rounded-full">
+        <img
+          src={user.profile_picture_base64 || DEFAULT_AVATAR_URL}
+          className="size-full object-cover"
+          alt="Profile"
+        />
+      </div>
+      <div>
+        <h1 className="text-lg font-semibold text-foreground">
+          {user.username}
+        </h1>
+        <p className="text-sm text-muted-foreground">Account settings</p>
+      </div>
+    </div>
       <div
         className={`mt-6 flex items-center justify-between rounded px-4 py-3 text-sm font-medium ${
           isVerified
@@ -255,7 +290,7 @@ const EditUser: React.FC = () => {
             <div className="mb-6">
               <Label className="mb-2 block font-medium">Interest tags</Label>
               <div className="flex flex-wrap gap-2">
-                {availableTags.map((tag) => {
+                {visibleTags.map((tag) => {
                   const selected = selectedTagIds.includes(tag.id);
                   return (
                     <Badge
@@ -274,6 +309,24 @@ const EditUser: React.FC = () => {
                     </Badge>
                   );
                 })}
+                {!showAllTags && hiddenTagCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer rounded-full text-muted-foreground"
+                    onClick={() => setShowAllTags(true)}
+                  >
+                    + {hiddenTagCount} more
+                  </Badge>
+                )}
+                {showAllTags && sortedTags.length > VISIBLE_TAG_COUNT && (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer rounded-full text-muted-foreground"
+                    onClick={() => setShowAllTags(false)}
+                  >
+                    Show less
+                  </Badge>
+                )}
               </div>
             </div>
 
