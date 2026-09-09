@@ -137,24 +137,25 @@ const getEvents = async (req: Request, res: Response) => {
 
     const eventsResult = await pool.query(
       `SELECT 
-         e.id, e.title, e.description, e.event_datetime, e.number_of_attendees, 
-         e.max_attendees, e.location, e.address, e.author_id, e.status, 
-         e.visibility, e.created_at,
-         u.username AS author_username,
-         COALESCE(
-           JSON_AGG(
-             JSON_BUILD_OBJECT('id', t.id, 'name', t.name)
-           ) FILTER (WHERE t.id IS NOT NULL), 
-           '[]'
-         ) AS tags
-       FROM events e
-       JOIN users u ON e.author_id = u.id
-       LEFT JOIN event_tags et ON e.id = et.event_id
-       LEFT JOIN tags t ON et.tag_id = t.id
-       WHERE ${whereClause.replace(/\$1/g, "$3")} 
-       GROUP BY e.id, u.username
-       ${orderByClause}
-       LIMIT $1 OFFSET $2`,
+        e.id, e.title, e.description, e.event_datetime, e.number_of_attendees, 
+        e.max_attendees, e.location, e.address, e.author_id, e.status, 
+        e.visibility, e.created_at,
+        u.username AS author_username,
+        u.profile_picture_base64 AS author_profile_picture_base64,
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT('id', t.id, 'name', t.name)
+          ) FILTER (WHERE t.id IS NOT NULL), 
+          '[]'
+        ) AS tags
+      FROM events e
+      JOIN users u ON e.author_id = u.id
+      LEFT JOIN event_tags et ON e.id = et.event_id
+      LEFT JOIN tags t ON et.tag_id = t.id
+      WHERE ${whereClause.replace(/\$1/g, "$3")} 
+      GROUP BY e.id, u.username, u.profile_picture_base64
+      ${orderByClause}
+      LIMIT $1 OFFSET $2`,
       [limit, offset, requestingUserId],
     );
 
@@ -528,12 +529,12 @@ const getEventsByAuthor = async (req: Request, res: Response) => {
       : [userId, queryLimit, offset, requestingUserId];
 
     const eventsResult = await pool.query(
-      `SELECT e.*, u.username AS author_username
-       FROM events e
-       JOIN users u ON e.author_id = u.id
-       WHERE e.author_id = $1 ${eventsVisibilityClause} ${timeClause}
-       ${orderByClause}
-       LIMIT $2 OFFSET $3`,
+      `SELECT e.*, u.username AS author_username, u.profile_picture_base64 AS author_profile_picture_base64
+      FROM events e
+      JOIN users u ON e.author_id = u.id
+      WHERE e.author_id = $1 ${eventsVisibilityClause} ${timeClause}
+      ${orderByClause}
+      LIMIT $2 OFFSET $3`,
       eventsParams,
     );
 

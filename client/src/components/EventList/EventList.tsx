@@ -75,8 +75,8 @@ const EventList: React.FC<EventListProps> = ({
           const eventIsExpired = new Date(event.event_datetime) < new Date();
           const isPrivate = event.visibility === "private";
 
-          const imageSrc = event.author?.profile_picture_base64
-            ? event.author.profile_picture_base64
+          const imageSrc = event.author_profile_picture_base64
+            ? event.author_profile_picture_base64
             : defaultAvatar;
 
           const statusLabel =

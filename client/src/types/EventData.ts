@@ -26,6 +26,7 @@ export interface EventData {
   visibility: "public" | "private";
   created_at: string;
   author_username: string;
+  author_profile_picture_base64?: string | null;
   author?: AuthorData;
   tags?: Tag[];
 }
