@@ -6,8 +6,8 @@ const RequireVerifiedUser = () => {
 
   if (!hasFetchedUser) return <div>Loading...</div>;
 
-  if (!isLoggedIn) return <Navigate to="/login" />;
-  if (!isVerified) return <Navigate to="/settings" />;
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
+  if (!isVerified) return <Navigate to="/settings" replace />;
 
   return <Outlet />;
 };

@@ -16,13 +16,15 @@ const BASE_URL = rawUrl ? `${rawUrl}/api` : "http://localhost:3000/api";
 interface NotificationDropdownProps {
   isLoggedIn: boolean;
   userId?: number;
-  label?: string; // when set, renders a full-width trigger with label (mobile drawer)
+  label?: string;
+  isVerified?: boolean;
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   isLoggedIn,
   userId,
   label,
+  isVerified,
 }) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -38,7 +40,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       if (!res.ok) throw new Error("Failed to fetch notifications");
       return res.json();
     },
-    enabled: !!userId && isLoggedIn,
+    enabled: !!userId && isLoggedIn && isVerified,
     staleTime: 1000 * 30,
   });
 

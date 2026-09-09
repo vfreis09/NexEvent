@@ -243,7 +243,7 @@ const Header: React.FC = () => {
 
             {user && (
               <div className="mr-6">
-                <NotificationDropdown isLoggedIn={isLoggedIn} userId={user.id} />
+                <NotificationDropdown isLoggedIn={isLoggedIn} userId={user.id} isVerified={isVerified} />
               </div>
             )}
 

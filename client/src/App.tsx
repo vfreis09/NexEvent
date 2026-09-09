@@ -74,8 +74,10 @@ const App: React.FC = () => {
                         </MapProvider>
                       }
                     />
-                    <Route path="/settings" element={<Settings />} />
                   </Route>
+                </Route>
+                <Route element={<ProtectedRoute blockBanned />}>
+                  <Route path="/settings" element={<Settings />} />
                 </Route>
                 <Route
                   path="/event/:id"
