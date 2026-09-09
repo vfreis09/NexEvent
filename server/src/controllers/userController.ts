@@ -36,6 +36,29 @@ const clearCookieOptions = {
   sameSite: "none" as const,
 };
 
+const generateUsername = async (baseName: string, email: string) => {
+  const slugBase = (baseName || email.split("@")[0])
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 20) || "user";
+
+  let candidate = slugBase;
+  let attempt = 0;
+
+  while (attempt < 5) {
+    const check = await pool.query(
+      "SELECT 1 FROM users WHERE username = $1",
+      [candidate],
+    );
+    if (check.rowCount === 0) return candidate;
+    candidate = `${slugBase}${crypto.randomBytes(2).toString("hex")}`;
+    attempt++;
+  }
+
+  // Last resort: guaranteed-unique fallback
+  return `user${crypto.randomBytes(6).toString("hex")}`;
+};
+
 const uploadProfilePicture = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   const { base64Image } = req.body;
@@ -550,13 +573,15 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
         [picture, googleId, userId],
       );
     } else {
+      const username = await generateUsername(name, email);
+
       const newUser = await pool.query(
         `INSERT INTO users (email, password, username, is_verified, profile_picture_base64, oauth_provider, oauth_id) 
-         VALUES ($1, $2, $3, TRUE, $4, 'google', $5) RETURNING id`,
+        VALUES ($1, $2, $3, TRUE, $4, 'google', $5) RETURNING id`,
         [
           email,
           await bcrypt.hash(crypto.randomBytes(16).toString("hex"), 10),
-          name,
+          username,
           picture,
           googleId,
         ],
@@ -568,9 +593,15 @@ const googleOAuthCallback = async (req: Request, res: Response) => {
       expiresIn: "1h",
     });
     res.cookie("token", token, cookieOptions).redirect(`${FRONTEND_URL}/`);
-  } catch (error) {
-    console.error("OAuth error:", error);
-    res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+  } catch (error: any) {
+    console.error("OAuth error:", {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack,
+    });
+    const errorCode = error.code === "23505" ? "duplicate" : "oauth_failed";
+    res.redirect(`${FRONTEND_URL}/login?error=${errorCode}`);
   }
 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, Calendar, MapPin, Bell } from "lucide-react";
 import { useUser } from "../../context/UserContext";
@@ -35,10 +35,19 @@ const features = [
   },
 ];
 
+const oauthErrorMessages: Record<string, string> = {
+  missing_code: "Google sign-in was cancelled or didn't complete. Please try again.",
+  csrf: "Your sign-in session expired. Please try again.",
+  duplicate: "An account with that email or name already exists. Try logging in with your password instead.",
+  oauth_failed: "Something went wrong signing in with Google. Please try again.",
+};
+
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { loadUser, isLoggedIn } = useUser();
   const [showPassword, setShowPassword] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [oauthError, setOauthError] = useState<string | null>(null);
   useTheme();
 
   const {
@@ -53,6 +62,16 @@ const LoginForm: React.FC = () => {
       navigate("/", { replace: true });
     }
   }, [isLoggedIn, navigate]);
+
+  useEffect(() => {
+    const errorCode = searchParams.get("error");
+    if (errorCode) {
+      setOauthError(
+        oauthErrorMessages[errorCode] ?? oauthErrorMessages.oauth_failed,
+      );
+      window.history.replaceState({}, document.title, "/login");
+    }
+  }, [searchParams]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -115,6 +134,12 @@ const LoginForm: React.FC = () => {
           <p className="mb-7 mt-1 text-center text-sm text-muted-foreground">
             Log in to manage your events
           </p>
+
+          {oauthError && (
+            <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-sm font-medium text-destructive">
+              {oauthError}
+            </div>
+          )}
 
           {errors.root && (
             <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-sm font-medium text-destructive">
